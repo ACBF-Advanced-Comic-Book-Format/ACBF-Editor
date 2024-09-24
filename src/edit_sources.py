@@ -124,7 +124,7 @@ class SourcesDialog(Gtk.Window):
                 title += "*"
             self.set_title(title)
 
-    def save_and_exit(self, widget, col_view: Gtk.ColumnView):
+    def save_and_exit(self, widget):
         if self.is_modified:
             self.parent.acbf_document.sources.clear()
             i = 0
