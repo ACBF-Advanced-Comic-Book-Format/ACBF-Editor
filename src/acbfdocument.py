@@ -66,7 +66,7 @@ class ACBFDocument():
         self.history: list[str] = []  # <p> separated
         self.languages: list[tuple[str, bool]] = []  # en, False
         self.contents_table: list[tuple[str, str]] = []  # title, page
-        self.sequences: list[tuple[str, str]] = []  # name, number
+        self.sequences: list[tuple[str, str, str]] = []  # name, volume, number
         self.book_title: dict[str, str] = {}
         self.annotation: dict[str, str] = {}
         self.content_ratings: list[tuple[str, str]] = []  # (type, value)
@@ -209,9 +209,10 @@ class ACBFDocument():
         try:
             for sequence in self.bookinfo.findall("sequence"):
                 name = sequence.get("title") or ""
+                volume = sequence.get("volume") or ""
                 number = sequence.text or ""
 
-                self.sequences.append((name, number))
+                self.sequences.append((name, volume, number))
         except:
             pass
 

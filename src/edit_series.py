@@ -19,16 +19,20 @@ from gi.repository import Gtk, GObject, Gio
 
 class Series(GObject.Object):
     name = GObject.Property(type=str)
+    volume = GObject.Property(type=str)
     number = GObject.Property(type=str)
 
-    def __init__(self, name: str = "", number: str = ""):
+    def __init__(self, name: str = "", volume: str = "", number: str = ""):
         super().__init__()
         self.name = name
+        self.volume = volume
         self.number = number
 
     def __str__(self) -> str:
         if self.number:
-            return self.name + " " + self.number
+            return self.name + " - Issue: " + self.number
+        elif self.number and self.volume:
+            return f"{self.name} - Volume: {self.volume}, Issue: {self.number} "
         else:
             return self.number
 
@@ -47,7 +51,7 @@ class SeriesDialog(Gtk.Window):
         self.model: Gio.ListStore = Gio.ListStore.new(item_type=Series)
 
         for series in self.parent.acbf_document.sequences:
-            self.model.append(Series(name=series[0], number=series[1]))
+            self.model.append(Series(name=series[0], volume=series[1], number=series[2]))
     
         selection_model = Gtk.NoSelection(model=self.model)
         Gtk.SelectionMode(0)
@@ -74,14 +78,22 @@ class SeriesDialog(Gtk.Window):
         name_column.set_resizable(True)
         column_view.append_column(name_column)
     
+        volume_factory = Gtk.SignalListItemFactory()
+        volume_factory.connect("setup", self.setup_number_column)
+        volume_factory.connect("bind", self.bind_editable_column, "volume")
+        volume_factory.connect("unbind", self.unbind_editable_column)
+        volume_column = Gtk.ColumnViewColumn(title="Volume Number", factory=volume_factory)
+        volume_column.set_resizable(True)
+        column_view.append_column(volume_column)
+
         number_factory = Gtk.SignalListItemFactory()
         number_factory.connect("setup", self.setup_number_column)
         number_factory.connect("bind", self.bind_editable_column, "number")
         number_factory.connect("unbind", self.unbind_editable_column)
-        number_column = Gtk.ColumnViewColumn(title="Series Number", factory=number_factory)
+        number_column = Gtk.ColumnViewColumn(title="Issue Number", factory=number_factory)
         number_column.set_resizable(True)
         column_view.append_column(number_column)
-    
+
         # Add delete button column
         delete_factory = Gtk.SignalListItemFactory()
         delete_factory.connect("setup", self.setup_delete_column)
@@ -94,6 +106,12 @@ class SeriesDialog(Gtk.Window):
     
     def setup_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
         entry: Gtk.Entry = Gtk.Entry()
+        list_item.set_child(entry)
+
+    def setup_volume_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+        entry: Gtk.Entry = Gtk.Entry()
+        entry.set_width_chars(5)
+        entry.set_alignment(1)
         list_item.set_child(entry)
 
     def setup_number_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
@@ -156,7 +174,7 @@ class SeriesDialog(Gtk.Window):
             if row is None:
                 break
 
-            self.parent.acbf_document.sequences.append((row.name, row.number))
+            self.parent.acbf_document.sequences.append((row.name, row.volume, row.number))
             i = i + 1
 
         self.parent.modified()
