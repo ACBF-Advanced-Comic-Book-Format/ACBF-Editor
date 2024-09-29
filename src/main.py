@@ -1503,6 +1503,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.sources_widget_update()
         self.history_widget_update()
         self.rating_widget_update()
+
+        if self.acbf_document.reading_direction != "LTR":
+            self.reading.set_selected(1)
         self.publish_date.set_text(self.acbf_document.publish_date_value)
         self.creation_date.set_text(self.acbf_document.creation_date)
 
@@ -1606,46 +1609,26 @@ class MainWindow(Gtk.ApplicationWindow):
         save_file_dialog = filechooser.FileChooserDialog(self).save_file_dialog()
 
     def saved_file(self, filename: str):
-        self.modified(False)
-        to_remove = self.acbf_document.tree.findall("meta-data/book-info/book-title")
-        for i in to_remove:
-            self.acbf_document.tree.find("meta-data/book-info").remove(i)
-
+        """Updates information from the main window entries to the acbfdocument python vars, calls save_to_tree"""
         if self.lang_button.get_selected_item().lang_iso in self.book_title_list:
             self.book_title_list[self.lang_button.get_selected_item().lang_iso] = self.book_title.get_text()
+            self.acbf_document.book_title = self.book_title_list
 
-        for title in list(self.book_title_list.items()):
-            if title[0] != '??' and title[1] is not None and title[1] != '':
-                new_title = xml.SubElement(self.acbf_document.tree.find("meta-data/book-info"), "book-title",
-                                           lang=title[0])
-                new_title.text = unescape(str(title[1]))
-            elif title[0] == '??':
-                new_title = xml.SubElement(self.acbf_document.tree.find("meta-data/book-info"), "book-title")
-                new_title.text = unescape(str(title[1]))
+        self.acbf_document.reading_direction = self.reading.get_selected_item().get_string()
 
-        to_remove = self.acbf_document.tree.findall("meta-data/book-info/annotation")
-        for i in to_remove:
-            self.acbf_document.tree.find("meta-data/book-info").remove(i)
+        self.acbf_document.publisher = self.publisher.get_text()
+        self.acbf_document.publish_date = self.publish_date.get_text()
+        self.acbf_document.city = self.city.get_text()
+        self.acbf_document.isbn = self.isbn.get_text()
+        self.acbf_document.license = self.license.get_text()
 
-        for anno in list(self.acbf_document.annotation.items()):
-            if anno[0] == '??' and anno[1] is not None and anno[1] != '':
-                new_anno = xml.SubElement(self.acbf_document.tree.find("meta-data/book-info"), "annotation")
-                for line in anno[1].split('\n'):
-                    new_line = xml.SubElement(new_anno, "p")
-                    new_line.text = str(line)
-            elif anno[1] is not None and anno[1] != '':
-                new_anno = xml.SubElement(self.acbf_document.tree.find("meta-data/book-info"), "annotation",
-                                          lang=anno[0])
-                for line in anno[1].split('\n'):
-                    new_line = xml.SubElement(new_anno, "p")
-                    new_line.text = str(line)
+        self.acbf_document.id = self.doc_id.get_text()
+        self.acbf_document.creation_date = self.creation_date.get_text()
+        self.acbf_document.version = self.version.get_text()
 
-        self.modify_element("meta-data/publish-info/publisher", self.publisher.get_text())
-        self.modify_element("meta-data/publish-info/city", self.city.get_text())
-        self.modify_element("meta-data/publish-info/isbn", self.isbn.get_text())
-        self.modify_element("meta-data/publish-info/license", self.license.get_text())
-
+        self.acbf_document.save_to_tree()
         self.write_file(filename)
+        self.modified(False)
 
     def write_file(self, output_file):
         if not self.is_cmd_line:

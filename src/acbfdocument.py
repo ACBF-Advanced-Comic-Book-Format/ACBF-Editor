@@ -53,7 +53,7 @@ class ACBFDocument():
         self.filename: str = filename
         self.authors: list[
             dict[str, str]] = []  # activity, language, first_name, middle_name, last_name, nickname, home_page, email
-        self.databaseref: list[dict[str, str]] = []  # dbname, dbtype, value
+        self.databaseref: list[dict[str, str, str]] = []  # dbname, dbtype, value
         self.genres: list[tuple[str, int]] = []
         self.characters: list[str] = []
         self.keywords: list[str] = []
@@ -234,8 +234,8 @@ class ACBFDocument():
             pass
 
         try:
-            for direction in self.bookinfo.find("reading-direction"):
-                self.reading_direction = direction.text
+            direction = self.bookinfo.find("reading-direction")
+            self.reading_direction = direction.text
         except:
             pass
 
@@ -618,6 +618,168 @@ class ACBFDocument():
                 f = open(os.path.join(self.fonts_dir, font.get("id")), 'wb')
                 f.write(decoded)
                 f.close()
+
+    def save_to_tree(self):
+        """Save new data to self.tree"""
+        def add_element(element, sub_element, text):
+            if text is not None and text != '':
+                new_element = xml.SubElement(element, sub_element)
+                new_element.text = str(text)
+
+        def modify_element(path, value):
+            element_name = path.split('/')[-1]
+            element_path = path[:len(path) - len(path.split('/')[-1]) - 1]
+            element = self.tree.find(path)
+
+            if element is None:
+                element = xml.SubElement(self.tree.find(element_path), element_name)
+            element.text = str(value)
+
+            return
+
+        for i in self.tree.findall("meta-data/book-info/book-title"):
+            self.tree.find("meta-data/book-info").remove(i)
+        for lang, title in self.book_title.items():
+            ele: xml.SubElement = xml.SubElement(self.tree.find("meta-data/book-info"), "book-title")
+            ele.text = str(title)
+            ele.attrib["lang"] = lang
+
+        for i in self.tree.findall("meta-data/book-info/annotation"):
+            self.tree.find("meta-data/book-info").remove(i)
+        for anno in list(self.annotation.items()):
+            if anno[0] == '??' and anno[1] is not None and anno[1] != '':
+                new_anno = xml.SubElement(self.tree.find("meta-data/book-info"), "annotation")
+                for line in anno[1].split('\n'):
+                    new_line = xml.SubElement(new_anno, "p")
+                    new_line.text = str(line)
+            elif anno[1] is not None and anno[1] != '':
+                new_anno = xml.SubElement(self.tree.find("meta-data/book-info"), "annotation", lang=anno[0])
+                for line in anno[1].split('\n'):
+                    new_line = xml.SubElement(new_anno, "p")
+                    new_line.text = str(line)
+
+        # book authors
+        for item in self.tree.findall("meta-data/book-info/author"):
+            self.tree.find("meta-data/book-info").remove(item)
+        for a in self.authors:
+            if a.get('activity') == 'Translator':
+                element = xml.SubElement(self.tree.find("meta-data/book-info"), "author", activity=a['activity'],
+                                         lang=a.get('language', 'en'))
+            else:
+                element = xml.SubElement(self.tree.find("meta-data/book-info"), "author", activity=a['activity'])
+
+            if a.get('first_name'):
+                add_element(element, "first-name", a['first_name'])
+            if a.get('middle_name'):
+                add_element(element, "middle-name", a['middle_name'])
+            if a.get('last_name'):
+                add_element(element, "last-name", a['last_name'])
+            if a.get('email'):
+                add_element(element, "email", a['email'])
+            if a.get('home_page'):
+                add_element(element, "home-page", a['home_page'])
+            if a.get('nickname'):
+                add_element(element, "nickname", a['nickname'])
+
+        for item in self.tree.findall("meta-data/book-info/sequence"):
+            self.tree.find("meta-data/book-info").remove(item)
+        for s in self.sequences:
+            ele: xml.SubElement = xml.SubElement(self.tree.find("meta-data/book-info"), "sequence")
+            ele.text = s[2]
+            ele.attrib["title"] = s[0]
+            if s[1]:
+                ele.attrib["volume"] = s[1]
+
+        for item in self.tree.findall("meta-data/book-info/genre"):
+            self.tree.find("meta-data/book-info").remove(item)
+        for s in self.genres:
+            element = xml.SubElement(self.tree.find("meta-data/book-info"), "genre")
+            element.text = s[0]
+            if s[1]:
+                element.attrib['match'] = str(s[1])
+
+        self.tree.find("meta-data/book-info/characters").clear()
+        for c in self.characters:
+            add_element(self.tree.find("meta-data/book-info/characters"), "name", c)
+
+        modify_element("meta-data/book-info/keywords", ", ".join(self.keywords))
+
+        for item in self.tree.findall("meta-data/book-info/languages/text-layer"):
+            self.tree.find("meta-data/book-info/languages").remove(item)
+        for l in self.languages:
+            element = xml.SubElement(self.tree.find("meta-data/book-info/languages"), "text-layer")
+            element.attrib['lang'] = l[0]
+            element.attrib['show'] = str(l[1])
+
+        for item in self.tree.findall("meta-data/book-info/databaseref"):
+            self.tree.find("meta-data/book-info").remove(item)
+        for d in self.databaseref:
+            element = xml.SubElement(self.tree.find("meta-data/book-info"), "databaseref")
+            element.text = d['value']
+            element.attrib['dbname'] = d['dbname']
+            if d.get('dbtype'):
+                element.attrib['type'] = d['dbtype']
+
+        for item in self.tree.findall("meta-data/book-info/content-rating"):
+            self.tree.find("meta-data/book-info").remove(item)
+        for r in self.content_ratings:
+            element = xml.SubElement(self.tree.find("meta-data/book-info"), "content-rating")
+            element.text = r[1]
+            if r[0]:
+                element.attrib['type'] = r[0]
+
+        modify_element("meta-data/book-info/reading-direction", self.reading_direction)
+
+        # Publisher info
+        modify_element("meta-data/publish-info/publisher", self.publisher)
+        modify_element("meta-data/publish-info/city", self.city)
+        modify_element("meta-data/publish-info/isbn", self.isbn)
+        modify_element("meta-data/publish-info/license", self.license)
+
+        pd = self.tree.find("meta-data/publish-info/publish-date")
+        pd.text = self.publish_date
+        pd.attrib['value'] = self.publish_date
+
+        # ACBF document
+        modify_element("meta-data/document-info/id", self.id)
+
+        # ACBF document authors
+        for item in self.tree.findall("meta-data/document-info/author"):
+            self.tree.find("meta-data/document-info").remove(item)
+        for a in self.doc_authors:
+            if a.get('activity') == 'Translator':
+                element = xml.SubElement(self.tree.find("meta-data/document-info/author"), "author", activity=a['activity'],
+                                         lang=a.get('language', 'en'))
+            else:
+                element = xml.SubElement(self.tree.find("meta-data/document-info"), "author", activity=a['activity'])
+
+            if a.get('first_name'):
+                add_element(element, "first-name", a['first_name'])
+            if a.get('middle_name'):
+                add_element(element, "middle-name", a['middle_name'])
+            if a.get('last_name'):
+                add_element(element, "last-name", a['last_name'])
+            if a.get('email'):
+                add_element(element, "email", a['email'])
+            if a.get('home_page'):
+                add_element(element, "home-page", a['home_page'])
+            if a.get('nickname'):
+                add_element(element, "nickname", a['nickname'])
+
+        cd = self.tree.find("meta-data/document-info/creation-date")
+        cd.text = self.creation_date
+        cd.attrib['value'] = self.creation_date
+
+        self.tree.find("meta-data/document-info/source").clear()
+        for s in self.sources:
+            add_element(self.tree.find("meta-data/document-info/source"), "p", s)
+
+        if self.version:
+            modify_element("meta-data/document-info/version", self.version)
+
+        self.tree.find("meta-data/document-info/history").clear()
+        for h in self.history:
+            add_element(self.tree.find("meta-data/document-info/history"), "p", h)
 
 
 class ImageURI():
