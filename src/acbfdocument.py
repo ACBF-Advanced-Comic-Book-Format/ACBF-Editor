@@ -663,8 +663,12 @@ class ACBFDocument():
             self.tree.find("meta-data/book-info").remove(item)
         for a in self.authors:
             if a.get('activity') == 'Translator':
+                lang = a.get('language', 'en')
+                # Possible get('language') returns None
+                if lang is None:
+                    lang = 'en'
                 element = xml.SubElement(self.tree.find("meta-data/book-info"), "author", activity=a['activity'],
-                                         lang=a.get('language', 'en'))
+                                         lang=lang)
             else:
                 element = xml.SubElement(self.tree.find("meta-data/book-info"), "author", activity=a['activity'])
 
@@ -748,7 +752,7 @@ class ACBFDocument():
             self.tree.find("meta-data/document-info").remove(item)
         for a in self.doc_authors:
             if a.get('activity') == 'Translator':
-                element = xml.SubElement(self.tree.find("meta-data/document-info/author"), "author", activity=a['activity'],
+                element = xml.SubElement(self.tree.find("meta-data/document-info"), "author", activity=a['activity'],
                                          lang=a.get('language', 'en'))
             else:
                 element = xml.SubElement(self.tree.find("meta-data/document-info"), "author", activity=a['activity'])
@@ -781,6 +785,8 @@ class ACBFDocument():
         for h in self.history:
             add_element(self.tree.find("meta-data/document-info/history"), "p", h)
 
+        xml.indent(self.tree)
+        
 
 class ImageURI():
 
