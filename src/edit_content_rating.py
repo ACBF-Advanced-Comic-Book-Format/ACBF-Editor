@@ -11,11 +11,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+from __future__ import annotations
 
 import gi
+from gi.repository import Gio
+from gi.repository import GObject
+from gi.repository import Gtk
 
-gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk, GObject, Gio
+gi.require_version("Gtk", "4.0")
 
 
 class Rating(GObject.Object):
@@ -29,7 +32,7 @@ class Rating(GObject.Object):
 
 
 class ContentRatingsDialog(Gtk.Window):
-    def __init__(self, parent):
+    def __init__(self, parent: Gtk.Window):
         self.parent = parent
         super().__init__(title="Edit Content Ratings")
         self.set_size_request(600, 400)
@@ -58,12 +61,15 @@ class ContentRatingsDialog(Gtk.Window):
         new_button.set_tooltip_text("Add new rating")
         toolbar_header.pack_start(new_button)
         new_button.set_icon_name("list-add-symbolic")
-        new_button.connect('clicked', self.add_rating)
+        new_button.connect("clicked", self.add_rating)
 
         name_factory = Gtk.SignalListItemFactory()
         name_factory.connect("setup", self.setup_name_column)
         name_factory.connect("bind", self.bind_type_column, "type")
-        name_column = Gtk.ColumnViewColumn(title="Rating Type", factory=name_factory)
+        name_column = Gtk.ColumnViewColumn(
+            title="Rating Type",
+            factory=name_factory,
+        )
         name_column.set_expand(True)
         name_column.set_resizable(True)
         column_view.append_column(name_column)
@@ -72,7 +78,10 @@ class ContentRatingsDialog(Gtk.Window):
         type_factory.connect("setup", self.setup_type_column)
         type_factory.connect("bind", self.bind_type_column, "name")
         type_factory.connect("unbind", self.unbind_type_column)
-        type_column = Gtk.ColumnViewColumn(title="Content Rating", factory=type_factory)
+        type_column = Gtk.ColumnViewColumn(
+            title="Content Rating",
+            factory=type_factory,
+        )
         type_column.set_resizable(True)
         column_view.append_column(type_column)
 
@@ -81,59 +90,64 @@ class ContentRatingsDialog(Gtk.Window):
         delete_factory.connect("setup", self.setup_delete_column)
         delete_factory.connect("bind", self.bind_delete_column)
         delete_factory.connect("unbind", self.unbind_delete_column)
-        delete_column = Gtk.ColumnViewColumn(title="Delete", factory=delete_factory)
+        delete_column = Gtk.ColumnViewColumn(
+            title="Delete",
+            factory=delete_factory,
+        )
         column_view.append_column(delete_column)
 
         self.set_child(column_view)
 
-    def setup_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def setup_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.Entry = Gtk.Entry()
         list_item.set_child(entry)
 
-    def setup_type_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def setup_type_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.Entry = Gtk.Entry()
         entry.set_width_chars(5)
         entry.set_alignment(1)
         list_item.set_child(entry)
 
-    def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
-        button: Gtk.Button = Gtk.Button.new_from_icon_name("edit-delete-symbolic")
+    def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
+        button: Gtk.Button = Gtk.Button.new_from_icon_name(
+            "edit-delete-symbolic",
+        )
         list_item.set_child(button)
 
-    def bind_type_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute):
+    def bind_type_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute: str) -> None:
         item = list_item.get_item()
         entry: Gtk.Entry = list_item.get_child()
         entry.set_text(getattr(item, attribute) or "")
         entry.connect("changed", self.text_changed, item, attribute)
 
-    def unbind_type_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_type_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.Entry = list_item.get_child()
         entry.disconnect_by_func(self.text_changed)
 
-    def bind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def bind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         position = list_item.get_position()
         button: Gtk.Button = list_item.get_child()
         button.connect("clicked", self.on_delete_button_clicked, position)
 
-    def unbind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         button: Gtk.Button = list_item.get_child()
         button.disconnect_by_func(self.on_delete_button_clicked)
 
-    def text_changed(self, entry: Gtk.Entry, item: Rating, attribute: str):
+    def text_changed(self, entry: Gtk.Entry, item: Rating, attribute: str) -> None:
         # Do not trigger a model updated otherwise the text will highlight
         setattr(item, attribute, entry.get_text())
         self.set_modified()
 
-    def on_delete_button_clicked(self, button: Gtk.Button, position: int):
+    def on_delete_button_clicked(self, button: Gtk.Button, position: int) -> None:
         self.model.remove(position)
         self.set_modified()
 
-    def add_rating(self, button):
+    def add_rating(self, button: Gtk.Button) -> None:
         blank = Rating()
         self.model.append(blank)
         self.set_modified()
 
-    def set_modified(self, modified: bool = True):
+    def set_modified(self, modified: bool = True) -> None:
         if self.is_modified is not modified:
             self.is_modified = modified
             title = self.get_title()
@@ -149,12 +163,14 @@ class ContentRatingsDialog(Gtk.Window):
             if row is None:
                 break
 
-            self.parent.acbf_document.content_ratings.append((row.type, row.name))
+            self.parent.acbf_document.content_ratings.append(
+                (row.type, row.name),
+            )
             i = i + 1
 
         self.parent.modified()
 
-    def save_and_exit(self, widget):
+    def save_and_exit(self, widget: Gtk.Button) -> None:
         if self.is_modified:
             self.save()
             self.parent.modified()

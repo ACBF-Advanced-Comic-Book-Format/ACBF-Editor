@@ -11,11 +11,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+from __future__ import annotations
 
 import gi
+from gi.repository import Gio
+from gi.repository import GObject
+from gi.repository import Gtk
 
-gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk, GObject, Gio
+gi.require_version("Gtk", "4.0")
 
 
 class Character(GObject.Object):
@@ -28,7 +31,7 @@ class Character(GObject.Object):
 
 
 class CharacterDialog(Gtk.Window):
-    def __init__(self, parent):
+    def __init__(self, parent: Gtk.Window):
         self.parent = parent
         super().__init__(title="Edit Characters")
         self.set_size_request(600, 400)
@@ -55,7 +58,7 @@ class CharacterDialog(Gtk.Window):
         new_button.set_tooltip_text("Add new character")
         toolbar_header.pack_start(new_button)
         new_button.set_icon_name("list-add-symbolic")
-        new_button.connect('clicked', self.add_character)
+        new_button.connect("clicked", self.add_character)
 
         name_factory = Gtk.SignalListItemFactory()
         name_factory.connect("setup", self.setup_name_column)
@@ -70,52 +73,55 @@ class CharacterDialog(Gtk.Window):
         delete_factory.connect("setup", self.setup_delete_column)
         delete_factory.connect("bind", self.bind_delete_column)
         delete_factory.connect("unbind", self.unbind_delete_column)
-        delete_column = Gtk.ColumnViewColumn(title="Delete", factory=delete_factory)
+        delete_column = Gtk.ColumnViewColumn(
+            title="Delete",
+            factory=delete_factory,
+        )
         column_view.append_column(delete_column)
 
         self.connect("close-request", self.save_and_exit)
         self.set_child(column_view)
 
-    def setup_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def setup_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry = Gtk.Entry()
         list_item.set_child(entry)
 
-    def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         button = Gtk.Button.new_from_icon_name("edit-delete-symbolic")
         list_item.set_child(button)
 
-    def bind_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def bind_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         item: Gtk.StringList = list_item.get_item()
         entry: Gtk.Entry = list_item.get_child()
         entry.set_text(item.name)
         entry.connect("changed", self.text_changed, item)
 
-    def unbind_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.Entry = list_item.get_child()
         entry.disconnect_by_func(self.text_changed)
 
-    def bind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def bind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         position = list_item.get_position()
         button: Gtk.Button = list_item.get_child()
         button.connect("clicked", self.on_delete_button_clicked, position)
 
-    def unbind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         button: Gtk.Button = list_item.get_child()
         button.disconnect_by_func(self.on_delete_button_clicked)
 
-    def text_changed(self, entry: Gtk.Entry, item: Character):
+    def text_changed(self, entry: Gtk.Entry, item: Character) -> None:
         item.name = entry.get_text()
         self.set_modified()
 
-    def on_delete_button_clicked(self, button: Gtk.Button, position: int):
+    def on_delete_button_clicked(self, button: Gtk.Button, position: int) -> None:
         self.model.remove(position)
         self.set_modified()
 
-    def add_character(self, button):
+    def add_character(self, button: Gtk.Button) -> None:
         self.model.append(Character())
         self.set_modified()
 
-    def set_modified(self, modified: bool = True):
+    def set_modified(self, modified: bool = True) -> None:
         if self.is_modified is not modified:
             self.is_modified = modified
             title = self.get_title()
@@ -123,7 +129,7 @@ class CharacterDialog(Gtk.Window):
                 title += "*"
             self.set_title(title)
 
-    def save_and_exit(self, widget):
+    def save_and_exit(self, widget: Gtk.Button) -> None:
         if self.is_modified:
             self.parent.acbf_document.characters.clear()
             i = 0

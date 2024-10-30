@@ -11,12 +11,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+from __future__ import annotations
 
-import gi
 import constants
-gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk, Gio, GObject
+import gi
 from edit_languages import Language
+from gi.repository import Gio
+from gi.repository import GObject
+from gi.repository import Gtk
+
+gi.require_version("Gtk", "4.0")
 
 
 class Author(GObject.Object):
@@ -29,7 +33,17 @@ class Author(GObject.Object):
     home_page = GObject.Property(type=str)
     email = GObject.Property(type=str)
 
-    def __init__(self, activity, language, first_name, middle_name, last_name, nickname, home_page, email):
+    def __init__(
+        self,
+        activity: str,
+        language: str,
+        first_name: str,
+        middle_name: str,
+        last_name: str,
+        nickname: str,
+        home_page: str,
+        email: str,
+    ):
         super().__init__()
         self.activity = activity
         self.language = language
@@ -40,7 +54,7 @@ class Author(GObject.Object):
         self.home_page = home_page
         self.email = email
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.first_name and self.last_name:
             return self.first_name + " " + self.last_name
         elif self.nickname:
@@ -49,13 +63,20 @@ class Author(GObject.Object):
             return self.first_name or self.last_name or ""
 
     def _dict(self) -> dict[str, str]:
-        return {"activity": self.activity, "language": self.language, "first_name": self.first_name,
-                "middle_name": self.middle_name, "last_name": self.last_name, "nickname": self.nickname,
-                "home_page": self.home_page, "email": self.email}
+        return {
+            "activity": self.activity,
+            "language": self.language,
+            "first_name": self.first_name,
+            "middle_name": self.middle_name,
+            "last_name": self.last_name,
+            "nickname": self.nickname,
+            "home_page": self.home_page,
+            "email": self.email,
+        }
 
 
 class AuthorsDialog(Gtk.Window):
-    def __init__(self, parent, doc_auth: bool = False):
+    def __init__(self, parent: Gtk.Window, doc_auth: bool = False):
         self.parent = parent
         super().__init__()
         self.set_transient_for(parent)
@@ -65,23 +86,28 @@ class AuthorsDialog(Gtk.Window):
 
         self.connect("close-request", self.save_and_exit)
 
-        self.model = Gio.ListStore.new(item_type=Author)
+        self.model: Gio.ListStore = Gio.ListStore.new(item_type=Author)
 
         self.authors = self.parent.acbf_document.doc_authors if doc_auth else self.parent.acbf_document.authors
 
         for author in self.authors:
-            author_record = Author(activity=author.get("activity"), language=author.get("language"),
-                                   first_name=author.get("first_name"), middle_name=author.get("middle_name"),
-                                   last_name=author.get("last_name"),
-                                   nickname=author.get("nickname"), home_page=author.get("home_page"),
-                                   email=author.get("email"))
+            author_record = Author(
+                activity=author.get("activity"),
+                language=author.get("language"),
+                first_name=author.get("first_name"),
+                middle_name=author.get("middle_name"),
+                last_name=author.get("last_name"),
+                nickname=author.get("nickname"),
+                home_page=author.get("home_page"),
+                email=author.get("email"),
+            )
             self.model.append(author_record)
-    
+
         selection_model = Gtk.NoSelection(model=self.model)
 
         column_view = Gtk.ColumnView(model=selection_model)
-        #column_view_row_factory: Gtk.ListItemFactory = column_view.get_row_factory()
-        #column_view_row_factory
+        # column_view_row_factory: Gtk.ListItemFactory = column_view.get_row_factory()
+        # column_view_row_factory
         column_view.set_show_column_separators(True)
         column_view.set_show_row_separators(True)
 
@@ -92,32 +118,32 @@ class AuthorsDialog(Gtk.Window):
         new_button.set_tooltip_text("Add new record")
         toolbar_header.pack_start(new_button)
         new_button.set_icon_name("list-add-symbolic")
-        new_button.connect('clicked', self.add_author)
+        new_button.connect("clicked", self.add_author)
 
         factory = Gtk.SignalListItemFactory()
         factory.connect("setup", self.setup_activity_column)
         factory.connect("bind", self.bind_activity_column, "activity")
         factory.connect("unbind", self.unbind_activity_column)
         column = Gtk.ColumnViewColumn(title="Activity", factory=factory)
-    
+
         column_view.append_column(column)
-    
+
         factory = Gtk.SignalListItemFactory()
         factory.connect("setup", self.setup_language_column)
         factory.connect("bind", self.bind_language_column)
         factory.connect("unbind", self.unbind_language_column)
         column = Gtk.ColumnViewColumn(title="Language", factory=factory)
         column_view.append_column(column)
-    
+
         text_columns = [
             ("First Name", "first_name"),
             ("Middle Name", "middle_name"),
             ("Last Name", "last_name"),
             ("Nickname", "nickname"),
             ("Home Page", "home_page"),
-            ("Email", "email")
+            ("Email", "email"),
         ]
-    
+
         for title, attribute in text_columns:
             factory = Gtk.SignalListItemFactory()
             factory.connect("setup", self.setup_editable_column)
@@ -131,28 +157,37 @@ class AuthorsDialog(Gtk.Window):
         delete_factory.connect("setup", self.setup_delete_column)
         delete_factory.connect("bind", self.bind_delete_column)
         delete_factory.connect("unbind", self.unbind_delete_column)
-        delete_column = Gtk.ColumnViewColumn(title="Delete", factory=delete_factory)
+        delete_column = Gtk.ColumnViewColumn(
+            title="Delete",
+            factory=delete_factory,
+        )
         column_view.append_column(delete_column)
 
         self.set_titlebar(toolbar_header)
-        self.set_child(column_view)
+        sw = Gtk.ScrolledWindow()
+        sw.set_child(column_view)
+        self.set_child(sw)
         self.set_size_request(1000, 600)
 
-    def setup_editable_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def setup_editable_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry = Gtk.Entry()
         list_item.set_child(entry)
 
-    def setup_activity_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def setup_activity_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         gtk_lang_list = Gtk.StringList.new(constants.AUTHORS_LIST)
         entry = Gtk.DropDown()
         entry.set_show_arrow(True)
         entry.set_model(gtk_lang_list)
         entry.set_enable_search(True)
-        expression = Gtk.PropertyExpression.new(Gtk.StringObject, None, "string")
+        expression = Gtk.PropertyExpression.new(
+            Gtk.StringObject,
+            None,
+            "string",
+        )
         entry.set_expression(expression)
         list_item.set_child(entry)
 
-    def setup_language_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def setup_language_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry = Gtk.DropDown()
         entry.set_model(self.parent.all_langs)
         entry.set_enable_search(True)
@@ -160,32 +195,36 @@ class AuthorsDialog(Gtk.Window):
         entry.set_expression(expression)
         list_item.set_child(entry)
 
-    def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         button = Gtk.Button.new_from_icon_name("edit-delete-symbolic")
         list_item.set_child(button)
-    
-    def bind_editable_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute):
+
+    def bind_editable_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute: str) -> None:
         item: Author = list_item.get_item()
         entry: Gtk.Entry = list_item.get_child()
         entry.set_text(getattr(item, attribute) or "")
         entry.connect("changed", self.text_changed, item, attribute)
 
-    def unbind_editable_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_editable_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.Entry = list_item.get_child()
         entry.disconnect_by_func(self.text_changed)
 
-    def bind_activity_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute):
+    def bind_activity_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute: str) -> None:
         item: Author = list_item.get_item()
         entry: Gtk.DropDown = list_item.get_child()
-        entry.set_selected(constants.AUTHORS_LIST.index(getattr(item, attribute) or constants.AUTHORS_LIST[0]))
-    
+        entry.set_selected(
+            constants.AUTHORS_LIST.index(
+                getattr(item, attribute) or constants.AUTHORS_LIST[0],
+            ),
+        )
+
         entry.connect("notify::selected", self.activity_change, item)
 
-    def unbind_activity_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_activity_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.DropDown = list_item.get_child()
         entry.disconnect_by_func(self.activity_change)
 
-    def bind_language_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def bind_language_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         item: Author = list_item.get_item()
         entry: Gtk.DropDown = list_item.get_child()
         entry.set_sensitive(False)
@@ -195,48 +234,61 @@ class AuthorsDialog(Gtk.Window):
             entry.set_sensitive(True)
         entry.connect("notify::selected", self.lang_change, item)
 
-    def unbind_language_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_language_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.DropDown = list_item.get_child()
         entry.disconnect_by_func(self.lang_change)
 
-    def bind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def bind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         item: Author = list_item.get_item()
         button = list_item.get_child()
         button.connect("clicked", self.on_delete_button_clicked, item)
 
-    def unbind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         button = list_item.get_child()
         button.disconnect_by_func(self.on_delete_button_clicked)
 
-    def on_delete_button_clicked(self, button, item):
+    def on_delete_button_clicked(self, button: Gtk.Button, item: Author) -> None:
         found, position = self.model.find(item)
         if found:
             self.model.remove(position)
             self.set_modified()
-    
-    def add_author(self, button):
-        blank = Author(activity="Writer", language="", first_name="", middle_name="", last_name="", nickname="", home_page="", email="")
+
+    def add_author(self, button: Gtk.Button) -> None:
+        blank = Author(
+            activity="Writer",
+            language="",
+            first_name="",
+            middle_name="",
+            last_name="",
+            nickname="",
+            home_page="",
+            email="",
+        )
         self.model.append(blank)
 
-    def text_changed(self, entry: Gtk.Entry, item: Author, attribute: str):
+    def text_changed(self, entry: Gtk.Entry, item: Author, attribute: str) -> None:
         # Do not trigger a model updated otherwise the text will highlight
         setattr(item, attribute, entry.get_text())
         self.set_modified()
 
-    def lang_change(self, button: Gtk.DropDown, _pspec,  item: Author):
+    def lang_change(self, button: Gtk.DropDown, _pspec: GObject.GParamSpec, item: Author) -> None:
         item.language = button.get_selected_item().lang_iso
         self.set_modified()
 
-    def activity_change(self, button: Gtk.DropDown, _pspec,  item: Author):
+    def activity_change(self, button: Gtk.DropDown, _pspec: GObject.GParamSpec, item: Author) -> None:
         # Don't trigger model change
         item.activity = button.get_selected_item().get_string().capitalize()
         self.set_modified()
 
-    def compare_lang(self, item: Author, model: Gio.ListStore):
+    def compare_lang(self, item: Author, model: Gio.ListStore) -> int:
         lang_iso = item.language
         if lang_iso is None:
             # If not the translator for a language, use currently set language
-            lang_iso = self.parent.lang_button.get_selected_item().lang_iso
+            lang_dd = self.parent.lang_button.get_selected_item()
+            if isinstance(lang_dd, Language):
+                lang_iso = lang_dd.lang_iso
+            else:
+                lang_iso = "en"
         position = 0
         i = 0
         while i < 999:
@@ -250,7 +302,7 @@ class AuthorsDialog(Gtk.Window):
 
         return position
 
-    def set_modified(self, modified: bool = True):
+    def set_modified(self, modified: bool = True) -> None:
         if self.is_modified is not modified:
             self.is_modified = modified
             title = self.get_title()
@@ -271,11 +323,10 @@ class AuthorsDialog(Gtk.Window):
 
         self.parent.modified()
 
-    def save_and_exit(self, widget: Gtk.Button):
+    def save_and_exit(self, widget: Gtk.Button) -> None:
         if self.is_modified:
             self.save()
             self.parent.authors_widget_update()
             self.parent.doc_authors_widget_update()
             self.parent.modified()
         self.close()
-        return False

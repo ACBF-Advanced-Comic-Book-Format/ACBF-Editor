@@ -11,11 +11,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+from __future__ import annotations
 
 import gi
-gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk, GObject, Gio
 import lxml.etree as xml
+from gi.repository import Gio
+from gi.repository import GObject
+from gi.repository import Gtk
+
+gi.require_version("Gtk", "4.0")
 
 
 class ContentItem(GObject.Object):
@@ -29,27 +33,24 @@ class ContentItem(GObject.Object):
 
 
 class EditContentWindow(Gtk.Window):
-    def __init__(self, parent):
+    def __init__(self, parent: Gtk.Window):
         self.parent = parent
         super().__init__(title="Edit Contents")
         self.set_transient_for(parent)
 
         self.is_modified: bool = False
         self.previous_lang: int = 0
-        self.page_image_names: list = []
+        self.page_image_names: list[str] = []
 
-        self.model = Gio.ListStore(item_type=ContentItem)
+        self.model: Gio.ListStore = Gio.ListStore(item_type=ContentItem)
         # Text Layers switch
-        self.contents_languages = []
+        self.contents_languages: list[str] = []
         try:
             for item in parent.acbf_document.tree.findall("meta-data/book-info/languages/text-layer"):
                 if item.get("lang") not in self.contents_languages:
                     self.contents_languages.append(item.get("lang"))
-        except:
+        except Exception:
             pass
-
-        titlepage = Gtk.Image()
-        #titlepage.set_from_pixbuf(self.pil_to_pixbuf(acbf_document.cover_thumb, '#000'))
 
         toolbar_header = Gtk.HeaderBar()
         self.set_titlebar(toolbar_header)
@@ -58,9 +59,12 @@ class EditContentWindow(Gtk.Window):
         new_button.set_tooltip_text("Add new record")
         toolbar_header.pack_start(new_button)
         new_button.set_icon_name("list-add-symbolic")
-        new_button.connect('clicked', self.add_content_item)
+        new_button.connect("clicked", self.add_content_item)
 
-        self.lang_button: Gtk.DropDown = self.parent.create_lang_dropdown(self.parent.lang_store, self.lang_changed)
+        self.lang_button: Gtk.DropDown = self.parent.create_lang_dropdown(
+            self.parent.lang_store,
+            self.lang_changed,
+        )
 
         toolbar_header.pack_start(self.lang_button)
 
@@ -73,7 +77,10 @@ class EditContentWindow(Gtk.Window):
         title_factory.connect("setup", self.setup_title_column)
         title_factory.connect("bind", self.bind_title_column, "title")
         title_factory.connect("unbind", self.unbind_title_column)
-        title_column = Gtk.ColumnViewColumn(title="Title", factory=title_factory)
+        title_column = Gtk.ColumnViewColumn(
+            title="Title",
+            factory=title_factory,
+        )
         title_column.set_expand(True)
         title_column.set_resizable(True)
         column_view.append_column(title_column)
@@ -90,7 +97,10 @@ class EditContentWindow(Gtk.Window):
         delete_factory.connect("setup", self.setup_delete_column)
         delete_factory.connect("bind", self.bind_delete_column)
         delete_factory.connect("unbind", self.unbind_delete_column)
-        delete_column = Gtk.ColumnViewColumn(title="Delete", factory=delete_factory)
+        delete_column = Gtk.ColumnViewColumn(
+            title="Delete",
+            factory=delete_factory,
+        )
         column_view.append_column(delete_column)
 
         self.update_contents(self.lang_button.get_selected())
@@ -100,32 +110,34 @@ class EditContentWindow(Gtk.Window):
 
         self.connect("close-request", self.save_and_exit)
 
-    def setup_title_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def setup_title_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.Entry = Gtk.Entry()
         list_item.set_child(entry)
 
-    def setup_page_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
-        pages: list = []
+    def setup_page_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
+        pages: list[str] = []
         for page in self.page_image_names:
             pages.append(page)
         entry: Gtk.DropDown = Gtk.DropDown.new_from_strings(pages)
         list_item.set_child(entry)
 
-    def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
-        button: Gtk.Button = Gtk.Button.new_from_icon_name("edit-delete-symbolic")
+    def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
+        button: Gtk.Button = Gtk.Button.new_from_icon_name(
+            "edit-delete-symbolic",
+        )
         list_item.set_child(button)
 
-    def bind_title_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute):
+    def bind_title_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute: str) -> None:
         item = list_item.get_item()
         entry: Gtk.Entry = list_item.get_child()
         entry.set_text(getattr(item, attribute) or "")
         entry.connect("changed", self.entry_changed)
 
-    def unbind_title_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_title_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.Entry = list_item.get_child()
         entry.disconnect_by_func(self.entry_changed)
 
-    def bind_page_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def bind_page_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         item = list_item.get_item()
         entry: Gtk.DropDown = list_item.get_child()
         for i, page in enumerate(self.page_image_names):
@@ -133,41 +145,41 @@ class EditContentWindow(Gtk.Window):
                 entry.set_selected(i)
         entry.connect("notify::selected", self.page_changed, item)
 
-    def unbind_page_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_page_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.DropDown = list_item.get_child()
         entry.disconnect_by_func(self.page_changed)
 
-    def bind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def bind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         position = list_item.get_position()
         button: Gtk.Button = list_item.get_child()
         button.connect("clicked", self.on_delete_button_clicked, position)
 
-    def unbind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem):
+    def unbind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         button: Gtk.Button = list_item.get_child()
         button.disconnect_by_func(self.on_delete_button_clicked)
 
-    def on_delete_button_clicked(self, button: Gtk.Button, position: int):
+    def on_delete_button_clicked(self, button: Gtk.Button, position: int) -> None:
         self.model.remove(position)
         self.set_modified()
 
-    def entry_changed(self, widget):
+    def entry_changed(self, widget: Gtk.Entry) -> None:
         self.set_modified()
 
-    def page_changed(self, widget: Gtk.DropDown, _pspec, item: ContentItem):
+    def page_changed(self, widget: Gtk.DropDown, _pspec: GObject.GParamSpec, item: ContentItem) -> None:
         item.page = widget.get_selected_item().get_string()
         self.set_modified()
 
-    def save_and_exit(self, widget):
+    def save_and_exit(self, widget: Gtk.Button) -> None:
         if self.is_modified:
             self.update_contents(self.previous_lang)
         self.close()
 
-    def add_content_item(self, widget, title: str = "", page: str = ""):
+    def add_content_item(self, widget: Gtk.Button, title: str = "", page: str = "") -> None:
         new_item = ContentItem(title=title, page=page)
         self.model.append(new_item)
 
-    def lang_changed(self, widget: Gtk.DropDown, _pspec):
-        def handle_response(dialog: Gtk.AlertDialog, task: Gio.Task, lang: int):
+    def lang_changed(self, widget: Gtk.DropDown, _pspec: GObject.GParamSpec) -> None:
+        def handle_response(dialog: Gtk.AlertDialog, task: Gio.Task, lang: int) -> None:
             response = dialog.choose_finish(task)
             if response == 2:
                 self.previous_lang = widget.get_selected()
@@ -185,7 +197,9 @@ class EditContentWindow(Gtk.Window):
             alert = Gtk.AlertDialog()
             alert.set_message("Unsaved Changes")
             alert.set_detail("There are unsaved changes that will be lost:")
-            alert.set_buttons(["Cancel", "Save and Switch", "Switch (lose changes)"])
+            alert.set_buttons(
+                ["Cancel", "Save and Switch", "Switch (lose changes)"],
+            )
             alert.set_cancel_button(0)
             alert.set_default_button(1)
             alert.choose(self, None, handle_response, widget.get_selected())
@@ -193,7 +207,7 @@ class EditContentWindow(Gtk.Window):
             self.previous_lang = widget.get_selected()
             self.update_contents(widget.get_selected())
 
-    def set_modified(self, modified: bool = True):
+    def set_modified(self, modified: bool = True) -> None:
         if self.is_modified is not modified:
             self.is_modified = modified
             title = self.get_title()
@@ -201,25 +215,27 @@ class EditContentWindow(Gtk.Window):
                 title += "*"
             self.set_title(title)
 
-    def save_contents(self, lang: int):
+    def save_contents(self, lang: int) -> None:
         for entry in self.model:
-            xml_page = self.parent.acbf_document.tree.xpath(f"//page[image[@href='{entry.page}']]")
+            xml_page = self.parent.acbf_document.tree.xpath(
+                f"//page[image[@href='{entry.page}']]",
+            )
             if len(xml_page) > 0:
                 element = xml.SubElement(xml_page[0], "title")
-                element.set('lang', self.contents_languages[lang])
+                element.set("lang", self.contents_languages[lang])
                 element.text = entry.title
 
-    def update_contents(self, lang: int):
+    def update_contents(self, lang: int) -> None:
         # TODO set image
-        '''if widget is not None:
-            lang = widget.get_selected()'''
+        """if widget is not None:
+        lang = widget.get_selected()"""
 
-        '''for entry in self.model:
+        """for entry in self.model:
             xml_page = self.parent.acbf_document.tree.xpath(f"//page[image[@href='{entry.page}']]")
             if len(xml_page) > 0:
                 element = xml.SubElement(xml_page[0], "title")
                 element.set('lang', lang)
-                element.text = entry.title'''
+                element.text = entry.title"""
 
         self.page_image_names.clear()
         for page in self.parent.acbf_document.tree.findall("body/page"):
@@ -233,8 +249,17 @@ class EditContentWindow(Gtk.Window):
             for title in page.findall("title"):
                 default_title = title.text
                 if (title.get("lang") == self.contents_languages[lang]) or (
-                        title.get("lang") is None and self.contents_languages[lang] == 'en'):
-                    self.add_content_item(None, title.text, self.page_image_names[idx])
+                    title.get(
+                        "lang",
+                    )
+                    is None
+                    and self.contents_languages[lang] == "en"
+                ):
+                    self.add_content_item(
+                        None,
+                        title.text,
+                        self.page_image_names[idx],
+                    )
                     title_found = True
             if not title_found and default_title != "":
                 self.add_content_item(None)
