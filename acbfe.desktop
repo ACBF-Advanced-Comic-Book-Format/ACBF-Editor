@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ACBF Editor
+Name[en_US]=ACBF Editor
+GenericName=Comic Book Editor
+Comment=Editor for comic book files in ACBF format
+Icon=acbfe
+Exec=acbfe %f
+Terminal=false
+MimeType=application/x-acbf;application/x-cbz;
+Categories=Graphics;2DGraphics;Art;Literature;GTK;
+StartupNotify=true
+
