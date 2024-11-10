@@ -51,7 +51,7 @@ class FramesEditorDialog(gtk.Dialog):
     
     def __init__(self, window):
         self._window = window
-        gtk.Dialog.__init__(self, title = 'Frames/Text Layers Editor', parent = window, flags = gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT)
+        gtk.Dialog.__init__(self, title = 'ACBF Editor: Frames/Text Layers Editor', parent = None, flags = gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT)
         self.set_resizable(True)
         self.set_border_width(8)
         self.set_size_request(1000 * self._window.ui_scale_factor, 700 * self._window.ui_scale_factor)
@@ -273,17 +273,17 @@ class FramesEditorDialog(gtk.Dialog):
         number_of_texts = len(self._window.acbf_document.load_page_texts(self.get_current_page_number(), selected_layer)[0])
 
       if self.drawing_frames == False and self.drawing_texts == False:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Nothing to copy.\nSelect 'Frames' or 'Text-Layers' tab.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Nothing to copy.\nSelect 'Frames' or 'Text-Layers' tab.")
       elif self.drawing_frames == True and number_of_frames == 0:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Nothing to copy.\nNo frames found on this page.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Nothing to copy.\nNo frames found on this page.")
       elif self.drawing_texts == True and number_of_texts == 0:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Nothing to copy.\nNo text-layers found on this page for layer: " + selected_layer)
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Nothing to copy.\nNo text-layers found on this page for layer: " + selected_layer)
       elif self.drawing_frames:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Frames layer copied: " + str(number_of_frames) + " objects.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Frames layer copied: " + str(number_of_frames) + " objects.")
         self.source_layer_frames = self.selected_page
         self.source_layer_frames_no = self.get_current_page_number()
       elif self.drawing_texts:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Text-layer copied: " + str(number_of_texts) + " objects.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Text-layer copied: " + str(number_of_texts) + " objects.")
         self.source_layer_texts = self.selected_page
         self.source_layer_texts_no = self.get_current_page_number()
       else:
@@ -294,22 +294,22 @@ class FramesEditorDialog(gtk.Dialog):
 
     def paste_layer(self, *args):
       if self.drawing_frames:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_YES_NO, message_format="Are you sure you want to paste frames from page '" + self.source_layer_frames +"'?\nCurrent layer will be removed.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.YES_NO, message_format="Are you sure you want to paste frames from page '" + self.source_layer_frames +"'?\nCurrent layer will be removed.")
       else:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_YES_NO, message_format="Are you sure you want to paste text-layers from page '" + self.source_layer_texts +"'?\nCurrent layer will be removed.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.YES_NO, message_format="Are you sure you want to paste text-layers from page '" + self.source_layer_texts +"'?\nCurrent layer will be removed.")
       response = message.run()
       message.destroy()
       if response != gtk.ResponseType.YES:
         return False
 
       if self.drawing_frames == False and self.drawing_texts == False:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Select 'Frames' or 'Text-Layers' tab to paste into.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Select 'Frames' or 'Text-Layers' tab to paste into.")
       elif self.drawing_frames and (self.source_layer_frames_no == 0 or self.source_layer_frames_no == self.get_current_page_number()):
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Nothing to paste. Copy frames from some other page first.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Nothing to paste. Copy frames from some other page first.")
       elif self.drawing_texts and (self.source_layer_texts_no == 0 or self.source_layer_texts_no == self.get_current_page_number()):
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Nothing to paste. Copy text-layer from some other page first.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Nothing to paste. Copy text-layer from some other page first.")
       elif self.drawing_frames:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Frames pasted from page " + self.source_layer_frames)
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Frames pasted from page " + self.source_layer_frames)
         self.set_modified()
 
         for page in self._window.acbf_document.pages:
@@ -329,7 +329,7 @@ class FramesEditorDialog(gtk.Dialog):
 
       elif self.drawing_texts:
         selected_layer = self.layer_dropdown.get_active_text()
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Text-layer pasted from page " + self.source_layer_texts)
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Text-layer pasted from page " + self.source_layer_texts)
         self.set_modified()
         layer_found = False
 
@@ -393,15 +393,6 @@ class FramesEditorDialog(gtk.Dialog):
           elif len(self.points) > 1:
             del self.points[-1]
             self.draw_page_image()
-            for point in self.points:
-              rect = (int(point[0] * self.scale_factor - 3), int(point[1] * self.scale_factor - 3), 6, 6)
-              rect2 = (int(point[0] * self.scale_factor - 1), int(point[1] * self.scale_factor - 1), 2, 2)
-              self.pixmap.draw_rectangle(widget.get_style().black_gc, True,
-                                    rect[0], rect[1], rect[2], rect[3])
-              self.drawing_area.queue_draw_area(rect[0], rect[1], rect[2], rect[3])
-              self.pixmap.draw_rectangle(widget.get_style().white_gc, True,
-                                    rect2[0], rect2[1], rect2[2], rect2[3])
-              self.drawing_area.queue_draw_area(rect2[0], rect2[1], rect2[2], rect2[3])
         elif event.keyval == Gdk.KEY_F1:
           self.show_help()
         elif event.keyval == Gdk.KEY_Delete:
@@ -610,7 +601,7 @@ class FramesEditorDialog(gtk.Dialog):
       if self.get_current_page_number() <= 1:
         return False
 
-      message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_YES_NO, message_format="Are you sure you want to remove this page?")
+      message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.YES_NO, message_format="Are you sure you want to remove this page?")
       response = message.run()
       message.destroy()
 
@@ -632,7 +623,7 @@ class FramesEditorDialog(gtk.Dialog):
 
       self.pages_tree.get_selection().get_selected()[0].remove(self.pages_tree.get_selection().get_selected()[1])
       self.pages_tree.set_cursor((0,0))
-      self.pages_tree.grab_focus() 
+      self.pages_tree.grab_focus()
       self.draw_page_image()
 
       self.set_modified()
@@ -727,15 +718,14 @@ class FramesEditorDialog(gtk.Dialog):
       self.set_modified()
 
     def set_body_bgcolor(self, widget):
-      #override to ColorSelectionDialog (to make it non-moda in order to pick color from other window with eyedropper)
-      for i in gtk.window_list_toplevels():
-        if i.get_name() == 'GtkColorSelectionDialog':
-          i.hide_all()
+      #override to ColorSelectionDialog (to make it non-modal in order to pick color from other window with eyedropper)
+      for i in self.list_toplevels():
+        if i.get_name() == 'GtkColorChooserDialog':
           i.destroy()
           my_dialog = ColorDialog(self, widget.get_color(), False, 'false')
           response = my_dialog.run()
           if response == gtk.ResponseType.OK:
-            widget.set_color(my_dialog.get_color_selection().get_current_color())
+            widget.set_rgba(my_dialog.get_rgba())
             self._window.acbf_document.tree.find("body").attrib["bgcolor"] = self.get_hex_color(widget)
             self._window.acbf_document.bg_color = self.get_hex_color(widget)
             color = Gdk.RGBA()
@@ -760,13 +750,12 @@ class FramesEditorDialog(gtk.Dialog):
     def set_page_bgcolor(self, widget):
       #override to ColorSelectionDialog (to make it non-moda in order to pick color from other window with eyedropper)
       for i in gtk.window_list_toplevels():
-        if i.get_name() == 'GtkColorSelectionDialog':
-          i.hide_all()
+        if i.get_name() == 'GtkColorChooserDialog':
           i.destroy()
           my_dialog = ColorDialog(self, widget.get_color(), False, 'false')
           response = my_dialog.run()
           if response == gtk.ResponseType.OK:
-            widget.set_color(my_dialog.get_color_selection().get_current_color())
+            widget.set_rgba(my_dialog.get_rgba())
             for page in self._window.acbf_document.pages:
               if page.find("image").get("href").replace("\\", "/") == self.selected_page:
                 page.attrib["bgcolor"] = self.get_hex_color(widget)
@@ -840,7 +829,7 @@ class FramesEditorDialog(gtk.Dialog):
       return
 
     def remove_frame(self, widget, hbox, polygon):
-      message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_YES_NO, message_format="Are you sure you want to remove the frame?")
+      message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.YES_NO, message_format="Are you sure you want to remove the frame?")
       response = message.run()
       message.destroy()
 
@@ -866,14 +855,13 @@ class FramesEditorDialog(gtk.Dialog):
 
     def set_frame_bgcolor(self, widget, polygon):
       #override to ColorSelectionDialog (to make it non-modal in order to pick color from other window with eyedropper)
-      for i in gtk.window_list_toplevels():
-        if i.get_name() == 'GtkColorSelectionDialog':
-          i.hide_all()
+      for i in self.list_toplevels():
+        if i.get_name() == 'GtkColorChooserDialog':
           i.destroy()
           my_dialog = ColorDialog(self, widget.get_color(), False, 'false')
           response = my_dialog.run()
           if response == gtk.ResponseType.OK:
-            widget.set_color(my_dialog.get_color_selection().get_current_color())
+            widget.set_rgba(my_dialog.get_rgba())
             for page in self._window.acbf_document.pages:
               if page.find("image").get("href").replace("\\", "/") == self.selected_page:
                 xml_frame = ''
@@ -1000,9 +988,8 @@ class FramesEditorDialog(gtk.Dialog):
 
     def set_text_bgcolor(self, widget, polygon):
       #override to ColorSelectionDialog (to make it non-modal in order to pick color from other window with eyedropper)
-      for i in gtk.window_list_toplevels():
-        if i.get_name() == 'GtkColorSelectionDialog':
-          i.hide_all()
+      for i in self.list_toplevels():
+        if i.get_name() == 'GtkColorChooserDialog':
           i.destroy()
 
           # get transparency value
@@ -1026,7 +1013,7 @@ class FramesEditorDialog(gtk.Dialog):
               widget.set_alpha(0)
             else:
               widget.set_use_alpha(False)
-              widget.set_color(my_dialog.get_color_selection().get_current_color())
+              widget.set_rgba(my_dialog.get_rgba())
             for page in self._window.acbf_document.pages:
               if page.find("image").get("href").replace("\\", "/") == self.selected_page:
                 xml_frame = ''
@@ -1073,7 +1060,7 @@ class FramesEditorDialog(gtk.Dialog):
       self.draw_page_image()
       
     def remove_text(self, widget, hbox, polygon):
-      message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_YES_NO, message_format="Are you sure you want to remove the text area?")
+      message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.YES_NO, message_format="Are you sure you want to remove the text area?")
       response = message.run()
       message.destroy()
 
@@ -1332,7 +1319,7 @@ class FramesEditorDialog(gtk.Dialog):
               y_move = -10
             
             #frame number background
-            rectangle = (int(anchor[0] * self.scale_factor) + x_move - 6, int(anchor[1] * self.scale_factor) + y_move - 30, 38, 38)
+            rectangle = (int(anchor[0]) + x_move - 6, int(anchor[1]) + y_move - 30, 38, 38)
             event.set_source_rgb(1,1,1)
             event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
             event.fill()
@@ -1341,7 +1328,7 @@ class FramesEditorDialog(gtk.Dialog):
             event.set_source_rgb(float(frames_color[0]/256), float(frames_color[1]/255), float(frames_color[2]/255))
             event.select_font_face("sans", cairo.FONT_WEIGHT_BOLD)
             event.set_font_size(32)
-            event.move_to(int(anchor[0] * self.scale_factor) + x_move, int(anchor[1] * self.scale_factor) + y_move)
+            event.move_to(int(anchor[0]) + x_move, int(anchor[1]) + y_move)
             event.show_text(str(idx+1))
             
         # draw text-layers
@@ -1363,7 +1350,7 @@ class FramesEditorDialog(gtk.Dialog):
               min_y = min(text_areas[0],key=lambda item:item[1])[1]
             
               #text-layer number background
-              rectangle = (int(min_x * self.scale_factor) - 5, int(min_y * self.scale_factor) - 5, 30, 30)
+              rectangle = (int(min_x * self.scale_factor) - 5, int(min_y * self.scale_factor) - 25, 30, 30)
               event.set_source_rgb(1,1,1)
               event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
               event.fill()
@@ -1377,12 +1364,12 @@ class FramesEditorDialog(gtk.Dialog):
         
         # draw current point
         for point in self.points:
-          rectangle = (point[0]* self.scale_factor, point[1]* self.scale_factor, 6, 6)
+          rectangle = ((point[0]-2)* self.scale_factor, (point[1]-2)* self.scale_factor, 6, 6)
           event.set_source_rgb(0,0,0)
           event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
           event.fill()
           rectangle = (point[0]* self.scale_factor, point[1]* self.scale_factor, 2, 2)
-          event.set_source_rgb(0,0,0)
+          event.set_source_rgb(1,1,1)
           event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
           event.fill()
         return False
@@ -1410,11 +1397,14 @@ class FramesEditorDialog(gtk.Dialog):
           self.selected_page = self.selected_page[5:].replace("\\", "/")
 
         current_page_image = os.path.join(self._window.tempdir, self.selected_page)
+        if not os.path.exists(current_page_image):
+          self.get_window().set_cursor(None)	
+          return
 
         if self.layer_dropdown.get_active_text()[-1] != '#':
           for idx, lang in enumerate(self._window.acbf_document.languages):
             if lang[0] == self.layer_dropdown.get_active_text():
-              xx = text_layer.TextLayer(current_page_image, self.get_current_page_number(), self._window.acbf_document, idx,
+              xx = text_layer.TextLayer(current_page_image, self._window.tempdir, self.get_current_page_number(), self._window.acbf_document, idx,
                                       self._window.acbf_document.font_styles['normal'],
                                       self._window.acbf_document.font_styles['strong'], self._window.acbf_document.font_styles['emphasis'],
                                       self._window.acbf_document.font_styles['code'], self._window.acbf_document.font_styles['commentary'],
@@ -1422,6 +1412,7 @@ class FramesEditorDialog(gtk.Dialog):
                                       self._window.acbf_document.font_styles['heading'], self._window.acbf_document.font_styles['letter'],
                                       self._window.acbf_document.font_styles['audio'], self._window.acbf_document.font_styles['thought'])
               i = xx.PILBackgroundImage
+              current_page_image = xx.PILBackgroundImageFile
         else:
           i, bg_color = self._window.acbf_document.load_page_image(self.get_current_page_number())
 
@@ -1461,7 +1452,7 @@ class FramesEditorDialog(gtk.Dialog):
           try:
             self.text_bubble_detection(event.x, event.y)
           except:
-            message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Failed to detect text area.")
+            message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Failed to detect text area.")
             response = message.run()
             message.destroy()
           self.detecting_bubble = False
@@ -1485,7 +1476,7 @@ class FramesEditorDialog(gtk.Dialog):
           if lang[1] == 'TRUE':
             lang_found = True
         if self.drawing_texts and not lang_found:
-          message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Can't draw text areas. No languages are defined for this comic book with 'show' attribute checked.")
+          message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Can't draw text areas. No languages are defined for this comic book with 'show' attribute checked.")
           response = message.run()
           message.destroy()
           return
@@ -1499,25 +1490,15 @@ class FramesEditorDialog(gtk.Dialog):
 
         if self._window.preferences.get_value("snap") == "True":
           if event.x > da_width - 7:
-            event.x = float(da_width)
+            event.x = float(da_width - 1)
           elif event.x < 7:
             event.x = float(1)
 
           if event.y > da_height - 7:
-            event.y = float(da_height)
+            event.y = float(da_height - 1)
           elif event.y < 7:
             event.y = float(1)
           
-        
-        rect = (int(event.x-3), int(event.y-3), 6, 6)
-        rect2 = (int(event.x-1), int(event.y-1), 2, 2)
-        #self.pixmap.draw_rectangle(widget.get_style().black_gc, True,
-        #                      rect[0], rect[1], rect[2], rect[3])
-        widget.queue_draw_area(rect[0], rect[1], rect[2], rect[3])
-        #self.pixmap.draw_rectangle(widget.get_style().white_gc, True,
-        #                      rect2[0], rect2[1], rect2[2], rect2[3])
-        widget.queue_draw_area(rect2[0], rect2[1], rect2[2], rect2[3])
-
         if ((len(self.points) > 0) and
             (event.x > self.points[0][0] - 3 and event.x < self.points[0][0] + 3) and 
             (event.y > self.points[0][1] - 3 and event.y < self.points[0][1] + 3)):
@@ -1529,6 +1510,7 @@ class FramesEditorDialog(gtk.Dialog):
         elif ((event.x >= x and event.x <= da_width) and 
               (event.y >= y and event.y <= da_height)):
           self.points.append((int(event.x / self.scale_factor), int(event.y / self.scale_factor)))
+        self.drawing_area.queue_draw()
     
     def cancel_rectangle(self, *args):
         self.draw_page_image()
@@ -1644,7 +1626,7 @@ class FramesEditorDialog(gtk.Dialog):
         #cv2.imshow("im", imgray)
           
         # get point color and range
-        px = imgray[y + 6, x + 6]
+        px = int(imgray[y + 6, x + 6])
         px_color = rgb[y, x]
         low_color = max(0, px - 30)
         high_color = min(255, px + 30)
@@ -1747,9 +1729,9 @@ class FramesEditorDialog(gtk.Dialog):
         if len(contours) == 0:
           raise
 
-        contours.sort(key=lambda x:cv2.contourArea(x), reverse = True)
-        arc_len = cv2.arcLength(contours[0], True)
-        approx = cv2.approxPolyDP(contours[0], 0.003 * arc_len, True)
+        countours_sorted = sorted(contours, key=lambda x:cv2.contourArea(x), reverse = True)
+        arc_len = cv2.arcLength(countours_sorted[0], True)
+        approx = cv2.approxPolyDP(countours_sorted[0], 0.003 * arc_len, True)
         self.points = []
 
         # move due to mask and image border added earlier + bubble carve out
@@ -1830,8 +1812,8 @@ class FramesEditorDialog(gtk.Dialog):
           if cv2.countNonZero(line) > 0:
             zero_these[idx] = (numpy.nonzero(line)[0][0], numpy.nonzero(line)[0][-1], len(numpy.nonzero(line)[0]))
             
-        values = zero_these.values()
-        keys = zero_these.keys()
+        values = list(zero_these.values())
+        keys = list(zero_these.keys())
         keys.sort()
         bubble_width = max(values,key=lambda item:item[2])[2]
         
@@ -1846,8 +1828,8 @@ class FramesEditorDialog(gtk.Dialog):
           if cv2.countNonZero(line) > 0:
             zero_these[idx] = (numpy.nonzero(line)[0][0], numpy.nonzero(line)[0][-1], len(numpy.nonzero(line)[0]))
             
-        values = zero_these.values()
-        keys = zero_these.keys()
+        values = list(zero_these.values())
+        keys = list(zero_these.keys())
         keys.sort()
         bubble_width = max(values,key=lambda item:item[2])[2]
         
@@ -1867,13 +1849,13 @@ class FramesEditorDialog(gtk.Dialog):
           if lang[1] == 'TRUE':
             lang_found = True
         if self.drawing_texts and not lang_found:
-          message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Can't draw text areas. No languages are defined for this comic book with 'show' attribute checked.")
+          message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Can't draw text areas. No languages are defined for this comic book with 'show' attribute checked.")
           response = message.run()
           message.destroy()
           return
         
         self.detecting_bubble = True
-        cross_cursor = gtk.Gdk.Cursor(gtk.Gdk.X_CURSOR)
+        cross_cursor = Gdk.Cursor(Gdk.CursorType.CROSS)
         self.get_window().set_cursor(cross_cursor)
 
     def frames_detection(self, *args):
@@ -1909,7 +1891,7 @@ class FramesEditorDialog(gtk.Dialog):
         gray = cv2.copyMakeBorder(gray,6,6,6,6,cv2.BORDER_CONSTANT,value=250)
         edges = cv2.Canny(gray, 10, CANNY)
         #cv2.imshow("edges", edges)
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (border / 2, border / 2))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(border / 2), int(border / 2)))
         closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
         #cv2.imshow("closed", closed)
         i = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -1970,7 +1952,7 @@ class FramesEditorDialog(gtk.Dialog):
               rectangles.append((self.points, centroid[0], centroid[1], min_x, min_y))
 
         if len(rectangles) == 0:
-          message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK, message_format="Failed to detect frames.")
+          message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Failed to detect frames.")
           response = message.run()
           message.destroy()
           self.get_window().set_cursor(None)
@@ -2007,7 +1989,7 @@ class FramesEditorDialog(gtk.Dialog):
           kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (border * 2, border * 2))
           mask = cv2.erode(mask, kernel, iterations = 1)
           mask = cv2.Canny(mask, 10, CANNY)
-          kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (border / 2, border / 2))
+          kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(border / 2), int(border / 2)))
           mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
           i = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
           try:
@@ -2119,21 +2101,26 @@ class FramesEditorDialog(gtk.Dialog):
               self.fsw.get_vadjustment().value = 0
               self.tsw.get_vadjustment().value = 0
 
-class ColorDialog(gtk.ColorSelectionDialog):
+class ColorDialog(gtk.ColorChooserDialog):
     
     def __init__(self, window, color, set_transparency, is_transparent):
         self._window = window
-        gtk.Dialog.__init__(self, 'Color Selection Dialog', self, gtk.DialogFlags.DESTROY_WITH_PARENT)
-        self.get_color_selection().set_current_color(color)
-        self.get_color_selection().set_has_palette(True)
+        gtk.Dialog.__init__(self, 'Color Selection Dialog', None, gtk.DialogFlags.DESTROY_WITH_PARENT)
+        color_string = 'rgb(' + str(int(color.red/256)) + ',' + str(int(color.green/256)) + ',' + str(int(color.blue/256)) + ')'
+        self.color_RGBA = Gdk.RGBA()
+        self.color_RGBA.parse(color_string)
+        self.set_rgba(self.color_RGBA)
+        #self.get_color_selection().set_has_palette(True)
         self.transparency_button = gtk.CheckButton("Set Transparent")
-        if set_transparency:
-          self.get_color_selection().get_children()[0].get_children()[1].pack_start(self.transparency_button, True, True, 0)
-          self.transparency_button.show_all()
-          self.transparency_button.connect('toggled', self.change_transparency)
+        self.transparency_button.set_active(False)
+        
+        #if set_transparency:
+        #  self.get_color_selection().get_children()[0].get_children()[1].pack_start(self.transparency_button, True, True, 0)
+        #  self.transparency_button.show_all()
+        #  self.transparency_button.connect('toggled', self.change_transparency)
         self.show_all()
-        if is_transparent != None and is_transparent.upper() == 'TRUE':
-          self.transparency_button.set_active(True)
+        #if is_transparent != None and is_transparent.upper() == 'TRUE':
+        #  self.transparency_button.set_active(True)
 
     def change_transparency(self, widget, *args):
         if widget.get_active():

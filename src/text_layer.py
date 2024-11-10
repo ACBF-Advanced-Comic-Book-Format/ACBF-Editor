@@ -25,6 +25,7 @@ from xml.sax.saxutils import unescape
 import math
 import re
 import sys
+import os
 import time
 
 try:
@@ -36,7 +37,7 @@ except:
 
 class TextLayer():
     
-    def __init__(self, filename, page_number, acbf_document, language_layer, normal_font, strong_font, emphasis_font, code_font,
+    def __init__(self, filename, tempdir, page_number, acbf_document, language_layer, normal_font, strong_font, emphasis_font, code_font,
                  commentary_font, sign_font, formal_font, heading_font, letter_font, audio_font, thought_font):
         self.bg_color = '#000000'
         self.rotation = 0
@@ -45,7 +46,6 @@ class TextLayer():
         self.PILBackgroundImageProcessed = None
         self.text_areas, self.references = acbf_document.load_page_texts(page_number, acbf_document.languages[language_layer][0])
         self.updated = False
-        #print(constants.FONTS_LIST)
         self.normal_font = normal_font
         self.strong_font = strong_font
         self.emphasis_font = emphasis_font
@@ -60,6 +60,8 @@ class TextLayer():
         self.frames = acbf_document.load_page_frames(page_number)
         self.frames_total = len(self.frames)
         self.draw_text_layer()
+        self.PILBackgroundImageFile = os.path.join(tempdir, 'acbf_text_layer.jpg')
+        self.PILBackgroundImage.save(self.PILBackgroundImageFile, "JPEG")
 
     def load_font(self, font, height):
         if font == 'normal':

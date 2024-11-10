@@ -234,7 +234,7 @@ class FilePrepare():
           progress_bar.set_fraction(1)
           return_filename = os.path.join(tempdir, os.path.splitext(os.path.basename(filename))[0] + '.acbf')
           f = open(return_filename, 'w')
-          f.write(xml.tostring(tree, pretty_print=True))
+          f.write(xml.tostring(tree, encoding='unicode', pretty_print=True))
           f.close()
 
         self.filename = return_filename

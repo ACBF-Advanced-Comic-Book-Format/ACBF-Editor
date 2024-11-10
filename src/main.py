@@ -1149,8 +1149,29 @@ class MainWindow(gtk.Window):
         entries_box = gtk.VBox(False, 0)
         entries_box.set_border_width(5)
 
+        hbox = gtk.HBox(False, 0)
+        label = gtk.Label()
+        label.set_markup('<b>First Name</b>')
+        hbox.pack_start(label, True, True, 0)
+
+        label = gtk.Label()
+        label.set_markup('<b>Middle Name</b>')
+        hbox.pack_start(label, True, True, 0)
+
+        label = gtk.Label()
+        label.set_markup('<b>Last Name</b>')
+        label.set_alignment(0, 0)
+        hbox.pack_start(label, True, True, 0)
+
+        label = gtk.Label()
+        label.set_markup('<b>Nickname</b>')
+        label.set_alignment(0, 0)
+        hbox.pack_start(label, True, True, 0)
+        
+        entries_box.pack_start(hbox, False, False, 0)
+
         for i in self.acbf_document.tree.findall("meta-data/document-info/author"):
-          first_name = middle_name = last_name = ''
+          first_name = middle_name = last_name = nickname = ''
           if i.find("first-name") is not None:
              first_name = i.find("first-name").text
           if i.find("middle-name") is not None:
@@ -1183,8 +1204,10 @@ class MainWindow(gtk.Window):
           for item in self.acbf_document.tree.findall("meta-data/document-info/author"):
             self.acbf_document.tree.find("meta-data/document-info").remove(item)
 
+          print('Saving:')
           for i in entries_box.get_children():
-            activity = ''
+            if i.get_children()[0].get_name() == 'GtkLabel':
+                continue
             for j in i.get_children():
               if j.get_name() == 'GtkEntry':
                 if j.type == 'first_name':
@@ -1323,7 +1346,7 @@ class MainWindow(gtk.Window):
                 continue
             activity = ''
             for j in i.get_children():
-              if j.get_name() == 'GtkComboBox':
+              if j.get_name() == 'GtkComboBoxText':
                 if j.type == 'activity':
                   activity = str(constants.AUTHORS_LIST[j.get_active()])
                 if j.type == 'lang':
@@ -1353,7 +1376,7 @@ class MainWindow(gtk.Window):
 
     def change_activity(self, widget, hbox):
       for i in hbox.get_children():
-        if i.get_name() == 'GtkComboBox':
+        if i.get_name() == 'GtkComboBoxText':
           if i.type == 'lang' and str(constants.AUTHORS_LIST[widget.get_active()]) == 'Translator':
             i.set_sensitive(True)
           elif i.type == 'lang':
@@ -1551,7 +1574,7 @@ class MainWindow(gtk.Window):
 
           for i in entries_box.get_children():
             for j in i.get_children():
-              if j.get_name() == 'GtkComboBox':
+              if j.get_name() == 'GtkComboBoxText':
                 self.add_element(self.acbf_document.tree.find("meta-data/book-info"), "genre", constants.GENRES_LIST[j.get_active()])
 
           self.acbf_document.load_metadata()
@@ -1702,7 +1725,7 @@ class MainWindow(gtk.Window):
             if i.get_children()[0].get_name() == 'GtkLabel':
               continue
             for j in i.get_children():
-              if j.get_name() == 'GtkComboBox':
+              if j.get_name() == 'GtkComboBoxText':
                 lang = str(constants.LANGUAGES[j.get_active()])
               if j.get_name() == 'GtkCheckButton':
                 if j.get_active():
@@ -1723,7 +1746,7 @@ class MainWindow(gtk.Window):
             if lang[1] not in lang_list:
               lang_list.append(lang[0])
 
-          for i in self.annotation_list.items():
+          for i in self.annotation_list.copy().items():
             if i[0] not in lang_list:
               try:
                 del self.annotation_list[i[0]]
@@ -1802,7 +1825,8 @@ class MainWindow(gtk.Window):
       label.set_markup('<b>(YYYY-MM-DD)</b>: ')
       hbox.pack_start(label, False, False, 0)
 
-      self.publish_date_entry = gtk.Entry(10)
+      self.publish_date_entry = gtk.Entry()
+      self.publish_date_entry.set_max_length(10)
       self.publish_date_entry.set_width_chars(10)
       self.publish_date_entry.set_text(self.publish_date.get_text())
       self.publish_date_entry.connect('changed', self.update_calendar)
@@ -1992,7 +2016,7 @@ class MainWindow(gtk.Window):
 
     def set_titlepage(self, widget, event, hbox):
       for i in hbox.get_children():
-        if i.get_name() == "GtkComboBox":
+        if i.get_name() == "GtkComboBoxText":
           page_image, bg_color = self.acbf_document.load_page_image(i.get_active() + 2)
           page_image.thumbnail((200 * self.ui_scale_factor, 200 * self.ui_scale_factor), Image.NEAREST)
           self.titlepage.set_from_pixbuf(self.pil_to_pixbuf(page_image, '#000'))
@@ -2047,7 +2071,7 @@ class MainWindow(gtk.Window):
                 for j in i.get_children():
                   if j.get_name() == "GtkEntry":
                     chapter_name = j.get_text()
-                  if j.get_name() == "GtkComboBox":
+                  if j.get_name() == "GtkComboBoxText":
                     image_name = self.page_image_names[j.get_active()]
                 if page.find("image").get("href") == image_name:
                   element = xml.SubElement(page, "title")
@@ -2166,7 +2190,7 @@ class MainWindow(gtk.Window):
                 for j in i.get_children():
                   if j.get_name() == "GtkEntry":
                     chapter_name = j.get_text()
-                  if j.get_name() == "GtkComboBox":
+                  if j.get_name() == "GtkComboBoxText":
                     image_name = self.page_image_names[j.get_active()]
                 if page.find("image").get("href") == image_name:
                   element = xml.SubElement(page, "title")
@@ -2186,7 +2210,7 @@ class MainWindow(gtk.Window):
       return
 
     def save_file(self, *args):
-      filechooser = gtk.FileChooserDialog(title='Save File ...', action=gtk.FILE_CHOOSER_ACTION_SAVE,
+      filechooser = gtk.FileChooserDialog(title='Save File ...', action=gtk.FileChooserAction.SAVE,
                                 buttons=(gtk.STOCK_CANCEL,gtk.ResponseType.CANCEL,gtk.STOCK_SAVE,gtk.ResponseType.OK))
 
       filechooser.set_current_folder(os.path.dirname(self.original_filename))
@@ -2256,16 +2280,21 @@ class MainWindow(gtk.Window):
       self.modify_element("meta-data/publish-info/city", self.city.get_text())
       self.modify_element("meta-data/publish-info/isbn", self.isbn.get_text())
       self.modify_element("meta-data/publish-info/license", self.license.get_text())
+      self.modify_element("meta-data/document-info/id", self.acbf_document.id)
 
       self.write_file(return_filename)
       return
 
     def write_file(self, output_file):
       if not self.is_cmd_line:
-        progress_dialog = gtk.Dialog('Saving file ...', parent=self, flags=gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT, buttons=None)
+        progress_dialog = gtk.Dialog('Saving file ...', parent=self, flags=gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT)
         progress_dialog.set_resizable(False)
         progress_dialog.set_border_width(8)
-        progress_dialog.set_geometry_hints(min_height=100 * self.ui_scale_factor, min_width=400 * self.ui_scale_factor)
+        geom = Gdk.Geometry()
+        geom.min_height = 100 * self.ui_scale_factor
+        geom.min_width = 400 * self.ui_scale_factor
+        hints = Gdk.WindowHints.MIN_SIZE | Gdk.WindowHints.MAX_SIZE
+        progress_dialog.set_geometry_hints(None, geom, hints)
         progress_bar = gtk.ProgressBar()
         progress_bar.set_size_request(-1,13 * self.ui_scale_factor)
         progress_dialog.vbox.pack_start(progress_bar, False, False, 5)
@@ -2285,7 +2314,7 @@ class MainWindow(gtk.Window):
           tree.append(deepcopy(element))
 
         f = open(os.path.join(self.tempdir, os.path.basename(self.filename)), 'w')
-        f.write(xml.tostring(tree, pretty_print=True, encoding='utf-8', xml_declaration=True))
+        f.write(xml.tostring(tree, encoding='unicode', pretty_print=True))
         f.close()
 
         tree = None
@@ -2320,7 +2349,7 @@ class MainWindow(gtk.Window):
 
       except Exception as inst:
         if not self.is_cmd_line:
-          message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.WARNING, buttons=gtk.BUTTONS_OK, message_format=None)
+          message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.WARNING, buttons=gtk.ButtonsType.OK, message_format=None)
           message.set_markup("Failed to save comic book.\n\n" + 'Exception: %s' % inst)
           response = message.run()
           message.destroy()

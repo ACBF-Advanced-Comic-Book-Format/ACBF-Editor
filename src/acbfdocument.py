@@ -167,7 +167,6 @@ class ACBFDocument():
         # languages
         self.languages = []
         for language in self.bookinfo.findall("languages/" + "text-layer"):
-          print(language)
           self.languages.append((language.get("lang"), language.get("show").upper()))
         if len(self.languages) == 0:
           self.languages.append(('??', 'FALSE'))
