@@ -127,9 +127,9 @@ class TextLayer():
         if len(lst) < 1:
           return None
         if len(lst) %2 == 1:
-          return lst[int(round(((len(lst)+1)/2)-1, 0))]
+          return lst[int(round((float(len(lst)+1)/2)-1, 0))]
         else:
-          return int(round(float(sum(lst[(len(lst)/2)-1:(len(lst)/2)+1]))/2.0, 0))
+          return int(round(float(sum(lst[int(len(lst)/2)-1:int(len(lst)/2)+1]))/2.0, 0))
 
     def draw_text_layer(self, *args):
         text_areas_draw = []

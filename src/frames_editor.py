@@ -1364,11 +1364,11 @@ class FramesEditorDialog(gtk.Dialog):
         
         # draw current point
         for point in self.points:
-          rectangle = ((point[0]-2)* self.scale_factor, (point[1]-2)* self.scale_factor, 6, 6)
+          rectangle = ((point[0]-1)* self.scale_factor, (point[1]-1)* self.scale_factor, 6, 6)
           event.set_source_rgb(0,0,0)
           event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
           event.fill()
-          rectangle = (point[0]* self.scale_factor, point[1]* self.scale_factor, 2, 2)
+          rectangle = ((point[0]+1)* self.scale_factor, (point[1]+1)* self.scale_factor, 2, 2)
           event.set_source_rgb(1,1,1)
           event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
           event.fill()
@@ -2139,7 +2139,7 @@ class TextBoxDialog(gtk.Dialog):
     
     def __init__(self, window):
         self._window = window
-        gtk.Dialog.__init__(self, 'Edit Text Layers', window, gtk.DialogFlags.DESTROY_WITH_PARENT,
+        gtk.Dialog.__init__(self, 'Edit Text Layers', None, gtk.DialogFlags.DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL, gtk.STOCK_OK, gtk.ResponseType.OK))
         self.set_resizable(True)
         self.set_border_width(8)
