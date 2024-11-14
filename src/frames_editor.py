@@ -462,7 +462,7 @@ class FramesEditorDialog(gtk.Dialog):
 
     def show_help(self, *args):
       dialog = gtk.Dialog('Help', self, gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT, (gtk.STOCK_CLOSE, gtk.ResponseType.CLOSE))
-      dialog.set_geometry_hints(min_height=230)
+      dialog.height = 300
       dialog.set_resizable(False)
       dialog.set_border_width(8)
 
@@ -937,7 +937,7 @@ class FramesEditorDialog(gtk.Dialog):
       # Edit text
       button = gtk.Button(stock=gtk.STOCK_ITALIC)
       button.get_children()[0].get_children()[0].get_children()[1].set_text(' ...')
-      button.connect("clicked", self.edit_texts, polygon, bg_color)
+      button.connect("clicked", self.edit_texts, polygon, bg_color, area_number)
       button.type = 'texts_edit'
       button.set_tooltip_text('Edit Text Areas')
       hbox.pack_start(button, False, False, 0)
@@ -1081,8 +1081,8 @@ class FramesEditorDialog(gtk.Dialog):
       self.load_texts()
       self.draw_page_image()
 
-    def edit_texts(self, widget, polygon, bg_color, *args):
-      dialog = TextBoxDialog(self)
+    def edit_texts(self, widget, polygon, bg_color, area_number, *args):
+      dialog = TextBoxDialog(self, area_number)
       dialog.set_size_request(700 * self._window.ui_scale_factor, 400 * self._window.ui_scale_factor)
 
       # Text Layers switch
@@ -1364,11 +1364,11 @@ class FramesEditorDialog(gtk.Dialog):
         
         # draw current point
         for point in self.points:
-          rectangle = ((point[0]-1)* self.scale_factor, (point[1]-1)* self.scale_factor, 6, 6)
+          rectangle = ((point[0]-2)* self.scale_factor, (point[1]-2)* self.scale_factor, 6, 6)
           event.set_source_rgb(0,0,0)
           event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
           event.fill()
-          rectangle = ((point[0]+1)* self.scale_factor, (point[1]+1)* self.scale_factor, 2, 2)
+          rectangle = ((point[0])* self.scale_factor, (point[1])* self.scale_factor, 2, 2)
           event.set_source_rgb(1,1,1)
           event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
           event.fill()
@@ -2137,9 +2137,9 @@ class ColorDialog(gtk.ColorChooserDialog):
 
 class TextBoxDialog(gtk.Dialog):
     
-    def __init__(self, window):
+    def __init__(self, window, area_number):
         self._window = window
-        gtk.Dialog.__init__(self, 'Edit Text Layers', None, gtk.DialogFlags.DESTROY_WITH_PARENT,
+        gtk.Dialog.__init__(self, 'Edit Text Layers (' + str(area_number) + ')', None, gtk.DialogFlags.DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL, gtk.STOCK_OK, gtk.ResponseType.OK))
         self.set_resizable(True)
         self.set_border_width(8)
@@ -2228,7 +2228,7 @@ class TextBoxDialog(gtk.Dialog):
 
     def show_help(self, *args):
       dialog = gtk.Dialog('Help', self, gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT, (gtk.STOCK_CLOSE, gtk.ResponseType.CLOSE))
-      dialog.set_geometry_hints(min_height=230)
+      dialog.height = 300
       dialog.set_resizable(False)
       dialog.set_border_width(8)
 
