@@ -368,9 +368,9 @@ class TextLayer():
                   current_chunk = self.remove_xml_tags(chunk)
                   if current_chunk != '':
                     try:
-                      chunk_size = chunk_size + draw.textsize(current_chunk, font=font)[0]
+                      chunk_size = chunk_size + draw.textlength(text=current_chunk, font=font)
                     except:
-                      chunk_size = chunk_size + draw.textsize(current_chunk.encode(encoding='ascii',errors='replace'), font=font)[0]
+                      chunk_size = chunk_size + draw.textlength(text=current_chunk.encode(encoding='ascii',errors='replace'), font=font)
 
                 text_size = (chunk_size, character_height + 1)
                 
@@ -494,9 +494,9 @@ class TextLayer():
                     current_chunk = self.remove_xml_tags(chunk)
                     if current_chunk != '':
                       try:
-                        chunk_size = chunk_size + draw.textsize(current_chunk, font=font)[0]
+                        chunk_size = chunk_size + draw.textlength(text=current_chunk, font=font)
                       except:
-                        chunk_size = chunk_size + draw.textsize(current_chunk.encode(encoding='ascii',errors='replace'), font=font)[0]
+                        chunk_size = chunk_size + draw.textlength(text=current_chunk.encode(encoding='ascii',errors='replace'), font=font)
 
                   text_size = (chunk_size, character_height + 1)
                   upper_right_corner_fits = point_inside_polygon(current_pointer[0] + text_size[0], current_pointer[1], polygon)
@@ -828,9 +828,9 @@ class TextLayer():
                   current_chunk = self.remove_xml_tags(chunk)
                   if current_chunk != '':
                     try:
-                      chunk_size = chunk_size + draw.textsize(current_chunk, font=font)[0]
+                      chunk_size = chunk_size + draw.textlength(text=current_chunk, font=font)
                     except:
-                      chunk_size = chunk_size + draw.textsize(current_chunk.encode(encoding='ascii',errors='replace'), font=font)[0]
+                      chunk_size = chunk_size + draw.textlength(text=current_chunk.encode(encoding='ascii',errors='replace'), font=font)
                 drawing_word = drawing_word + 1
                 line_length = line_length + chunk_size
               change_in_height = int(round((((line[2][1] - line[0][1]) - (current_character_height + 1)) / 2), 0))
@@ -1076,7 +1076,7 @@ class TextLayer():
               if old_line != line:
                 justify_space = 0
                 if is_commentary or (text_area[5].upper() == 'FORMAL' and idx + 1 == len(lines)): #left align
-                  space_between_words = draw.textsize(' ', font=font)[0]
+                  space_between_words = draw.textlength(text=' ', font=font)
                 elif text_area[5].upper() == 'FORMAL': #justify
                   w_count = len(line[1].strip().split(' ')) - 1
                   if is_last_line:
@@ -1085,9 +1085,9 @@ class TextLayer():
                     justify_space = (max_coordinate - line[2][0]) / w_count
                   else:
                     justify_space = 0
-                  space_between_words = draw.textsize(' ', font=font)[0] + justify_space
+                  space_between_words = draw.textlength(text=' ', font=font) + justify_space
                 else: #center
-                  space_between_words = draw.textsize('n n', font=font)[0] - draw.textsize('nn', font=font)[0]
+                  space_between_words = draw.textlength(text='n n', font=font) - draw.textlength(text='nn', font=font)
                   line_length = line[2][0] - line[0][0]
                   mid_bubble_x = ((get_frame_span(text_area[4])[0] + get_frame_span(text_area[4])[2]) / 2) - line_length / 2
                   max_coordinate_x = current_pointer[0] + int((max_coordinate - line[2][0])/2)
@@ -1117,19 +1117,19 @@ class TextLayer():
                   current_pointer = (current_pointer[0], current_pointer[1] - int(current_character_height * 0.7))
                 elif use_superscript:
                   draw.text(current_pointer, current_word + ' ', font=font_small, fill=font_color)
-                  #draw.rectangle((current_pointer[0] - 1, current_pointer[1] - 1, current_pointer[0] + draw.textsize(current_word, font=font_small)[0] + 1, current_pointer[1] + int(character_height * 0.7) + 1), outline=font_color)
+                  #draw.rectangle((current_pointer[0] - 1, current_pointer[1] - 1, current_pointer[0] + draw.textlength(text=current_word, font=font_small)[0] + 1, current_pointer[1] + int(character_height * 0.7) + 1), outline=font_color)
                   if '<A_HREF' in chunk_upper:
                     reference_id = re.sub("[^#]*#", '', chunk)
                     reference_id = re.sub("\".*", '', reference_id)
                     for idxr, reference in enumerate(self.references):
                       if reference_id == reference[0]:
                         rectangle = [(current_pointer[0] - 5, current_pointer[1] - 5),
-                                     (current_pointer[0] + draw.textsize(current_word, font=font_small)[0] + 5, current_pointer[1] - 5),
-                                     (current_pointer[0] + draw.textsize(current_word, font=font_small)[0] + 5, current_pointer[1] + int(current_character_height * 0.7) + 5),
+                                     (current_pointer[0] + draw.textlength(text=current_word, font=font_small) + 5, current_pointer[1] - 5),
+                                     (current_pointer[0] + draw.textlength(text=current_word, font=font_small) + 5, current_pointer[1] + int(current_character_height * 0.7) + 5),
                                      (current_pointer[0] - 5, current_pointer[1] + int(current_character_height * 0.7) + 5)]
                         self.references[idxr] = (reference[0], reference[1], rectangle)
             
-                text_size = (draw.textsize(current_word, font=font_small)[0], int(current_character_height * 0.5))
+                text_size = (draw.textlength(text=current_word, font=font_small), int(current_character_height * 0.5))
                 strikethrough_rectangle = [current_pointer[0] - int(space_between_words/2),
                                            current_pointer[1] + int(current_character_height/2) + 1,
                                            current_pointer[0] + text_size[0] + int(space_between_words/2),
@@ -1141,10 +1141,10 @@ class TextLayer():
                 word_start = current_pointer
                 text_size = [0, current_character_height]
                 word_count = len(current_word.strip().split(' '))
-                line_length_total = draw.textsize(current_word.strip(), font=font)[0]
+                line_length_total = draw.textlength(text=current_word.strip(), font=font)
                 word_length_total = 0
                 for one_word in current_word.split(' '):
-                  word_length_total = word_length_total + draw.textsize(one_word.strip(), font=font)[0]
+                  word_length_total = word_length_total + draw.textlength(text=one_word.strip(), font=font)
 
                 space_length = line_length_total - word_length_total
                 if word_count > 1:
@@ -1152,7 +1152,7 @@ class TextLayer():
                 elif space_length > 0:
                   one_space = space_length
                 else:
-                  one_space = draw.textsize(current_word + ' M', font=font)[0] - draw.textsize(current_word + 'M', font=font)[0]
+                  one_space = draw.textlength(text=current_word + ' M', font=font) - draw.textlength(text=current_word + 'M', font=font)
 
                 #print('#' + current_word.encode('ascii', 'ignore') + '#', line_length_total, word_length_total, space_length, one_space, font_color)
                 
@@ -1164,7 +1164,7 @@ class TextLayer():
                   #elif font == e_font or font == s_font:
                   #  current_pointer = (current_pointer[0] - 1, current_pointer[1])
                   draw.text(current_pointer, one_word + ' ', font=font, fill=font_color)
-                  word_length = max(draw.textsize(one_word.strip(), font=font)[0] + one_space, draw.textsize(one_word.strip() + ' ', font=font)[0])
+                  word_length = max(draw.textlength(text=one_word.strip(), font=font) + one_space, draw.textlength(text=one_word.strip() + ' ', font=font))
                   if text_area[5].upper() == 'FORMAL':
                     word_length = word_length + justify_space
                   text_size = (text_size[0] + word_length, current_character_height)
@@ -1175,7 +1175,7 @@ class TextLayer():
                   #  current_pointer = (current_pointer[0] + 1, current_pointer[1])
                   
                 #draw.text(current_pointer, current_word, font=font, fill=font_color)
-                #text_size = (draw.textsize(current_word, font=font)[0], current_character_height)
+                #text_size = (draw.textlength(text=current_word, font=font), current_character_height)
                 #current_pointer = (current_pointer[0] + text_size[0], current_pointer[1])
                 strikethrough_rectangle = [word_start[0] - int(space_between_words/2),
                                            word_start[1] + int(current_character_height/2) + 1,
