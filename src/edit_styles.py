@@ -21,6 +21,7 @@ from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GObject
 from gi.repository import Gtk
+from PIL import ImageFont
 
 gi.require_version("Gtk", "4.0")
 
@@ -28,15 +29,19 @@ gi.require_version("Gtk", "4.0")
 class FontItem(GObject.Object):
     sematic = GObject.Property(type=str)
     font = GObject.Property(type=str)
+    font_filename = GObject.Property(type=str)
     font_families = GObject.Property(type=str)
     colour = GObject.Property(type=str)
+    path = GObject.Property(type=str)
 
-    def __init__(self, sematic: str, font: str, font_families: str, colour: str):
+    def __init__(self, sematic: str, font: str, font_filename: str, font_families: str, colour: str, path: str):
         super().__init__()
         self.sematic = sematic
         self.font = font
+        self.font_filename = font_filename
         self.font_families = font_families
         self.colour = colour
+        self.path = path
 
 
 class EditStylesWindow(Gtk.Window):
@@ -51,15 +56,20 @@ class EditStylesWindow(Gtk.Window):
 
         for k, v in self.parent.acbf_document.font_styles.items():
             font_path = pathlib.Path(v)
-            font = font_path.stem.split("-")[0]
+            font = ImageFont.truetype(font_path)
+            font_name = font.getname()
+            font_name = f"{font_name[0]} ({font_name[1]})"
+            # font = font_path.stem.split("-")[0]
             font_familes = self.parent.acbf_document.font_families[k]
             colour = self.parent.acbf_document.font_colors.get(k, "#000000")
             self.model.append(
                 FontItem(
                     sematic=k,
-                    font=font,
+                    font=font_name,
+                    font_filename=font_path.stem.split("/")[0],
                     font_families=font_familes,
                     colour=colour,
+                    path=v,
                 ),
             )
 
@@ -93,10 +103,7 @@ class EditStylesWindow(Gtk.Window):
         colour_factory = Gtk.SignalListItemFactory()
         colour_factory.connect("setup", self.setup_colour_column)
         colour_factory.connect("bind", self.bind_colour_column)
-        colour_factory = Gtk.ColumnViewColumn(
-            title="Colour",
-            factory=colour_factory,
-        )
+        colour_factory = Gtk.ColumnViewColumn(title="Colour", factory=colour_factory)
         column_view.append_column(colour_factory)
 
         # Add the ColumnView to a ScrolledWindow
@@ -114,155 +121,6 @@ class EditStylesWindow(Gtk.Window):
 
         self.set_size_request(500, 600)
         self.set_child(scrolled_window)
-
-        # Create Font list
-        """context = self.create_pango_context()
-        for font in context.list_families():
-            font_name = font.get_name()"""
-
-        """fonts_dir = os.path.join(self.tempdir, 'Fonts')
-        for root, dirs, files in os.walk(fonts_dir):
-            for f in files:
-                is_duplicate = False
-                if f.upper()[-4:] == '.TTF' or f.upper()[-4:] == '.OTF':
-                    for font in constants.FONTS_LIST:
-                        if f.upper() == font[0].upper():
-                            is_duplicate = True
-                    if not is_duplicate:
-                        constants.FONTS_LIST.append((f.replace('.ttf', '').replace('.TTF', '').replace('.otf',
-                                                                                                       '').replace(
-                            '.OTF', ''), os.path.join(root, f)))
-
-
-        if response == Gtk.ResponseType.OK:
-            self.is_modified = True
-            style = ''
-
-            if self.speech_font.font_idx > 0:
-                self.acbf_document.font_styles["normal"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.speech_font.font_idx][1]))
-                style = 'text-area {font-family: "' + os.path.basename(self.acbf_document.font_styles["normal"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.speech_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.speech_font.font_idx][1],
-                                    self.acbf_document.font_styles["normal"])
-                style = style + 'color: "' + self.acbf_document.font_colors["speech"] + '";}\n'
-            if self.emphasis_font.font_idx > 0:
-                self.acbf_document.font_styles["emphasis"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.emphasis_font.font_idx][1]))
-                style = style + 'emphasis {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["emphasis"]) + '";}\n'
-                if not os.path.isfile(os.path.join(fonts_dir, os.path.basename(
-                        constants.FONTS_LIST[self.emphasis_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.emphasis_font.font_idx][1],
-                                    self.acbf_document.font_styles["emphasis"])
-            if self.strong_font.font_idx > 0:
-                self.acbf_document.font_styles["strong"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.strong_font.font_idx][1]))
-                style = style + 'strong {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["strong"]) + '";}\n'
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.strong_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.strong_font.font_idx][1],
-                                    self.acbf_document.font_styles["strong"])
-            if self.commentary_font.font_idx > 0:
-                self.acbf_document.font_styles["commentary"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.commentary_font.font_idx][1]))
-                style = style + 'text-area[type=commentary] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["commentary"]) + '"; '
-                if not os.path.isfile(os.path.join(fonts_dir, os.path.basename(
-                        constants.FONTS_LIST[self.commentary_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.commentary_font.font_idx][1],
-                                    self.acbf_document.font_styles["commentary"])
-                style = style + 'color: "' + self.acbf_document.font_colors["commentary"] + '";}\n'
-            if self.code_font.font_idx > 0:
-                self.acbf_document.font_styles["code"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.code_font.font_idx][1]))
-                style = style + 'text-area[type=code] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["code"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.code_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.code_font.font_idx][1],
-                                    self.acbf_document.font_styles["code"])
-                style = style + 'color: "' + self.acbf_document.font_colors["code"] + '";}\n'
-            if self.formal_font.font_idx > 0:
-                self.acbf_document.font_styles["formal"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.formal_font.font_idx][1]))
-                style = style + 'text-area[type=formal] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["formal"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.formal_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.formal_font.font_idx][1],
-                                    self.acbf_document.font_styles["formal"])
-                style = style + 'color: "' + self.acbf_document.font_colors["formal"] + '";}\n'
-            if self.letter_font.font_idx > 0:
-                self.acbf_document.font_styles["letter"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.letter_font.font_idx][1]))
-                style = style + 'text-area[type=letter] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["letter"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.letter_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.letter_font.font_idx][1],
-                                    self.acbf_document.font_styles["letter"])
-                style = style + 'color: "' + self.acbf_document.font_colors["letter"] + '";}\n'
-            if self.heading_font.font_idx > 0:
-                self.acbf_document.font_styles["heading"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.heading_font.font_idx][1]))
-                style = style + 'text-area[type=heading] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["heading"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.heading_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.heading_font.font_idx][1],
-                                    self.acbf_document.font_styles["heading"])
-                style = style + 'color: "' + self.acbf_document.font_colors["heading"] + '";}\n'
-            if self.audio_font.font_idx > 0:
-                self.acbf_document.font_styles["audio"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.audio_font.font_idx][1]))
-                style = style + 'text-area[type=audio] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["audio"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.audio_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.audio_font.font_idx][1],
-                                    self.acbf_document.font_styles["audio"])
-                style = style + 'color: "' + self.acbf_document.font_colors["audio"] + '";}\n'
-            if self.thought_font.font_idx > 0:
-                self.acbf_document.font_styles["thought"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.thought_font.font_idx][1]))
-                style = style + 'text-area[type=thought] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["thought"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.thought_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.thought_font.font_idx][1],
-                                    self.acbf_document.font_styles["thought"])
-                style = style + 'color: "' + self.acbf_document.font_colors["thought"] + '";}\n'
-            if self.sign_font.font_idx > 0:
-                self.acbf_document.font_styles["sign"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.sign_font.font_idx][1]))
-                style = style + 'text-area[type=sign] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["sign"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.sign_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.sign_font.font_idx][1],
-                                    self.acbf_document.font_styles["sign"])
-                style = style + 'color: "' + self.acbf_document.font_colors["sign"] + '";}\n'
-
-            # print style
-            if style != '':
-                try:
-                    self.acbf_document.tree.find("style").text = style
-                except:
-                    element = xml.SubElement(self.acbf_document.tree.getroot(), "style", type="text/css")
-                    element.text = str(style)
-
-            # delete unused files
-            for root, dirs, files in os.walk(fonts_dir):
-                for f in files:
-                    if f.upper()[-4:] == '.TTF' or f.upper()[-4:] == '.OTF':
-                        if os.path.join(root, f) not in list(self.acbf_document.font_styles.values()):
-                            os.remove(os.path.join(root, f))
-
-        dialog.destroy()
-        return"""
 
     def setup_sematic_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.Label = Gtk.Label()
@@ -289,9 +147,9 @@ class EditStylesWindow(Gtk.Window):
         entry.set_text(item.sematic.capitalize() or "")
 
     def bind_font_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ListItem) -> None:
-        item = list_item.get_item()
+        item: FontItem = list_item.get_item()
         entry: Gtk.FontDialogButton = list_item.get_child()
-        entry.set_label(item.font)
+        # entry.set_label(item.font)
         entry.connect("clicked", self.font_button_click, item)
         # initial_font = Pango.FontDescription.from_string(f"{item.font} 12")
         # print(item.font_families)
@@ -299,6 +157,11 @@ class EditStylesWindow(Gtk.Window):
         # print(test.to_string())
         # entry.set_font_desc(test)
         # entry.set_level(Gtk.FontLevel.FAMILY)
+        item.bind_property("font", entry, "label", GObject.BindingFlags.SYNC_CREATE)
+
+    def unbind_font_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
+        entry: Gtk.FontDialogButton = list_item.get_child()
+        entry.disconnect_by_func(self.font_button_click)
 
     def bind_colour_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ListItem) -> None:
         item = list_item.get_item()
@@ -306,15 +169,23 @@ class EditStylesWindow(Gtk.Window):
         colour = Gdk.RGBA()
         colour.parse(item.colour)
         button.set_rgba(colour)
+        button.connect("notify::rgba", self.set_font_color, item)
+
+    def unbind_colour_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
+        entry: Gtk.ColorDialogButton = list_item.get_child()
+        entry.disconnect_by_func(self.set_font_color)
 
     def font_button_click(self, widget: Gtk.Button, item: FontItem) -> None:
-        # chooser = fontselectiondialog.CustomFontChooserDialog(self.parent.acbf_document.fonts_dir)
-        chooser = fontselectiondialog.FontSelectionOldDialog(
-            self,
-            self.parent.acbf_document.fonts_dir,
-            item,
-        )
+        chooser = fontselectiondialog.FontSelectionOldDialog(self, self.parent.acbf_document.fonts_dir, item)
         chooser.present()
+
+    def set_font_color(self, widget: Gtk.ColorDialogButton, _pspec: GObject.GParamSpec, item: FontItem) -> None:
+        font_type = item.sematic
+        if font_type == "normal":
+            font_type = "speech"
+
+        self.parent.acbf_document.font_colors[font_type] = widget.get_rgba().to_string()
+        self.set_modified()
 
     def set_modified(self, modified: bool = True) -> None:
         if self.is_modified is not modified:
@@ -323,6 +194,7 @@ class EditStylesWindow(Gtk.Window):
             if modified:
                 title += "*"
             self.set_title(title)
+            self.parent.modified()
 
     def save_and_exit(self, widget: Gtk.Button) -> None:
         self.close()

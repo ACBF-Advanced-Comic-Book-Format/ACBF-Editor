@@ -6,22 +6,17 @@ https://launchpad.net/~just-me
 
 from __future__ import annotations
 
-import io
 import logging
 import os
 
-import cairo
-import constants
-from gi.repository import GdkPixbuf
 from gi.repository import Gio
-from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
-from gi.repository import Pango
-from gi.repository import PangoCairo
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
+from typing import Any
+# from edit_styles import FontItem  # circular import atm
 
 # -------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or modify
@@ -42,7 +37,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class FontItem(GObject.Object):
+class FontFileItem(GObject.Object):
     label = GObject.Property(type=str)
     style = GObject.Property(type=str)
     name = GObject.Property(type=str)
@@ -56,152 +51,18 @@ class FontItem(GObject.Object):
         self.path = path
 
 
-class CustomFontChooserDialog(Gtk.Dialog):
-    def __init__(self, font_directory: str):
-        super().__init__(title="Select Font", modal=True)
-        self.font_directory = font_directory
-        self.selected_font = None
-        self.font_treeview: Gtk.TreeView
-
-        # self.font_treeview: Gio.ListStore
-        self.set_default_size(400, 300)
-        self.set_resizable(True)
-
-        self.box = self.get_content_area()
-        self.font_list_store: Gtk.ListStore = Gio.ListStore.new(
-            item_type=FontItem,
-        )
-
-        self.load_fonts()
-        self.create_widgets()
-
-    def load_fonts(self) -> None:
-        for font_file in os.listdir(self.font_directory):
-            if font_file.endswith(".ttf") or font_file.endswith(".otf"):
-                font_path = os.path.join(self.font_directory, font_file)
-                self.font_list_store.append(
-                    FontItem(
-                        label=font_file,
-                        name=font_file,
-                        path=font_path,
-                        style="",
-                    ),
-                )
-
-    def create_widgets(self) -> None:
-        self.font_treeview = Gtk.TreeView(model=self.font_list_store)
-        renderer = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("Font Files", renderer, text=0)
-        self.font_treeview.append_column(column)
-
-        self.font_treeview.connect("cursor-changed", self.on_font_selected)
-        self.box.append(self.font_treeview)
-
-        self.preview_area = Gtk.DrawingArea()
-        self.preview_area.set_content_width(300)
-        self.preview_area.set_content_height(100)
-        self.preview_area.set_draw_func(self.on_draw_preview)
-        self.box.append(self.preview_area)
-
-        self.show_all()
-
-    def on_font_selected(self, treeview: Gtk.TreeView) -> None:
-        selection = treeview.get_selection()
-        model, treeiter = selection.get_selected()
-        if treeiter:
-            self.selected_font = model[treeiter][1]
-            self.preview_area.queue_draw()
-
-    def on_draw_preview(self, drawing_area: Gtk.DrawingArea, context: cairo.Context, width: int, height: int) -> None:
-        if not self.selected_font:
-            return
-
-        # Create Pango layout for rendering text
-        layout = PangoCairo.create_layout(context)
-        font_description = Pango.FontDescription()
-        font_description.set_family("Sans")
-        font_description.set_absolute_size(20 * Pango.SCALE)
-        layout.set_font_description(font_description)
-        layout.set_text("Sample Text", -1)
-
-        # Render the text
-        context.move_to(10, 50)
-        PangoCairo.update_layout(context, layout)
-        PangoCairo.show_layout(context, layout)
-
-        # Load and use the selected font for preview
-        face = cairo.ToyFontFace(
-            "Sans",
-            cairo.FONT_SLANT_NORMAL,
-            cairo.FONT_WEIGHT_NORMAL,
-        )
-        context.set_font_face(face)
-        context.set_font_size(20)
-        context.move_to(10, 100)
-        context.show_text("Sample Text")
-
-
-class FontSelectionDialog(Gtk.FontDialog):
-    def __init__(self, parent: Gtk.Window):
-        super().__init__()
-        self.parent = parent
-
-        # self.font_type = font_type
-
-        # self.choose_font()
-
-    def create_model(self) -> Gio.ListStore:
-        store = Gtk.ListStore(str)
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            store.append(
-                [
-                    font[0]
-                    .replace(".ttf", "")
-                    .replace(
-                        ".TTF",
-                        "",
-                    )
-                    .replace(".otf", "")
-                    .replace(".OTF", ""),
-                ],
-            )
-        return store
-
-    def create_columns(self, treeView: Gtk.TreeView) -> None:
-        rendererText = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("Font Name", rendererText, text=0)
-        column.set_sort_column_id(0)
-        treeView.append_column(column)
-
-    """def on_cursor_changed(self, widget, *args) -> None:
-        self._window.font_idx = widget.get_cursor()[0][0]
-        self.get_font_preview(
-            constants.FONTS_LIST[widget.get_cursor()[0][0]][1],
-        )"""
-
-    """def on_activated(self, widget, *args) -> None:
-        self._window.font_idx = widget.get_cursor()[0][0]
-        Gtk.Widget.destroy(self)"""
-
-    """def get_font_preview(self, font_path) -> None:
-        font_image = Image.new("RGB", (200, 50), "#fff")
-        draw = ImageDraw.Draw(font_image)
-        font = ImageFont.truetype(font_path, 20)
-        draw.text((10, 10), "AaBbCc DdEeFf", font=font, fill="#000")
-
-        pixbuf_image = self.parent.pil_to_pixbuf(font_image, "#000")
-        self.font_image.set_from_pixbuf(pixbuf_image)"""
-
-
 class FontSelectionOldDialog(Gtk.Window):
     """Font Selection dialog."""
 
-    def __init__(self, parent: Gtk.Window, font_dir: str, selected_font: str):
-        super().__init__(title="Font Selection")
+    # TODO Integrate system font picker (somehow)
+    def __init__(self, parent: Gtk.Window, font_dir: str, selected_font: Any):
+        super().__init__(title="Font Selection (comic 'Fonts' directory)")
         self.set_transient_for(parent)
         self.parent = parent
         self.font_directory = font_dir
-        self.set_size_request(350, 500)
+        self.selected_font = selected_font
+        self.selected_item: int = -1
+        self.set_default_size(350, 400)
 
         content: Gtk.Box = Gtk.Box.new(Gtk.Orientation.VERTICAL, spacing=0)
 
@@ -211,20 +72,32 @@ class FontSelectionOldDialog(Gtk.Window):
 
         content.append(sw)
 
-        self.treestore = Gio.ListStore.new(item_type=FontItem)
+        self.font_image = Gtk.Picture()
+        self.font_image.set_size_request(-1, 40)
+
+        content.append(self.font_image)
+
+        action_bar = Gtk.ActionBar()
+        okay_button: Gtk.Button = Gtk.Button.new_with_label("Okay")
+        cancel_button: Gtk.Button = Gtk.Button.new_with_label("Cancel")
+
+        okay_button.connect("clicked", self.okay_clicked)
+        cancel_button.connect("clicked", self.cancel_clicked)
+
+        action_bar.pack_start(okay_button)
+        action_bar.pack_end(cancel_button)
+
+        content.append(action_bar)
+
+        self.treestore: Gio.ListStore = Gio.ListStore.new(item_type=FontFileItem)
 
         font_list_factory = Gtk.SignalListItemFactory()
         font_list_factory.connect("setup", self.setup_font_item)
         font_list_factory.connect("bind", self.bind_font_item)
 
-        selection_model: Gtk.SingleSelection = Gtk.SingleSelection.new(
-            self.treestore,
-        )
+        selection_model: Gtk.SingleSelection = Gtk.SingleSelection.new(self.treestore)
 
-        font_view: Gtk.ListView = Gtk.ListView.new(
-            selection_model,
-            font_list_factory,
-        )
+        font_view: Gtk.ListView = Gtk.ListView.new(selection_model, font_list_factory)
         font_view.set_single_click_activate(True)
         font_view.connect("activate", self.tree_item_selected)
 
@@ -235,7 +108,7 @@ class FontSelectionOldDialog(Gtk.Window):
                     font = ImageFont.truetype(font_path)
                     label = font.getname()
                     self.treestore.append(
-                        FontItem(
+                        FontFileItem(
                             label=label[0],
                             style=label[1],
                             name=font_file,
@@ -253,16 +126,17 @@ class FontSelectionOldDialog(Gtk.Window):
 
         sw.set_child(font_view)
 
-        # font drawing
-        # font_preview: Gtk.Box = Gtk.Box.new(Gtk.Orientation.VERTICAL, spacing=0)
+        # Find current font in list and select
+        i = 0
+        while i < 999:
+            font_item: FontFileItem = self.treestore.get_item(i)
+            if font_item is None:
+                break
 
-        # label = Gtk.Label.new("Font Preview:")
-        # font_preview.append(label)
-
-        self.font_image = Gtk.Picture()
-
-        # font_preview.append(self.font_image)
-        content.append(self.font_image)
+            if font_item.path == selected_font.path:
+                font_view.scroll_to(i, Gtk.ListScrollFlags.SELECT)
+                break
+            i = i + 1
 
         self.set_child(content)
 
@@ -275,13 +149,14 @@ class FontSelectionOldDialog(Gtk.Window):
         list_item.set_child(entry)
 
     def bind_font_item(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ListItem) -> None:
-        item: FontItem = list_item.get_item()
+        item: FontFileItem = list_item.get_item()
         entry: Gtk.Entry = list_item.get_child()
         label = f"{item.label} ({item.style})"
         entry.set_text(label)
 
     def tree_item_selected(self, list_view: Gtk.ListView, selection: int) -> None:
-        item: FontItem = self.treestore.get_item(selection)
+        item: FontFileItem = self.treestore.get_item(selection)
+        self.selected_item = selection
         self.gen_font_preview(item.path)
 
     def gen_font_preview(self, font_path: str) -> None:
@@ -295,40 +170,21 @@ class FontSelectionOldDialog(Gtk.Window):
             fill="#000",
         )
 
-        pixbuf_image = self.pil_to_pixbuf(font_image)
+        pixbuf_image = self.parent.parent.pil_to_pixbuf(font_image)
         self.font_image.set_pixbuf(pixbuf_image)
 
-    def pil_to_pixbuf(self, PILImage: Image) -> GdkPixbuf.Pixbuf:
-        """Return a pixbuf created from the PIL <image>."""
-        try:
-            PILImage = PILImage.convert("RGBA")
+    def okay_clicked(self, widget: Gtk.Button) -> None:
+        if self.selected_item > -1:
+            font: FontFileItem = self.treestore.get_item(self.selected_item)
+            self.parent.parent.acbf_document.font_styles[self.selected_font.sematic] = font.path
+            model: Gio.ListStore = self.parent.model
+            found, position = model.find(self.selected_font)
+            if found:
+                item = model.get_item(position)
+                # TODO Keep fallback and only replace first item rather than acbfdocument.savetree?
+                item.font = font.label
+            self.parent.set_modified()
+        self.close()
 
-            # https://gist.github.com/mozbugbox/10cd35b2872628246140
-            data = PILImage.tobytes()
-            w, h = PILImage.size
-            data = GLib.Bytes.new(data)
-            pix = GdkPixbuf.Pixbuf.new_from_bytes(
-                data,
-                GdkPixbuf.Colorspace.RGB,
-                True,
-                8,
-                w,
-                h,
-                w * 4,
-            )
-            return pix
-        except Exception as e:
-            print("failed to create pixbuf with alpha: ", e)
-            bg = Image.new("RGBA", (550, 200), (0, 0, 0, 0))
-
-            dummy_file = io.BytesIO()
-            bg.save(dummy_file, "ppm")
-            dummy_file.seek(0)
-            contents = dummy_file.read()
-            dummy_file.close()
-
-            loader = GdkPixbuf.PixbufLoader.new_with_type("pnm")
-            loader.write(contents)
-            loader.close()
-            pixbuf = loader.get_pixbuf()
-            return pixbuf
+    def cancel_clicked(self, widget: Gtk.Button) -> None:
+        self.close()

@@ -56,17 +56,14 @@ class ACBFDocument:
         self.bg_color: str | None = "#000000"
         self.valid: bool = False
         self.filename: str = filename
-        # activity, language, first_name, middle_name, last_name, nickname,
-        self.authors: list[dict[str, str]] = []
-        # home_page, email, dbname, dbtype, value
-        self.databaseref: list[dict[str, str]] = []
+        self.authors: list[dict[str, str]] = []  # activity, language, first_name, middle_name, last_name, nickname,
+        self.databaseref: list[dict[str, str]] = []  # home_page, email, dbname, dbtype, value
         self.genres: list[tuple[str, int]] = []
         self.characters: list[str] = []
         self.keywords: list[str] = []
         self.publisher = self.publish_date = self.city = self.isbn = self.license = self.publish_date_value = ""
         self.doc_authors: list[dict[str, str]] = []
-        self.creation_date: str = ""
-        # <source><p>source 1</p><p>source 2</p></source>
+        self.creation_date: str = ""  # <source><p>source 1</p><p>source 2</p></source>
         self.sources: list[str] = []
         self.id = ""
         self.version: str = ""
@@ -78,7 +75,6 @@ class ACBFDocument:
         self.annotation: dict[str, str] = {}
         self.content_ratings: list[tuple[str, str]] = []  # (type, value)
         self.reading_direction: str = "LTR"
-        # self.genres_dict = {}
         self.has_frames: bool = False
         self.fonts_dir: str = os.path.join(self.parent.tempdir, "Fonts")
         self.font_styles: dict[str, str] = {
@@ -650,13 +646,7 @@ class ACBFDocument:
                                 .strip('"')
                             )
                         elif selector == "TEXT-AREA[INVERTED=TRUE]" and current_style == "COLOR":
-                            self.font_colors["inverted"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["inverted"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=SPEECH]" and current_style == "COLOR":
                             self.font_colors["speech"] = (
                                 style.split(
@@ -841,8 +831,6 @@ class ACBFDocument:
         ]:
             if self.font_families[style] == constants.default_font:
                 self.font_families[style] = self.font_families["normal"]
-
-        # print self.font_styles
 
     def extract_fonts(self) -> None:
         if os.path.exists(os.path.join(self.base_dir, "Fonts")) and not os.path.exists(self.fonts_dir):
@@ -1182,6 +1170,28 @@ class ACBFDocument:
                 "p",
                 h,
             )
+
+        # Save fonts
+        all_styles = ""
+        for type, style in self.font_styles.items():
+            if style:
+                style = os.path.basename(style)
+                families = self.font_families[type].split(", ")
+                families[0] = style
+                style = ", ".join(families)
+                if type in ["code", "letter", "commentary", "formal", "heading", "audio", "thought", "sign"]:
+                    all_styles += f'text-area[type={type}] {{font-family: "{style}"; '
+                elif type in ["emphasis", "strong"]:
+                    all_styles += f'{type} {{font-family: "{style}"; '
+                else:
+                    all_styles += f'text-area {{font-family: "{style}"; '
+
+                all_styles += f'color: "{self.font_colors.get(type, "#000000")}";}}\n'
+
+        if all_styles:
+            xml_styles = get_or_create_element("style")
+            xml_styles.attrib["type"] = "text/css"
+            xml_styles.text = all_styles
 
         xml.indent(self.tree)
 
