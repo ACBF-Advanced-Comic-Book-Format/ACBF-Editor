@@ -24,6 +24,7 @@ import os
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
+from gi.repository import Gdk
 from gi.repository import GdkPixbuf
 import io
 from PIL import Image, ImageDraw, ImageFont
@@ -39,7 +40,7 @@ class FontSelectionDialog(gtk.Dialog):
     
     def __init__(self, window, font_type, selected_font):
         self._window = window
-        gtk.Dialog.__init__(self, 'Font Selection: ' + font_type, window, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+        gtk.Dialog.__init__(self, 'Font Selection: ' + font_type, window, gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT,
                                   (gtk.STOCK_CLOSE, gtk.ResponseType.CLOSE))
         self.set_resizable(True)
         self.set_border_width(8)
@@ -49,8 +50,8 @@ class FontSelectionDialog(gtk.Dialog):
 
         # list of available fonts
         sw = gtk.ScrolledWindow()
-        sw.set_shadow_type(gtk.SHADOW_ETCHED_IN)
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        sw.set_shadow_type(gtk.ShadowType.ETCHED_IN)
+        sw.set_policy(gtk.PolicyType.AUTOMATIC, gtk.PolicyType.AUTOMATIC)
         if self._window._window.preferences.get_value("hidpi") == 'True':
           self.ui_scale_factor = 2
         else:
@@ -73,24 +74,24 @@ class FontSelectionDialog(gtk.Dialog):
         vbox = gtk.VBox(False, 10)
 
         label = gtk.Label("Font Preview:")
-        vbox.pack_start(label)
+        vbox.pack_start(label, True, True, 0)
 
         self.font_image = gtk.Image()
-        self.font_image.set_from_stock(gtk.STOCK_BOLD, gtk.ICON_SIZE_LARGE_TOOLBAR)
+        self.font_image.set_from_stock(gtk.STOCK_BOLD, gtk.IconSize.LARGE_TOOLBAR)
         self.get_font_preview(constants.FONTS_LIST[self.treeView.get_cursor()[0][0]][1])
 
-        vbox.pack_start(self.font_image)
-        hbox.pack_start(vbox)
+        vbox.pack_start(self.font_image, True, True, 0)
+        hbox.pack_start(vbox, True, True, 0)
         
-        self.vbox.pack_start(hbox)
+        self.vbox.pack_start(hbox, True, True, 0)
         self.show_all()
         self.treeView.connect("cursor-changed", self.on_cursor_changed)
         self.treeView.connect("row-activated", self.on_activated)
 
         # adjust scroll window
-        scroll_adjustment = self.treeView.get_cursor()[0][0]/float(len(constants.FONTS_LIST))*(self.treeView.get_vadjustment().get_upper - self.treeView.get_vadjustment().get_lower)
-        if scroll_adjustment > self.treeView.get_vadjustment().get_upper:
-          scroll_adjustment = self.treeView.get_vadjustment().get_upper
+        scroll_adjustment = self.treeView.get_cursor()[0][0]/float(len(constants.FONTS_LIST))*(self.treeView.get_vadjustment().get_upper() - self.treeView.get_vadjustment().get_lower())
+        if scroll_adjustment > self.treeView.get_vadjustment().get_upper():
+          scroll_adjustment = self.treeView.get_vadjustment().get_upper()
         self.treeView.get_vadjustment().set_value(scroll_adjustment)
 
         self.run()
@@ -128,22 +129,33 @@ class FontSelectionDialog(gtk.Dialog):
         self.font_image.set_from_pixbuf(pixbuf_image)
         
 
-
 def pil_to_pixbuf(PILImage, BGColor):
-    """Return a pixbuf created from the PIL <image>."""
+        bcolor = Gdk.RGBA()
+        Gdk.RGBA.parse(bcolor, BGColor)
+        bcolor = (int(bcolor.red*255), int(bcolor.green*255), int(bcolor.blue*255))
+        try:
+          PILImage = PILImage.convert("RGBA")
+          bg = Image.new("RGB", PILImage.size, bcolor)
+          bg.paste(PILImage,PILImage)
 
-    bcolor = (int(gtk.gdk.color_parse(BGColor).red_float*255), int(gtk.gdk.color_parse(BGColor).green_float*255), int(gtk.gdk.color_parse(BGColor).blue_float*255))
+          with io.BytesIO() as dummy_file:
+            bg.save(dummy_file, "ppm")
+            contents = dummy_file.getvalue()
 
-    PILImage = PILImage.convert("RGBA")
-    bg = Image.new("RGB", PILImage.size, bcolor)
-    bg.paste(PILImage,PILImage)
+          loader = GdkPixbuf.PixbufLoader()
+          loader.write(contents)
+          pixbuf = loader.get_pixbuf()
+          loader.close()
+          return pixbuf
+        except:
+          bg = Image.new("RGB", (150 * self.ui_scale_factor, 200 * self.ui_scale_factor), bcolor)
+          with io.BytesIO() as dummy_file:
+            bg.save(dummy_file, "ppm")
+            contents = dummy_file.getvalue()
 
-    with io.BytesIO() as dummy_file:
-      bg.save(dummy_file, "ppm")
-      contents = dummy_file.getvalue()
+          loader = GdkPixbuf.PixbufLoader()
+          loader.write(contents)
+          pixbuf = loader.get_pixbuf()
+          loader.close()
+          return pixbuf
 
-    loader = GdkPixbuf.PixbufLoader()
-    loader.write(contents)
-    pixbuf = loader.get_pixbuf()
-    loader.close()
-    return pixbuf
