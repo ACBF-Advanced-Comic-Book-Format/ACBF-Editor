@@ -75,6 +75,25 @@ class PrefsDialog(gtk.Dialog):
 
         tab.pack_start(hbox, False, False, 0)
 
+        # default comic books dir
+        hbox = gtk.HBox(False, 0)
+        hbox.set_border_width(5)
+        
+        label = gtk.Label()
+        label.set_markup('Default comics folder: ')
+        hbox.pack_start(label, False, False, 0)
+        
+        self.comics_dir = self._window.preferences.get_value("comics_dir")
+        if len(self.comics_dir) > 25:
+          comics_dir_label = self.comics_dir[0:25] + ' ...'
+        else:
+          comics_dir_label = self.comics_dir
+        self.comics_dir_button = gtk.Button.new_with_label(comics_dir_label)
+        self.comics_dir_button.connect('clicked', self.select_folder)
+        
+        hbox.pack_start(self.comics_dir_button, False, False, 0)
+        tab.pack_start(hbox, False, False, 0)
+
         # tmpfs
         hbox = gtk.HBox(False, 0)
         hbox.set_border_width(5)
@@ -100,7 +119,7 @@ class PrefsDialog(gtk.Dialog):
           self.tmpfs_entry.set_sensitive(False)
 
         tab.pack_start(hbox, False, False, 0)
-
+        
         # HiDPI
         button = gtk.CheckButton("HiDPI display")
         button.set_border_width(5)
@@ -276,6 +295,27 @@ class PrefsDialog(gtk.Dialog):
         self.connect('response', self.close_preferences)
         self.run()
 
+    def select_folder(self, *args):
+      filechooser = gtk.FileChooserDialog(title='Select Folder ...', action=gtk.FileChooserAction.SELECT_FOLDER,
+                                buttons=(gtk.STOCK_CANCEL,gtk.ResponseType.CANCEL,gtk.STOCK_OPEN,gtk.ResponseType.OK))
+
+      filechooser.set_current_folder(self._window.preferences.get_value("comics_dir"))
+
+      response = filechooser.run()
+      if response != gtk.ResponseType.OK:
+        filechooser.destroy()
+        return
+
+      self.comics_dir = str(filechooser.get_filename())
+      if len(self.comics_dir) > 25:
+        comics_dir_label = self.comics_dir[0:25] + ' ...'
+      else:
+        comics_dir_label = self.comics_dir
+      
+      self.comics_dir_button.set_label(comics_dir_label)
+      self._window.preferences.set_value("comics_dir", self.comics_dir)
+      filechooser.destroy()
+
     def set_hidpi(self, widget):
         if widget.get_active():
           self._window.preferences.set_value("hidpi", "True")
@@ -328,4 +368,3 @@ class PrefsDialog(gtk.Dialog):
           self._window.preferences.set_value("middle_name", self.middle_name_entry.get_text())
           self._window.preferences.set_value("last_name", self.last_name_entry.get_text())
           self._window.preferences.set_value("nickname", self.nick_name_entry.get_text())
-

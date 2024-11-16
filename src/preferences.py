@@ -72,7 +72,7 @@ class Preferences():
       return
 
   def check_elements(self, *args):
-      for element in ["default_language", "tmpfs", "tmpfs_dir", "first_name", "middle_name", "last_name", "nickname", "unrar_location",
+      for element in ["default_language", "tmpfs", "tmpfs_dir", "comics_dir", "first_name", "middle_name", "last_name", "nickname", "unrar_location",
                       "frames_color", "text_layers_color", "hidpi", "snap"]:
         if self.tree.find(element) == None:
           self.set_default_value(element)
@@ -95,6 +95,9 @@ class Preferences():
       elif element == 'tmpfs_dir':
         tmpfs_dir = xml.SubElement(self.tree, "tmpfs_dir")
         tmpfs_dir.text = "/dev/shm"
+      elif element == 'comics_dir':
+        comics_dir = xml.SubElement(self.tree, "comics_dir")
+        comics_dir.text = "."
       elif element == 'first_name':
         first_name = xml.SubElement(self.tree, "first_name")
       elif element == 'middle_name':

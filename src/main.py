@@ -91,7 +91,7 @@ class MainWindow(gtk.Window):
 
         self.filename = open_path
         if self.filename == None:
-          self.filename = "/home/whale/Work/ACBF/trunk/xSample Comic Book/Doctorow, Cory - Craphound.acbf"
+          self.filename = "xx"
           self.original_filename = self.filename
         else:
           if output_file == None:
@@ -2002,7 +2002,7 @@ class MainWindow(gtk.Window):
       info.set_markup(_('\n<span>ACBF Editor is editor for comic books files in ACBF format.') + '\n' +
                       _('ACBF Editor is licensed under the GNU General Public License.') + '\n\n' +
                        '<small>Copyright 2013-2024 Robert Kubik\n' +
-                       'https://launchpad.net/acbf</small></span>\n')
+                       'https://github.com/GeoRW/ACBF</small></span>\n')
       label.set_line_wrap(True)
       info.set_justify(gtk.Justification.CENTER)
       hbox.pack_start(info, False, False, 0)

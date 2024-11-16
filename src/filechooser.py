@@ -27,9 +27,11 @@ import sys
 try:
   from . import constants
   from . import fileprepare
+  from . import preferences
 except:
   import constants
   import fileprepare
+  import preferences
 
 class FileChooserDialog(gtk.FileChooserDialog):
     
@@ -42,9 +44,10 @@ class FileChooserDialog(gtk.FileChooserDialog):
         gtk.FileChooserDialog.__init__(self, title='Open File',action=gtk.FileChooserAction.OPEN,
                                        buttons=(gtk.STOCK_CANCEL,gtk.ResponseType.CANCEL,gtk.STOCK_OPEN,gtk.ResponseType.OK))
         self.set_default_response(gtk.ResponseType.OK)
-        if sys.platform != 'win32':
-          self.set_current_folder(os.path.dirname(self._window.original_filename))
-
+        
+        self.preferences = preferences.Preferences()
+        self.set_current_folder(self.preferences.get_value("comics_dir"))
+ 
         # filter
         filter = gtk.FileFilter()
         filter.set_name("Comic files")
