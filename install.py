@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 This script installs or uninstalls ACBF Editor on your system.
@@ -211,7 +211,7 @@ for opt, value in opts:
 # ---------------------------------------------------------------------------
 if args == ['install']:
     check_dependencies()
-    print 'Installing ACBF Editor to', install_dir, '...\n'
+    print('Installing ACBF Editor to', install_dir, '...\n')
     if not os.access(install_dir, os.W_OK):
         print('You do not have write permissions to', install_dir)
         sys.exit(1)
