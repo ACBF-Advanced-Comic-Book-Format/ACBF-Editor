@@ -143,6 +143,18 @@ def check_dependencies():
         print('    !!! python-lxml ............. Not found')
         required_found = False
     try:
+        import matplotlib
+        assert matplotlib.__version__ >= '0.99'
+        print('    python-matplotlib ........... OK')
+    except ImportError:
+        print('    !!! python-matplotlib ....... Not found')
+        required_found = False
+    except AssertionError:
+        print('    !!! python-matplotlib ....... version', matplotlib.__version__, end=' ')
+        print('found')
+        print('Required matplotlib version is: 0.99 or higher')
+        sys.exit(1)
+    try:
         import cv2
         print('    open cv ..................... OK')
     except ImportError:
@@ -164,6 +176,13 @@ def check_dependencies():
         print('found')
         print('    !!! Python Imaging Library 1.1.5 or higher is required')
         required_found = False
+    try:
+        import patoolib
+        print('    patool ...................... OK')
+    except ImportError:
+        print('    !!! patool .................. Not found')
+        required_found = False
+    
     if not required_found:
         print('\nCould not find all required dependencies!')
         print('Please install them and try again.')
