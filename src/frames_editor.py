@@ -37,6 +37,7 @@ from copy import deepcopy
 import numpy
 import cv2
 import cairo
+import math
 
 try:
   from . import constants
@@ -44,7 +45,7 @@ try:
 except:
   import constants
   import text_layer
-  
+
 class FramesEditorDialog(gtk.Dialog):
     
     """Frames Editor dialog."""
@@ -63,6 +64,7 @@ class FramesEditorDialog(gtk.Dialog):
         self.page_color_button = gtk.ColorButton()
         self.drawing_frames = False
         self.drawing_texts = False
+        self.drawing_rounded_rectangle = True
         self.detecting_bubble = False
         self.scale_factor = 1
         self.transition_dropdown_dict = {0 : "", 1 : "None", 2 : "Fade", 3 : "Blend", 4 : "Scroll Right", 5 : "Scroll Down"}
@@ -397,6 +399,11 @@ class FramesEditorDialog(gtk.Dialog):
           self.show_help()
         elif event.keyval == Gdk.KEY_Delete:
           self.delete_page()
+        elif event.keyval in (Gdk.KEY_R, Gdk.KEY_r) and self.drawing_texts:
+          self.points = []
+          self.drawing_rounded_rectangle = True
+          cross_cursor = Gdk.Cursor(Gdk.CursorType.CROSS)
+          self.get_window().set_cursor(cross_cursor)
         elif event.keyval in (Gdk.KEY_F8, Gdk.KEY_F, Gdk.KEY_f):
           self.frames_detection()
         elif event.keyval in (Gdk.KEY_F7, Gdk.KEY_T, Gdk.KEY_t):
@@ -505,7 +512,8 @@ class FramesEditorDialog(gtk.Dialog):
       left_vbox.pack_start(hbox, False, False, 0)
       
       hbox = gtk.HBox(False, 3)
-      button = gtk.Button(label = 'CTRL')
+      button = gtk.ToolButton()
+      button.set_stock_id(gtk.STOCK_GO_FORWARD)
       hbox.pack_start(button, False, False, 3)
       label = gtk.Label()
       label.set_markup('Draw straight line by holding down Control key')
@@ -513,7 +521,8 @@ class FramesEditorDialog(gtk.Dialog):
       left_vbox.pack_start(hbox, False, False, 0)
 
       hbox = gtk.HBox(False, 3)
-      button = gtk.Button(label = 'F5')
+      button = gtk.ToolButton()
+      button.set_stock_id(gtk.STOCK_REFRESH)
       hbox.pack_start(button, False, False, 3)
       label = gtk.Label()
       label.set_markup('Refresh image (F5)')
@@ -521,10 +530,20 @@ class FramesEditorDialog(gtk.Dialog):
       left_vbox.pack_start(hbox, False, False, 0)
 
       hbox = gtk.HBox(False, 3)
-      button = gtk.Button(label = 'F8')
+      button = gtk.ToolButton()
+      button.set_stock_id(gtk.STOCK_FIND)
       hbox.pack_start(button, False, False, 3)
       label = gtk.Label()
       label.set_markup('Detect Frames (F8 or "F" key)')
+      hbox.pack_start(label, False, False, 3)
+      left_vbox.pack_start(hbox, False, False, 0)
+      
+      hbox = gtk.HBox(False, 3)
+      button = gtk.ToolButton()
+      button.set_stock_id(gtk.STOCK_FULLSCREEN)
+      hbox.pack_start(button, False, False, 3)
+      label = gtk.Label()
+      label.set_markup('Hide bottom and side bars (F11 or "H" key)')
       hbox.pack_start(label, False, False, 3)
       left_vbox.pack_start(hbox, False, False, 0)
 
@@ -561,7 +580,8 @@ class FramesEditorDialog(gtk.Dialog):
       right_vbox.pack_start(hbox, False, False, 0)
 
       hbox = gtk.HBox(False, 3)
-      button = gtk.Button(label = 'BKSP')
+      button = gtk.ToolButton()
+      button.set_stock_id(gtk.STOCK_UNDO)
       hbox.pack_start(button, False, False, 3)
       label = gtk.Label()
       label.set_markup('Remove Last Point (BackSpace)')
@@ -569,18 +589,20 @@ class FramesEditorDialog(gtk.Dialog):
       right_vbox.pack_start(hbox, False, False, 0)
       
       hbox = gtk.HBox(False, 3)
-      button = gtk.Button(label = 'F7')
+      button = gtk.ToolButton()
+      button.set_stock_id(gtk.STOCK_SELECT_FONT)
       hbox.pack_start(button, False, False, 3)
       label = gtk.Label()
-      label.set_markup('Detect Bubble at cursor (F7 or "T" key)')
+      label.set_markup('Detect Text Bubble at cursor (F7 or "T" key)')
       hbox.pack_start(label, False, False, 3)
       right_vbox.pack_start(hbox, False, False, 0)
 
       hbox = gtk.HBox(False, 3)
-      button = gtk.Button(label = 'F11')
+      button = gtk.ToolButton()
+      button.set_stock_id(gtk.STOCK_ORIENTATION_LANDSCAPE)
       hbox.pack_start(button, False, False, 3)
       label = gtk.Label()
-      label.set_markup('Hide bottom and side bars (F11 or "H" key)')
+      label.set_markup('Draw Text Layer Rectangle with rounded corners ("R" key)')
       hbox.pack_start(label, False, False, 3)
       right_vbox.pack_start(hbox, False, False, 0)
 
@@ -1510,6 +1532,12 @@ class FramesEditorDialog(gtk.Dialog):
         elif ((event.x >= x and event.x <= da_width) and 
               (event.y >= y and event.y <= da_height)):
           self.points.append((int(event.x / self.scale_factor), int(event.y / self.scale_factor)))
+        
+        if self.drawing_rounded_rectangle and len(self.points) == 2:
+          self.points = rounded_rectangle(self.points[0], self.points[1])
+          self.enclose_rectangle()
+          self.drawing_rounded_rectangle = False
+          self.get_window().set_cursor(None)
         self.drawing_area.queue_draw()
     
     def cancel_rectangle(self, *args):
@@ -2330,3 +2358,72 @@ class TextBoxDialog(gtk.Dialog):
         dialog.destroy()
 
       return
+
+def circle_quadrant(center_x, center_y, radius, quadrant):
+    step_size = 0.1
+    circle_points = []
+    
+    t = 0
+    while t < 2 * math.pi:
+      if t <= (math.pi / 2) and quadrant == 3:
+        circle_points.append((int(radius * math.cos(t) + center_x), int(radius * math.sin(t) + center_y)))
+      elif t >= (math.pi / 2) and t <= math.pi and quadrant == 4:
+        circle_points.append((int(radius * math.cos(t) + center_x), int(radius * math.sin(t) + center_y)))
+      elif t >= math.pi and t <= (math.pi * 1.5) and quadrant == 1:
+        circle_points.append((int(radius * math.cos(t) + center_x), int(radius * math.sin(t) + center_y)))
+      elif t >= (math.pi * 1.5) and quadrant == 2:
+        circle_points.append((int(radius * math.cos(t) + center_x), int(radius * math.sin(t) + center_y)))
+      t = t + step_size
+    
+    return circle_points
+
+def rounded_rectangle(point_one, point_two):
+    points = []
+    width = abs(point_one[0] - point_two[0])
+    height = abs(point_one[1] - point_two[1])
+    top_left = (min(point_one[0], point_two[0]), min(point_one[1], point_two[1]))
+    bottom_right = (max(point_one[0], point_two[0]), max(point_one[1], point_two[1]))
+    radius = int(min(width, height) / 4)
+    
+    top_left_circle_center = (top_left[0] + radius, top_left[1] + radius)
+    top_right_circle_center = (bottom_right[0] - radius, top_left[1] + radius)
+    bottom_right_circle_center = (bottom_right[0] - radius, bottom_right[1] - radius)
+    bottom_left_circle_center = (top_left[0] + radius, bottom_right[1] - radius)
+    
+    # add first quadrant
+    circle_points = circle_quadrant(top_left_circle_center[0], top_left_circle_center[1], radius, 1)
+    for i in circle_points:
+      points.append(i)
+    
+    # add top line
+    points.append((top_left[0] + radius, top_left[1]))
+    points.append((top_left[0] + width - (radius * 2), top_left[1]))
+    
+    # add second quadrant
+    circle_points = circle_quadrant(top_right_circle_center[0], top_right_circle_center[1], radius, 2)
+    for i in circle_points:
+      points.append(i)
+    
+    # add right line
+    points.append((bottom_right[0], top_left[1] + radius))
+    points.append((bottom_right[0], bottom_right[1] - (radius * 2)))
+    
+    # add third quadrant
+    circle_points = circle_quadrant(bottom_right_circle_center[0], bottom_right_circle_center[1], radius, 3)
+    for i in circle_points:
+      points.append(i)
+    
+    # add bottom line
+    points.append((bottom_right[0] - radius, bottom_right[1]))
+    points.append((top_left[0] + radius, bottom_right[1]))
+    
+    # add fourth quadrant
+    circle_points = circle_quadrant(bottom_left_circle_center[0], bottom_left_circle_center[1], radius, 4)
+    for i in circle_points:
+      points.append(i)
+      
+    # add bottom line
+    points.append((top_left[0], bottom_right[1] - radius))
+    points.append((top_left[0], top_left[1] + radius))
+      
+    return points
