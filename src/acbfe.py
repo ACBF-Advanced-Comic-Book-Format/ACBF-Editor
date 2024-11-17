@@ -28,51 +28,18 @@ from typing import Any
 # -------------------------------------------------------------------------
 
 
-# Check for PyGTK and PIL dependencies.
 try:
     import gi
 
-    gi.require_version("Gtk", "4.0")
-    gi.require_version("Adw", "1")
+    gi.require_version("Gtk", "4.10")
     from gi.repository import Gtk
 
-    # assert Gtk.gtk_version >= (2, 12, 0)
-    # assert Gtk.pygtk_version >= (2, 12, 0)
 except AssertionError:
-    print("You don't have the required versions of GTK+ and/or PyGTK", end=" ")
-    print("installed.")
-    print(
-        "Installed GTK+ version is: %s" % (".".join([str(n) for n in Gtk.gtk_version])),
-    )
-    print("Required GTK+ version is: 4.12.0 or higher\n")
-    print(
-        "Installed PyGTK version is: %s" % (".".join([str(n) for n in Gtk.pygtk_version])),
-    )
-    print("Required PyGTK version is: 4.12.0 or higher")
+    print("Required version of GTK4 is 4.10 or higher!")
+    print(f"Installed GTK4 version is: {Gtk.get_major_version()}.{Gtk.get_minor_version()}")
     sys.exit(1)
 except ImportError:
-    print("PyGTK version 4.12.0 or higher is required to run Comix.")
-    print("No version of PyGTK was found on your system.")
-    sys.exit(1)
-
-try:
-    from PIL import Image
-
-    try:
-        im_ver = Image.__version__
-    except AttributeError:
-        im_ver = Image.__version__
-    assert Image.__version__ >= "1.1.5"
-except AssertionError:
-    print("You don't have the required version of the Python Imaging", end=" ")
-    print("Library (PIL) installed.")
-    print("Installed PIL version is: %s" % Image.__version__)
-    print("Required PIL version is: 1.1.5 or higher")
-    sys.exit(1)
-except ImportError:
-    print("Python Imaging Library (PIL) 1.1.5 or higher is required.")
-    print("No version of the Python Imaging Library was found on your", end=" ")
-    print("system.")
+    print("PyGTK version 4.10.0 or higher is required to run ACBF Editor.")
     sys.exit(1)
 
 import constants
@@ -102,32 +69,19 @@ def print_help() -> None:
 
 def run() -> None:
     """Run the program."""
-    # Use gettext translations as found in the source dir, otherwise based on
-    # the install path.
+    # Use gettext translations as found in the source dir, otherwise based on the install path.
 
-    """print exec_path
-    print constants.DATA_DIR
-    print constants.CONFIG_DIR
-    print constants.HOME_DIR"""
-
+    # TODO gettext
     if os.path.isdir(os.path.join(constants.BASE_DIR, "messages")):
         gettext.install("acbfe", os.path.join(constants.BASE_DIR, "messages"))
     else:
-        gettext.install(
-            "acbfe",
-            os.path.join(
-                constants.BASE_DIR,
-                "share/locale",
-            ),
-        )
+        gettext.install("acbfe", os.path.join(constants.BASE_DIR, "share/locale"))
 
     open_path = None
     output_file = None
 
-    print(
-        "ACBF Editor version " + constants.VERSION + " Copyright 2013-2019 Robert Kubik.",
-    )
-    print("Licensed under the GNU General Public License. https://launchpad.net/acbf")
+    print("ACBF Editor version " + constants.VERSION + " Copyright 2013-2025 Robert Kubik.")
+    print("Licensed under the GNU General Public License. https://github.com/GeoRW/ACBF-Editor")
 
     try:
         opts, args = getopt.gnu_getopt(

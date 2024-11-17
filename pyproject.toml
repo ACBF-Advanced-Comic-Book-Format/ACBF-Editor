@@ -30,7 +30,7 @@ requires-python = ">= 3.9"
 dependencies = [
     "PyGObject",
     "lxml",
-    "pillow",
+    "pillow>10",
     "opencv-python",
     "matplot",
     "patool",
