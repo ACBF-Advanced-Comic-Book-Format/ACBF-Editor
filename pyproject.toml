@@ -1,3 +1,47 @@
+[project]
+name = "ACBF Editor"
+#dynamic = ["version"]
+version = "3.0.0a"
+authors = [
+  {name = "Robert Kubik"},
+  {name = "mizaki"},
+]
+description = "Editor for comic book files in ACBF format"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["comics", "comic", "metadata", "tagging", "tagger"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Environment :: MacOS X",
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Other/Nonlisted Topic",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: GPLv3 License",
+]
+requires-python = ">= 3.9"
+dependencies = [
+    "PyGObject",
+    "lxml",
+    "pillow",
+    "opencv-python",
+    "matplot",
+    "patool",
+]
+
+[project.urls]
+Homepage = "https://github.com/GeoRW/ACBF-Editor"
+Documentation = "https://github.com/GeoRW/ACBF-Editor/wiki"
+Repository = "https://github.com/GeoRW/ACBF-Editor.git"
+Issues = "https://github.com/GeoRW/ACBF-Editor/issues"
+
 [build-system]
 requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
 build-backend = "setuptools.build_meta"
