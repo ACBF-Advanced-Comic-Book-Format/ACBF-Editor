@@ -1452,16 +1452,21 @@ class MainWindow(gtk.Window):
         label.set_markup('<b>Series Title</b>')
         label.set_alignment(0, 0)
         hbox.pack_start(label, True, True, 0)
+        
+        label = gtk.Label()
+        label.set_markup('      <b>Volume (optional)</b>')
+        label.set_alignment(0, 0)
+        hbox.pack_start(label, True, True, 0)
 
         label = gtk.Label()
-        label.set_markup('<b>Number       </b>')
+        label.set_markup('<b>Sequence       </b>')
         label.set_alignment(0, 0)
         hbox.pack_start(label, False, False, 0)
 
         entries_box.pack_start(hbox, False, False, 0)
 
         for item in self.acbf_document.tree.findall("meta-data/book-info/sequence"):
-          self.add_series_hbox(None, entries_box, item.text, item.get("title"))
+          self.add_series_hbox(None, entries_box, item.text, item.get("title"), item.get("volume"))
 
         dialog.vbox.pack_start(entries_box, False, False, 0)
 
@@ -1470,7 +1475,7 @@ class MainWindow(gtk.Window):
         hbox.set_border_width(5)
 
         button = gtk.ToolButton(gtk.STOCK_ADD)
-        button.connect('clicked', self.add_series_hbox, entries_box, '', '')
+        button.connect('clicked', self.add_series_hbox, entries_box, '', '', '')
         hbox.pack_start(button, False, False, 0)
 
         dialog.vbox.pack_start(hbox, False, False, 0)
@@ -1491,10 +1496,12 @@ class MainWindow(gtk.Window):
               if j.get_name() == 'GtkEntry':
                 if j.type == 'title':
                   title = str(j.get_text())
-                elif j.type == 'text':
+                elif j.type == 'volume':
+                  volume = str(j.get_text())
+                elif j.type == 'sequence':
                   text = str(j.get_text())
 
-            element = xml.SubElement(self.acbf_document.tree.find("meta-data/book-info"), "sequence", title=title)
+            element = xml.SubElement(self.acbf_document.tree.find("meta-data/book-info"), "sequence", title=title, volume=volume)
             element.text = text
 
           self.acbf_document.load_metadata()
@@ -1503,22 +1510,30 @@ class MainWindow(gtk.Window):
         dialog.destroy()
         return
 
-    def add_series_hbox(self, widget, entries_box, text, title):
+    def add_series_hbox(self, widget, entries_box, sequence, title, volume):
       hbox = gtk.HBox(False, 0)
       entry = gtk.Entry()
       if title != None:
         entry.set_text(title)
       entry.type = 'title'
-      entry.set_width_chars(20)
+      entry.set_width_chars(25)
       entry.set_tooltip_text('Series Title')
       hbox.pack_start(entry, True, True, 0)
 
       entry = gtk.Entry()
-      if text != None:
-        entry.set_text(text)
-      entry.type = 'text'
-      entry.set_width_chars(4)
-      entry.set_tooltip_text('Sequence Number')
+      if volume != None:
+        entry.set_text(volume)
+      entry.type = 'volume'
+      entry.set_width_chars(10)
+      entry.set_tooltip_text('Volume')
+      hbox.pack_start(entry, False, False, 0)
+      
+      entry = gtk.Entry()
+      if sequence != None:
+        entry.set_text(sequence)
+      entry.type = 'sequence'
+      entry.set_width_chars(10)
+      entry.set_tooltip_text('Sequence')
       hbox.pack_start(entry, False, False, 0)
 
       remove_button = gtk.ToolButton(gtk.STOCK_REMOVE)
