@@ -31,15 +31,21 @@ from typing import Any
 try:
     import gi
 
-    gi.require_version("Gtk", "4.10")
+    gi.require_version("Gtk", "4.0")
     from gi.repository import Gtk
-
-except AssertionError:
-    print("Required version of GTK4 is 4.10 or higher!")
-    print(f"Installed GTK4 version is: {Gtk.get_major_version()}.{Gtk.get_minor_version()}")
+except ImportError as e:
+    print("GTK4 version 4.10.0 or higher is required to run ACBF Editor.")
+    print(e)
     sys.exit(1)
-except ImportError:
-    print("PyGTK version 4.10.0 or higher is required to run ACBF Editor.")
+except ValueError as e:
+    print("GTK4 version 4.10.0 or higher is required to run ACBF Editor.")
+    print(e)
+    sys.exit(1)
+
+# Don't want to require an exact version but a minimum one
+if Gtk.get_minor_version() < 10:
+    print("GTK4 version 4.10.0 or higher is required to run ACBF Editor.")
+    print(f"Installed GTK4 version is: {Gtk.get_major_version()}.{Gtk.get_minor_version()}")
     sys.exit(1)
 
 import constants
