@@ -64,7 +64,7 @@ class FramesEditorDialog(gtk.Dialog):
         self.page_color_button = gtk.ColorButton()
         self.drawing_frames = False
         self.drawing_texts = False
-        self.drawing_rounded_rectangle = True
+        self.drawing_rounded_rectangle = False
         self.detecting_bubble = False
         self.scale_factor = 1
         self.transition_dropdown_dict = {0 : "", 1 : "None", 2 : "Fade", 3 : "Blend", 4 : "Scroll Right", 5 : "Scroll Down"}
@@ -386,11 +386,13 @@ class FramesEditorDialog(gtk.Dialog):
         elif event.keyval == Gdk.KEY_Escape:
           self.cancel_rectangle()
           self.detecting_bubble = False
+          self.drawing_rounded_rectangle = False
           self.get_window().set_cursor(None)
         elif event.keyval == Gdk.KEY_BackSpace:
           if len(self.points) == 1:
             self.cancel_rectangle()
             self.detecting_bubble = False
+            self.drawing_rounded_rectangle = False
             self.get_window().set_cursor(None)
           elif len(self.points) > 1:
             del self.points[-1]
@@ -1341,20 +1343,24 @@ class FramesEditorDialog(gtk.Dialog):
               y_move = -10
             
             #frame number background
-            rectangle = (int(anchor[0]) + x_move - 6, int(anchor[1]) + y_move - 30, 38, 38)
-            event.set_source_rgb(1,1,1)
+            if idx > 8:
+              background_width = 50
+            else:
+              background_width = 30
+            rectangle = (int(anchor[0]) + x_move - 6, int(anchor[1]) + y_move - 30, background_width, 30)
+            event.set_source_rgba(1,1,1, 0.5)
             event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
             event.fill()
             
             #frame number
-            event.set_source_rgb(float(frames_color[0]/256), float(frames_color[1]/255), float(frames_color[2]/255))
+            event.set_source_rgba(float(frames_color[0]/256), float(frames_color[1]/255), float(frames_color[2]/255), 0.9)
             event.select_font_face("sans", cairo.FONT_WEIGHT_BOLD)
-            event.set_font_size(32)
+            event.set_font_size(28)
             event.move_to(int(anchor[0]) + x_move, int(anchor[1]) + y_move)
             event.show_text(str(idx+1))
             
         # draw text-layers
-        event.set_source_rgb(float(text_layers_color[0]/256), float(text_layers_color[1]/255), float(text_layers_color[2]/255))
+        event.set_source_rgba(float(text_layers_color[0]/256), float(text_layers_color[1]/255), float(text_layers_color[2]/255), 0.9)
         for lang in self._window.acbf_document.languages:
           if lang[1] != 'FALSE':
             for idx, text_areas in enumerate(self._window.acbf_document.load_page_texts(self.get_current_page_number(), lang[0])[0]):
@@ -1372,8 +1378,12 @@ class FramesEditorDialog(gtk.Dialog):
               min_y = min(text_areas[0],key=lambda item:item[1])[1]
             
               #text-layer number background
-              rectangle = (int(min_x * self.scale_factor) - 5, int(min_y * self.scale_factor) - 25, 30, 30)
-              event.set_source_rgb(1,1,1)
+              if idx > 8:
+                background_width = 50
+              else:
+                background_width = 30
+              rectangle = (int(min_x * self.scale_factor) - 5, int(min_y * self.scale_factor) - 25, background_width, 30)
+              event.set_source_rgba(1,1,1, 0.5)
               event.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
               event.fill()
             
