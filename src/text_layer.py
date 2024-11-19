@@ -119,8 +119,9 @@ class TextLayer():
             return ImageFont.truetype(self.thought_font, height)
           else:
             return ImageFont.load_default()
+
     def remove_xml_tags(self, in_string):
-        return unescape(re.sub(u"<[^>]*>", '', in_string))
+        return unescape(re.sub(u"<[^>]*>", '', in_string.replace('\n', ' ')))
 
     def median(self, lst):
         lst = sorted(lst)
