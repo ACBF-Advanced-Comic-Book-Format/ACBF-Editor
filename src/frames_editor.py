@@ -65,6 +65,7 @@ class FramesEditorDialog(gtk.Dialog):
         self.drawing_frames = False
         self.drawing_texts = False
         self.drawing_rounded_rectangle = False
+        self.drawing_ellipse = False
         self.detecting_bubble = False
         self.scale_factor = 1
         self.transition_dropdown_dict = {0 : "", 1 : "None", 2 : "Fade", 3 : "Blend", 4 : "Scroll Right", 5 : "Scroll Down"}
@@ -387,12 +388,14 @@ class FramesEditorDialog(gtk.Dialog):
           self.cancel_rectangle()
           self.detecting_bubble = False
           self.drawing_rounded_rectangle = False
+          self.drawing_ellipse = False
           self.get_window().set_cursor(None)
         elif event.keyval == Gdk.KEY_BackSpace:
           if len(self.points) == 1:
             self.cancel_rectangle()
             self.detecting_bubble = False
             self.drawing_rounded_rectangle = False
+            self.drawing_ellipse = False
             self.get_window().set_cursor(None)
           elif len(self.points) > 1:
             del self.points[-1]
@@ -404,6 +407,11 @@ class FramesEditorDialog(gtk.Dialog):
         elif event.keyval in (Gdk.KEY_R, Gdk.KEY_r) and self.drawing_texts:
           self.points = []
           self.drawing_rounded_rectangle = True
+          cross_cursor = Gdk.Cursor(Gdk.CursorType.CROSS)
+          self.get_window().set_cursor(cross_cursor)
+        elif event.keyval in (Gdk.KEY_E, Gdk.KEY_e) and self.drawing_texts:
+          self.points = []
+          self.drawing_ellipse = True
           cross_cursor = Gdk.Cursor(Gdk.CursorType.CROSS)
           self.get_window().set_cursor(cross_cursor)
         elif event.keyval in (Gdk.KEY_F8, Gdk.KEY_F, Gdk.KEY_f):
@@ -1548,6 +1556,13 @@ class FramesEditorDialog(gtk.Dialog):
           self.enclose_rectangle()
           self.drawing_rounded_rectangle = False
           self.get_window().set_cursor(None)
+          
+        if self.drawing_ellipse and len(self.points) == 4:
+          self.points = ellipse(self.points[0], self.points[1], self.points[2], self.points[3])
+          self.enclose_rectangle()
+          self.drawing_ellipse = False
+          self.get_window().set_cursor(None)
+          
         self.drawing_area.queue_draw()
     
     def cancel_rectangle(self, *args):
@@ -2437,3 +2452,24 @@ def rounded_rectangle(point_one, point_two):
     points.append((top_left[0], top_left[1] + radius))
       
     return points
+
+def ellipse(point_one, point_two, point_three, point_four):
+    # creates ellipse from four points: top, bottom, left right
+    points=[]
+    left = min(point_one[0], point_two[0], point_three[0], point_four[0])
+    right = max(point_one[0], point_two[0], point_three[0], point_four[0])
+    top = min(point_one[1], point_two[1], point_three[1], point_four[1])
+    bottom = max(point_one[1], point_two[1], point_three[1], point_four[1])
+    
+    center = (int((left + right)/2) + 1, int((top + bottom)/2) + 1)
+    radius_one = int((right - left)/2)
+    radius_two = int((bottom - top)/2)
+    step_size = 0.2
+    t = 0
+    
+    while t < 2 * math.pi:
+      points.append((int(radius_one * math.cos(t) + center[0]), int(radius_two * math.sin(t) + center[1])))
+      t = t + step_size
+    
+    return points
+    
