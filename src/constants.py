@@ -40,6 +40,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(exec_path))
 ICON_PATH = ''
 if os.path.isfile(os.path.join(BASE_DIR, 'images/acbfe.png')):
   ICON_PATH = os.path.join(BASE_DIR, 'images')
+# pyinstallyer
+elif os.path.isfile(os.path.join(BASE_DIR, 'acbfe/_internal/images/acbfe.png')):
+  ICON_PATH = os.path.join(BASE_DIR, 'acbfe/_internal/images')
 elif os.path.isfile(os.path.join(os.path.dirname(exec_path), 'images/acbfe.png')):
   ICON_PATH = os.path.join(os.path.dirname(exec_path), 'images')
 elif os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../images/acbfe.png')):
