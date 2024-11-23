@@ -75,6 +75,7 @@ class FileChooserDialog(Gtk.FileDialog):
                     True,
                 )
                 self.parent.filename = prepared_file.filename
+                self.parent.file_list = prepared_file.file_list
                 self.parent.original_filename = file.get_path()
                 self.parent.opened_file()
             else:

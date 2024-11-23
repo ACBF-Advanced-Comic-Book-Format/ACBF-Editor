@@ -16,6 +16,7 @@ import patoolib
 import preferences
 from gi.repository import Gtk
 from PIL import Image
+from pathlib import Path
 # -------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as published
@@ -37,6 +38,7 @@ class FilePrepare:
     def __init__(self, window: Gtk.Window, filename: str, tempdir: str, show_dialog: bool):
         self._window = window
         self.filename: str = filename
+        self.file_list: list[Path] = []
         file_type = None
         self.preferences = preferences.Preferences()
 
@@ -92,6 +94,7 @@ class FilePrepare:
             # check if there's ACBF file inside
             acbf_found: bool = False
             for datafile in os.listdir(tempdir):
+                self.file_list.append(Path(datafile))
                 if datafile[-4:] == "acbf":
                     acbf_found = True
                     return_filename = os.path.join(tempdir, datafile)

@@ -15,12 +15,13 @@ import shutil
 import zipfile
 from copy import deepcopy
 from typing import Any
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 from xml.sax.saxutils import unescape
 
 import acbfdocument
 import constants
 import edit_authors
+import cover_picker
 import edit_characters
 import edit_content_rating
 import edit_contents
@@ -48,6 +49,9 @@ from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
 from PIL import Image
+
+if TYPE_CHECKING:
+    from pathlib import Path
 # -------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as published
@@ -88,6 +92,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.original_filename: str
         self.original_file_size: float = 1
+        self.file_list: list[Path] | None = None
 
         # check if custom temp dir is defined
         # TODO use tempfile
@@ -132,6 +137,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     False,
                 )
             self.filename = prepared_file.filename
+            self.file_list = prepared_file.file_list
             self.original_filename = open_path if open_path is not None else ""
 
         try:
@@ -357,11 +363,30 @@ class MainWindow(Gtk.ApplicationWindow):
         self.panes = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
         self.panes.set_position(300)
 
-        # TODO Change coverpage
+        cover_page_button = Gtk.Button()
+        cover_page_button.set_has_frame(False)
+        # cover_page_button.add_css_class("destructive-action")
+        # CSS to remove hover outline
+        css_provider = Gtk.CssProvider()
+        css = """
+                    button:hover {
+                        box-shadow: none;
+                        text-shadow: none;
+                        background: none;
+                        transition: none;
+                        border: none;
+                    }
+                """
+        css_provider.load_from_data(css.encode("utf-8"))
+        style_context: Gtk.StyleContext = cover_page_button.get_style_context()
+        style_context.add_provider(css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+        cover_page_button.connect("clicked", self.edit_cover)
         self.coverpage = Gtk.Picture()
         self.coverpage.set_size_request(200, 300)
         self.coverpage.set_hexpand(True)
-        self.panes.set_start_child(self.coverpage)
+        cover_page_button.set_child(self.coverpage)
+        self.panes.set_start_child(cover_page_button)
 
         # book-info
         scrolled = Gtk.ScrolledWindow()
@@ -1521,6 +1546,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self.strong_font.font_idx = self.font_idx
         return True"""
 
+    def edit_cover(self, widget: Gtk.Button) -> None:
+        dialog = cover_picker.CoverDialog(self)
+        dialog.present()
+
     def edit_genres(self, widget: Gtk.Button, pos_icon: Gtk.EntryIconPosition) -> None:
         dialog = edit_genres.GenresDialog(self)
         dialog.present()
@@ -1644,6 +1673,10 @@ class MainWindow(Gtk.ApplicationWindow):
         # If this is placeholder text any newlines expand the box
         self.annotation.set_text(anno_text)
 
+    def cover_widget_update(self) -> None:
+        if self.acbf_document.cover_page is not None:
+            self.coverpage.set_pixbuf(self.pil_to_pixbuf(self.acbf_document.cover_page))
+
     def edit_annotation(self, widget: Gtk.Button, pos: Gtk.EntryIconPosition) -> None:
         def save_and_exit(widget: Gtk.Popover, popup: Gtk.Popover) -> None:
             new_text = anno_text.get_buffer().get_text(
@@ -1741,12 +1774,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def update_forms(self, is_new: bool) -> None:
         if is_new:
-            # self.coverpage.set_from_pixbuf(self.pil_to_pixbuf(self.acbf_document.cover_page, "#000"))
-            if self.acbf_document.cover_page is not None:
-                # self.coverpage.set_from_paintable(self.pil_to_paintable(self.acbf_document.cover_page))
-                self.coverpage.set_pixbuf(
-                    self.pil_to_pixbuf(self.acbf_document.cover_page),
-                )
+            self.cover_widget_update()
             book_title = ""
             if self.acbf_document.valid:
                 try:

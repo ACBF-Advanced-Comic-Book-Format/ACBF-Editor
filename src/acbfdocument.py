@@ -50,8 +50,9 @@ logger = logging.getLogger(__name__)
 class ACBFDocument:
     def __init__(self, parent: Gtk.Window, filename: str):
         self.parent = parent
-        self.cover_page = None
-        self.cover_thumb = None
+        self.cover_page: PIL.Image = None
+        self.cover_page_uri: ImageURI | None = None
+        self.cover_thumb: PIL.Image = None
         self.pages_total: int = 0
         self.bg_color: str | None = "#000000"
         self.valid: bool = False
@@ -173,8 +174,8 @@ class ACBFDocument:
         # Get cover page. While it is mandatory fallback to blank page
         try:
             image_id = self.bookinfo.find("coverpage/" + "image").get("href")
-            image_uri = ImageURI(image_id)
-            self.cover_page = self.load_image(image_uri)
+            self.cover_page_uri = ImageURI(image_id)
+            self.cover_page = self.load_image(self.cover_page_uri)
         except Exception as e:
             logger.warning(f"Failed to load cover, using blank page. {e}")
             self.cover_page = Image.new("RGB", (50, 50), (0, 0, 0))
@@ -949,6 +950,11 @@ class ACBFDocument:
             )
             ele.text = str(title)
             ele.attrib["lang"] = lang
+
+        # Only need to set URI as frames editor will save text and frames etc.
+        if self.cover_page_uri is not None:
+            coverpage_image = get_or_create_element("meta-data/book-info/coverpage/image")
+            coverpage_image.attrib["href"] = self.cover_page_uri.file_path
 
         for i in self.tree.findall("meta-data/book-info/annotation"):
             self.tree.find("meta-data/book-info").remove(i)
