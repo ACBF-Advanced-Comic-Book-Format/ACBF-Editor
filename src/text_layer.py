@@ -139,6 +139,9 @@ class TextLayer():
         image_draw = ImageDraw.Draw(self.PILBackgroundImage)
         for text_area in self.text_areas:
           polygon = []
+          text = text_area[1]
+          if len(text) == 0:
+            continue
 
           if text_area[3] == 0:
             draw = image_draw
@@ -177,7 +180,7 @@ class TextLayer():
           
           # calculate some default values
           polygon_area = area(polygon)
-          text = text_area[1]
+          
           if '<COMMENTARY>' in text.upper() or text_area[4].upper() == 'COMMENTARY':
             is_commentary = True
           else:

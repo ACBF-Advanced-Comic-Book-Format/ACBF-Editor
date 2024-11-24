@@ -72,6 +72,7 @@ class FramesEditorDialog(gtk.Dialog):
         self.transition_dropdown_is_active = True
         self.frames_box = gtk.VBox(False, 0)
         self.texts_box = gtk.VBox(False, 0)
+        self.old_layer_dropdown = [0,0]
 
         # main screen
         self.main_box = gtk.HBox(False, 0)
@@ -418,6 +419,9 @@ class FramesEditorDialog(gtk.Dialog):
           self.frames_detection()
         elif event.keyval in (Gdk.KEY_F7, Gdk.KEY_T, Gdk.KEY_t):
           self.text_bubble_detection_cursor()
+        elif event.keyval in (Gdk.KEY_F2, Gdk.KEY_L, Gdk.KEY_l):
+          #switch to previous text-layer
+          self.layer_dropdown.set_active(self.old_layer_dropdown[0])
         elif event.keyval == Gdk.KEY_F5:
           self.draw_page_image()
         elif event.keyval in (Gdk.KEY_h, Gdk.KEY_H, Gdk.KEY_F11):
@@ -556,6 +560,15 @@ class FramesEditorDialog(gtk.Dialog):
       label.set_markup('Hide bottom and side bars (F11 or "H" key)')
       hbox.pack_start(label, False, False, 3)
       left_vbox.pack_start(hbox, False, False, 0)
+      
+      hbox = gtk.HBox(False, 3)
+      button = gtk.ToolButton()
+      button.set_stock_id(gtk.STOCK_SELECT_FONT)
+      hbox.pack_start(button, False, False, 3)
+      label = gtk.Label()
+      label.set_markup('Switch to previous text layer (F2 or "L" key)')
+      hbox.pack_start(label, False, False, 3)
+      left_vbox.pack_start(hbox, False, False, 0)
 
       main_hbox.pack_start(left_vbox, False, False, 10)
 
@@ -600,7 +613,7 @@ class FramesEditorDialog(gtk.Dialog):
       
       hbox = gtk.HBox(False, 3)
       button = gtk.ToolButton()
-      button.set_stock_id(gtk.STOCK_SELECT_FONT)
+      button.set_stock_id(gtk.STOCK_JUSTIFY_CENTER)
       hbox.pack_start(button, False, False, 3)
       label = gtk.Label()
       label.set_markup('Detect Text Bubble at cursor (F7 or "T" key)')
@@ -613,6 +626,15 @@ class FramesEditorDialog(gtk.Dialog):
       hbox.pack_start(button, False, False, 3)
       label = gtk.Label()
       label.set_markup('Draw Text Layer Rectangle with rounded corners ("R" key)')
+      hbox.pack_start(label, False, False, 3)
+      right_vbox.pack_start(hbox, False, False, 0)
+      
+      hbox = gtk.HBox(False, 3)
+      button = gtk.ToolButton()
+      button.set_stock_id(gtk.STOCK_ORIENTATION_LANDSCAPE)
+      hbox.pack_start(button, False, False, 3)
+      label = gtk.Label()
+      label.set_markup('Draw Ellipse ("E" key)')
       hbox.pack_start(label, False, False, 3)
       right_vbox.pack_start(hbox, False, False, 0)
 
@@ -669,6 +691,7 @@ class FramesEditorDialog(gtk.Dialog):
       self.draw_page_image()
 
     def change_layer(self, *args):
+      self.old_layer_dropdown = [self.old_layer_dropdown[1], self.layer_dropdown.get_active()]
       self.draw_page_image()
       return
 
@@ -1284,7 +1307,6 @@ class FramesEditorDialog(gtk.Dialog):
           text_area_found = True
           self.text_box.get_buffer().set_text(unescape(text_areas[1].replace('<commentary>', '').replace('</commentary>', '').replace('<commentary/>', '').replace('<inverted>', '').replace('</inverted>', '').replace('<BR>', '\n')))
       if not text_area_found:
-        self.text_box.get_buffer().set_text('...')
         xml_frame = ''
         for point in polygon:
           xml_frame = xml_frame + str(point[0]) + ',' + str(point[1]) + ' '
@@ -1299,7 +1321,6 @@ class FramesEditorDialog(gtk.Dialog):
               layer = xml.SubElement(page, "text-layer", lang=self.lang_dropdown.get_active_text())
               area = xml.SubElement(layer, "text-area", points=xml_frame.strip(), bgcolor=bg_color)
             par = xml.SubElement(area, "p")
-            par.text = '...'
 
       self.old_lang_dropdown = self.lang_dropdown.get_active_text()
 
@@ -1592,12 +1613,10 @@ class FramesEditorDialog(gtk.Dialog):
                         layer_found = True
                         area = xml.SubElement(layer, "text-area", points=xml_frame.strip(), bgcolor=str(color))
                         par = xml.SubElement(area, "p")
-                        par.text = '...'
                     if not layer_found:
                       layer = xml.SubElement(page, "text-layer", lang=lang[0])
                       area = xml.SubElement(layer, "text-area", points=xml_frame.strip(), bgcolor=str(color))
                       par = xml.SubElement(area, "p")
-                      par.text = '...'
                 self.load_texts()
                 self.set_modified()
                 #self.pixmap.draw_polygon(self.text_layers_gc, False, self.scale_polygon(self.points))
