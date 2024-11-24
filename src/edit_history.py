@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import gi
@@ -39,7 +40,6 @@ class HistoryDialog(Gtk.Window):
 
         self.is_modified: bool = False
 
-        # Create a ListStore model
         self.model: Gio.ListStore = Gio.ListStore.new(item_type=History)
 
         for hist in self.parent.acbf_document.history:
@@ -64,23 +64,16 @@ class HistoryDialog(Gtk.Window):
         name_factory.connect("setup", self.setup_name_column)
         name_factory.connect("bind", self.bind_name_column)
         name_factory.connect("unbind", self.unbind_name_column)
-        name_column = Gtk.ColumnViewColumn(
-            title="History",
-            factory=name_factory,
-        )
+        name_column = Gtk.ColumnViewColumn(title="History", factory=name_factory)
         name_column.set_expand(True)
         name_column.set_resizable(True)
         column_view.append_column(name_column)
 
-        # Add delete button column
         delete_factory = Gtk.SignalListItemFactory()
         delete_factory.connect("setup", self.setup_delete_column)
         delete_factory.connect("bind", self.bind_delete_column)
         delete_factory.connect("unbind", self.unbind_delete_column)
-        delete_column = Gtk.ColumnViewColumn(
-            title="Delete",
-            factory=delete_factory,
-        )
+        delete_column = Gtk.ColumnViewColumn(title="Delete", factory=delete_factory)
         column_view.append_column(delete_column)
 
         self.connect("close-request", self.save_and_exit)
@@ -91,9 +84,7 @@ class HistoryDialog(Gtk.Window):
         list_item.set_child(entry)
 
     def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
-        button: Gtk.Button = Gtk.Button.new_from_icon_name(
-            "edit-delete-symbolic",
-        )
+        button: Gtk.Button = Gtk.Button.new_from_icon_name("edit-delete-symbolic")
         list_item.set_child(button)
 
     def bind_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:

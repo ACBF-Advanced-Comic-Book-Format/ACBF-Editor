@@ -1,8 +1,21 @@
 """main.py - Main window.
 
 Copyright (C) 2011-2019 Robert Kubik
-https://launchpad.net/~just-me
+https://github.com/GeoRW/ACBF-Editor
 """
+# -------------------------------------------------------------------------
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# -------------------------------------------------------------------------
 
 from __future__ import annotations
 
@@ -52,19 +65,7 @@ from PIL import Image
 
 if TYPE_CHECKING:
     from pathlib import Path
-# -------------------------------------------------------------------------
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as published
-# by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# -------------------------------------------------------------------------
+
 
 logger = logging.getLogger("acbf_editor")
 logger.setLevel(logging.DEBUG)
@@ -82,26 +83,17 @@ class MainWindow(Gtk.ApplicationWindow):
     ):
         super().__init__(application=application)
         self.app: Gtk.Application = application
-        # Preferences
         self.preferences = preferences.Preferences()
         self._window = self
         self.font_idx = 0
-
-        # Start variables
         self.is_modified: bool = False
-
         self.original_filename: str
         self.original_file_size: float = 1
         self.file_list: list[Path] | None = None
 
         # check if custom temp dir is defined
         # TODO use tempfile
-        self.tempdir_root = str(
-            os.path.join(
-                self.preferences.get_value("tmpfs_dir"),
-                "acbfe",
-            ),
-        )
+        self.tempdir_root = str(os.path.join(self.preferences.get_value("tmpfs_dir"), "acbfe"))
         if self.preferences.get_value("tmpfs") != "False":
             print("Temporary directory override set to: " + self.tempdir_root)
         else:
@@ -119,32 +111,17 @@ class MainWindow(Gtk.ApplicationWindow):
         self.filename = ""
         if open_path is None:
             pass
-            # self.filename = "/home/whale/Work/ACBF/trunk/xSample Comic Book/Doctorow, Cory - Craphound.acbf"
-            # self.original_filename = self.filename
         else:
             if output_file is None:
-                prepared_file = fileprepare.FilePrepare(
-                    self,
-                    open_path,
-                    self.tempdir,
-                    True,
-                )
+                prepared_file = fileprepare.FilePrepare(self, open_path, self.tempdir, True)
             else:
-                prepared_file = fileprepare.FilePrepare(
-                    self,
-                    open_path,
-                    self.tempdir,
-                    False,
-                )
+                prepared_file = fileprepare.FilePrepare(self, open_path, self.tempdir, False)
             self.filename = prepared_file.filename
             self.file_list = prepared_file.file_list
             self.original_filename = open_path if open_path is not None else ""
 
         try:
-            self.original_file_size = round(
-                float(os.path.getsize(self.original_filename)) / 1024 / 1024,
-                2,
-            )
+            self.original_file_size = round(float(os.path.getsize(self.original_filename)) / 1024 / 1024, 2)
         except Exception:
             self.original_file_size = 1
 
@@ -183,29 +160,19 @@ class MainWindow(Gtk.ApplicationWindow):
                         if int(value) > 0 and int(value) < 101:
                             convert_quality = int(value)
                         else:
-                            raise ValueError(
-                                "Image quality must be an integer between 0 and 100.",
-                            )
+                            raise ValueError("Image quality must be an integer between 0 and 100.")
                     except Exception:
                         print("")
-                        print(
-                            "Error: Image quality must be an integer between 0 and 100.",
-                        )
+                        print("Error: Image quality must be an integer between 0 and 100.")
                         self.exit_program()
                 if opt in ("-r", "--resize"):
                     if re.match("[0-9]*x[0-9]*[<>]", value) is not None:
                         resize_geometry = value
                     else:
                         print("")
-                        print(
-                            "Error: Image geometry must be in format [width]x[height][flag].",
-                        )
-                        print(
-                            "[width] and [height] defines target image size as integer.",
-                        )
-                        print(
-                            "[flag] defines wheather to shrink (>) or enlarge (<) target image.",
-                        )
+                        print("Error: Image geometry must be in format [width]x[height][flag].")
+                        print("[width] and [height] defines target image size as integer.")
+                        print("[flag] defines wheather to shrink (>) or enlarge (<) target image.")
                         self.exit_program()
                 if opt in ("-l", "--filter"):
                     if value.upper() not in (
@@ -256,12 +223,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.all_langs: Gio.ListStore = Gio.ListStore.new(Language)
         for iso_lang in isocodes.languages.items:
             if iso_lang.get("alpha_2", ""):
-                self.all_langs.append(
-                    Language(
-                        lang_iso=iso_lang["alpha_2"],
-                        lang=iso_lang["name"],
-                    ),
-                )
+                self.all_langs.append(Language(lang_iso=iso_lang["alpha_2"], lang=iso_lang["name"]))
 
         self.all_lang_store: Gio.ListStore = Gio.ListStore.new(Language)
 
@@ -338,25 +300,16 @@ class MainWindow(Gtk.ApplicationWindow):
         header = Gtk.HeaderBar()
         self.set_titlebar(header)
         header.pack_start(self.hamburger)
-        open_button: Gtk.Button = Gtk.Button.new_from_icon_name(
-            "document-open-symbolic",
-        )
+        open_button: Gtk.Button = Gtk.Button.new_from_icon_name("document-open-symbolic")
         open_button.set_tooltip_text("Open file")
         header.pack_start(open_button)
         open_button.connect("clicked", self.open_file)
-        self.save_button: Gtk.Button = Gtk.Button.new_from_icon_name(
-            "document-save-symbolic",
-        )
+        self.save_button: Gtk.Button = Gtk.Button.new_from_icon_name("document-save-symbolic")
         self.save_button.set_tooltip_text("Save file")
         header.pack_start(self.save_button)
         self.save_button.connect("clicked", self.save_file)
 
-        self.lang_button: Gtk.DropDown = self.create_lang_dropdown(
-            self.lang_store,
-            self.change_language,
-        )
-        # self.update_languages()
-        # self.lang_button: Gtk.DropDown = self.create_lang_dropdown(self.acbf_document.languages, self.change_language)
+        self.lang_button: Gtk.DropDown = self.create_lang_dropdown(self.lang_store, self.change_language)
 
         header.pack_start(self.lang_button)
 
@@ -365,7 +318,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         cover_page_button = Gtk.Button()
         cover_page_button.set_has_frame(False)
-        # cover_page_button.add_css_class("destructive-action")
+
         # CSS to remove hover outline
         css_provider = Gtk.CssProvider()
         css = """
@@ -405,7 +358,6 @@ class MainWindow(Gtk.ApplicationWindow):
         tab.attach(label, 0, 0, 1, 1)
         self.book_title = Gtk.Entry()
         self.book_title.set_hexpand(True)
-        # self.book_title.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
         self.book_title.connect("changed", self.entry_changed)
         tab.attach(self.book_title, 1, 0, 1, 1)
 
@@ -414,18 +366,11 @@ class MainWindow(Gtk.ApplicationWindow):
         label.set_xalign(1)
         tab.attach(label, 0, 1, 1, 1)
         self.authors: Gtk.Entry = Gtk.Entry()
-        # self.authors.set_ellipsize(3)
         self.authors.set_editable(False)
         self.authors.set_can_focus(False)
-        self.authors.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
+        self.authors.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
         self.authors.set_icon_sensitive(Gtk.EntryIconPosition.SECONDARY, True)
-        self.authors.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.authors.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.authors.connect("icon-press", self.edit_authors)
         tab.attach(self.authors, 1, 1, 1, 1)
 
@@ -436,14 +381,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.series: Gtk.Entry = Gtk.Entry()
         self.series.set_can_focus(False)
         self.series.set_editable(False)
-        self.series.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
-        self.series.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.series.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
+        self.series.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.series.connect("icon-press", self.edit_series)
         tab.attach(self.series, 1, 2, 1, 1)
 
@@ -454,14 +393,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.genres: Gtk.Entry = Gtk.Entry()
         self.genres.set_can_focus(False)
         self.genres.set_editable(False)
-        self.genres.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
-        self.genres.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.genres.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
+        self.genres.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.genres.connect("icon-press", self.edit_genres)
         tab.attach(self.genres, 1, 3, 1, 1)
 
@@ -472,14 +405,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.characters: Gtk.Entry = Gtk.Entry()
         self.characters.set_editable(False)
         self.characters.set_can_focus(False)
-        self.characters.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
-        self.characters.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.characters.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
+        self.characters.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.characters.connect("icon-press", self.edit_characters)
         tab.attach(self.characters, 1, 4, 1, 1)
 
@@ -491,14 +418,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.annotation.set_editable(False)
         # self.annotation.set_can_focus(False)
         # self.annotation.set_
-        self.annotation.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
-        self.annotation.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.annotation.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
+        self.annotation.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.annotation.connect("icon-press", self.edit_annotation)
         tab.attach(self.annotation, 1, 5, 1, 1)
 
@@ -509,14 +430,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.keywords: Gtk.Entry = Gtk.Entry()
         self.keywords.set_editable(False)
         self.keywords.set_can_focus(False)
-        self.keywords.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "tag-symbolic",
-        )
-        self.keywords.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.keywords.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "tag-symbolic")
+        self.keywords.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.keywords.connect("icon-press", self.edit_keywords)
         tab.attach(self.keywords, 1, 6, 1, 1)
 
@@ -527,14 +442,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.languages: Gtk.Entry = Gtk.Entry()
         self.languages.set_editable(False)
         self.languages.set_can_focus(False)
-        self.languages.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "language-chooser-symbolic",
-        )
-        self.languages.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.languages.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "language-chooser-symbolic")
+        self.languages.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.languages.connect("icon-press", self.edit_languages)
         tab.attach(self.languages, 1, 7, 1, 1)
 
@@ -545,14 +454,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.databaseref: Gtk.Entry = Gtk.Entry()
         self.databaseref.set_editable(False)
         self.databaseref.set_can_focus(False)
-        self.databaseref.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
-        self.databaseref.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.databaseref.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
+        self.databaseref.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.databaseref.connect("icon-press", self.edit_dbref)
         tab.attach(self.databaseref, 1, 8, 1, 1)
 
@@ -563,14 +466,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.rating: Gtk.Entry = Gtk.Entry()
         self.rating.set_editable(False)
         self.rating.set_can_focus(False)
-        self.rating.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
-        self.rating.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.rating.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
+        self.rating.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.rating.connect("icon-press", self.edit_ratings)
         tab.attach(self.rating, 1, 9, 1, 1)
 
@@ -578,13 +475,7 @@ class MainWindow(Gtk.ApplicationWindow):
         label = Gtk.Label.new("Reading Direction:")
         label.set_xalign(1)
         tab.attach(label, 0, 10, 1, 1)
-        self.reading: Gtk.DropDown = Gtk.DropDown.new_from_strings(
-            [
-                "LTR",
-                "RTL",
-            ],
-        )
-        # self.reading.connect('notify::selection', self.edit_reading_direction)
+        self.reading: Gtk.DropDown = Gtk.DropDown.new_from_strings(["LTR", "RTL"])
         tab.attach(self.reading, 1, 10, 1, 1)
 
         # publish-info
@@ -599,7 +490,6 @@ class MainWindow(Gtk.ApplicationWindow):
         tab.attach(label, 0, 12, 1, 1)
         self.publisher: Gtk.Entry = Gtk.Entry()
         self.publisher.connect("changed", self.entry_changed)
-        # self.publisher.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
         tab.attach(self.publisher, 1, 12, 1, 1)
 
         # Publish Date
@@ -609,14 +499,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.publish_date: Gtk.Entry = Gtk.Entry()
         self.publish_date.set_editable(False)
         self.publish_date.set_can_focus(False)
-        self.publish_date.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "view-calendar-symbolic",
-        )
-        self.publish_date.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.publish_date.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "view-calendar-symbolic")
+        self.publish_date.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.publish_date.connect("icon-press", self.edit_publish_date)
         tab.attach(self.publish_date, 1, 13, 1, 1)
 
@@ -626,7 +510,6 @@ class MainWindow(Gtk.ApplicationWindow):
         tab.attach(label, 0, 14, 1, 1)
         self.city: Gtk.Entry = Gtk.Entry()
         self.city.connect("changed", self.entry_changed)
-        # self.city.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
         tab.attach(self.city, 1, 14, 1, 1)
 
         # ISBN
@@ -635,7 +518,6 @@ class MainWindow(Gtk.ApplicationWindow):
         tab.attach(label, 0, 15, 1, 1)
         self.isbn: Gtk.Entry = Gtk.Entry()
         self.isbn.connect("changed", self.entry_changed)
-        # self.isbn.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
         tab.attach(self.isbn, 1, 15, 1, 1)
 
         # License
@@ -644,7 +526,6 @@ class MainWindow(Gtk.ApplicationWindow):
         tab.attach(label, 0, 16, 1, 1)
         self.license: Gtk.Entry = Gtk.Entry()
         self.license.connect("changed", self.entry_changed)
-        # self.license.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
         tab.attach(self.license, 1, 16, 1, 1)
 
         # document-info
@@ -669,14 +550,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.doc_author: Gtk.Entry = Gtk.Entry()
         self.doc_author.set_editable(False)
         self.doc_author.set_can_focus(False)
-        self.doc_author.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
-        self.doc_author.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.doc_author.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
+        self.doc_author.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.doc_author.connect("icon-press", self.edit_authors, True)
         tab.attach(self.doc_author, 1, 19, 1, 1)
 
@@ -687,17 +562,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.creation_date: Gtk.Entry = Gtk.Entry()
         self.creation_date.set_editable(False)
         self.creation_date.set_can_focus(False)
-        self.creation_date.set_tooltip_text(
-            "The creation date of this ACBF document",
-        )
-        self.creation_date.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "view-calendar-symbolic",
-        )
-        self.creation_date.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.creation_date.set_tooltip_text("The creation date of this ACBF document")
+        self.creation_date.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "view-calendar-symbolic")
+        self.creation_date.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.creation_date.connect("icon-press", self.edit_creation_date)
         tab.attach(self.creation_date, 1, 20, 1, 1)
 
@@ -708,14 +575,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.source: Gtk.Entry = Gtk.Entry()
         self.source.set_editable(False)
         self.source.set_can_focus(False)
-        self.source.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
-        self.source.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.source.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
+        self.source.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.source.connect("icon-press", self.edit_source)
         tab.attach(self.source, 1, 21, 1, 1)
 
@@ -733,14 +594,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.history: Gtk.Entry = Gtk.Entry()
         self.history.set_editable(False)
         self.history.set_can_focus(False)
-        self.history.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY,
-            "edit-symbolic",
-        )
-        self.history.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY,
-            "Click to edit",
-        )
+        self.history.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-symbolic")
+        self.history.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Click to edit")
         self.history.connect("icon-press", self.edit_history)
         tab.attach(self.history, 1, 23, 1, 1)
 
@@ -819,19 +674,12 @@ class MainWindow(Gtk.ApplicationWindow):
         if self.acbf_document.valid:
             try:
                 book_title = (
-                    unescape(
-                        self.acbf_document.book_title[self.lang_button.get_selected_item().lang_iso],
-                    )
-                    + book_title
+                    unescape(self.acbf_document.book_title[self.lang_button.get_selected_item().lang_iso]) + book_title
                 )
             except Exception:
                 book_title = (
                     unescape(
-                        self.acbf_document.book_title[
-                            list(
-                                self.acbf_document.book_title.items(),
-                            )[0][0]
-                        ],
+                        self.acbf_document.book_title[list(self.acbf_document.book_title.items())[0][0]],
                     )
                     + book_title
                 )
@@ -860,11 +708,7 @@ class MainWindow(Gtk.ApplicationWindow):
         for idx, page in enumerate(self.acbf_document.pages, start=1):
             in_path = os.path.join(
                 self.tempdir,
-                page.find(
-                    "image",
-                )
-                .get("href")
-                .replace("\\", "/"),
+                page.find("image").get("href").replace("\\", "/"),
             )
             in_path_short = in_path[len(self.tempdir) + 1 :]
             if im_format is None:
@@ -872,17 +716,7 @@ class MainWindow(Gtk.ApplicationWindow):
             out_path = os.path.splitext(in_path)[0] + "." + im_format.lower()
             out_path_short = out_path[len(self.tempdir) + 1 :]
             page.find("image").attrib["href"] = out_path_short
-            perc_done = (
-                str(
-                    int(
-                        round(
-                            float(idx) / float(self.acbf_document.pages_total) * 100,
-                            0,
-                        ),
-                    ),
-                ).rjust(4)
-                + "%"
-            )
+            perc_done = str(int(round(float(idx) / float(self.acbf_document.pages_total) * 100, 0))).rjust(4) + "%"
             print(perc_done, in_path_short, "->", out_path_short)
 
             # convert image
@@ -913,9 +747,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 if im_geometry is not None:
                     geometry_flag = im_geometry[-1:]
                     geometry_x = int(im_geometry[0 : im_geometry.find("x")])
-                    geometry_y = int(
-                        im_geometry[im_geometry.find("x") + 1 : -1],
-                    )
+                    geometry_y = int(im_geometry[im_geometry.find("x") + 1 : -1])
                     ratio_x = geometry_x / float(im.size[0])
                     ratio_y = geometry_y / float(im.size[1])
                     ratio = min(ratio_x, ratio_y)
@@ -945,20 +777,8 @@ class MainWindow(Gtk.ApplicationWindow):
                                 new_coord = ""
                                 for coord in text_area.get("points").split(" "):
                                     new_point = (
-                                        round(
-                                            int(
-                                                coord.split(",")[0],
-                                            )
-                                            * ratio,
-                                            0,
-                                        ),
-                                        round(
-                                            int(
-                                                coord.split(",")[1],
-                                            )
-                                            * ratio,
-                                            0,
-                                        ),
+                                        round(int(coord.split(",")[0]) * ratio, 0),
+                                        round(int(coord.split(",")[1]) * ratio, 0),
                                     )
                                     new_coord = new_coord + str(int(new_point[0])) + "," + str(int(new_point[1])) + " "
 
@@ -985,566 +805,6 @@ class MainWindow(Gtk.ApplicationWindow):
     def edit_styles(self, action: Gio.SimpleAction, _pspec: GObject.GParamSpec) -> None:
         edit_styles_dialog = edit_styles.EditStylesWindow(self)
         edit_styles_dialog.present()
-
-        """dialog = Gtk.Dialog('Edit Styles/Fonts Definitions', self,
-                            Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
-                            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OK, Gtk.ResponseType.OK))
-        dialog.set_resizable(True)
-        #        dialog.set_border_width(8)
-
-        # Create Font list
-        fonts_dir = os.path.join(self.tempdir, 'Fonts')
-        for root, dirs, files in os.walk(fonts_dir):
-            for f in files:
-                is_duplicate = False
-                if f.upper()[-4:] == '.TTF' or f.upper()[-4:] == '.OTF':
-                    for font in constants.FONTS_LIST:
-                        if f.upper() == font[0].upper():
-                            is_duplicate = True
-                    if not is_duplicate:
-                        constants.FONTS_LIST.append((f.replace('.ttf', '').replace('.TTF', '').replace('.otf',
-                                                                                                       '').replace(
-                            '.OTF', ''), os.path.join(root, f)))
-
-        # Font Styles
-        entries_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        #        entries_box.set_border_width(5)
-
-        ## Speech
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Speech (default): </tt>')
-        hbox.append(label)
-
-        self.speech_font = Gtk.Button.new_with_label()
-        self.speech_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["normal"]))[0]:
-                self.speech_font.font_idx = idx
-                break
-        self.speech_font.set_label(constants.FONTS_LIST[self.speech_font.font_idx][0])
-
-        hbox.append(self.speech_font)
-        self.speech_font.connect("clicked", self.set_speech_font)
-
-        color = Gdk.color_parse(self.acbf_document.font_colors["speech"])
-        color_button = Gtk.ColorButton(color)
-        color_button.set_title('Select Color')
-        color_button.connect("color-set", self.set_font_color, 'speech')
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Emphasis
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Emphasis:         </tt>')
-        hbox.append(label)
-
-        self.emphasis_font = Gtk.Button.new_with_label()
-        self.emphasis_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["emphasis"]))[0]:
-                self.emphasis_font.font_idx = idx
-                break
-        self.emphasis_font.set_label(constants.FONTS_LIST[self.emphasis_font.font_idx][0])
-
-        hbox.append(self.emphasis_font)
-        self.emphasis_font.connect("clicked", self.set_emphasis_font)
-
-        color_button = Gtk.ColorButton(Gdk.color_parse("#999999"))
-        color_button.set_sensitive(False)
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Strong
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Strong:           </tt>')
-        hbox.append(label)
-
-        self.strong_font = Gtk.Button.new_with_label()
-        self.strong_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["strong"]))[0]:
-                self.strong_font.font_idx = idx
-                break
-        self.strong_font.set_label(constants.FONTS_LIST[self.strong_font.font_idx][0])
-
-        hbox.append(self.strong_font)
-        self.strong_font.connect("clicked", self.set_strong_font)
-
-        color_button = Gtk.ColorButton(Gdk.color_parse("#999999"))
-        color_button.set_sensitive(False)
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Commentary
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Commentary:       </tt>')
-        hbox.append(label)
-
-        self.commentary_font = Gtk.Button.new_with_label()
-        self.commentary_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["commentary"]))[0]:
-                self.commentary_font.font_idx = idx
-                break
-        self.commentary_font.set_label(constants.FONTS_LIST[self.commentary_font.font_idx][0])
-
-        hbox.append(self.commentary_font)
-        self.commentary_font.connect("clicked", self.set_commentary_font)
-
-        color = Gdk.color_parse(self.acbf_document.font_colors["commentary"])
-        color_button = Gtk.ColorButton(color)
-        color_button.set_title('Select Color')
-        color_button.connect("color-set", self.set_font_color, 'commentary')
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Code
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Code:             </tt>')
-        hbox.append(label)
-
-        self.code_font = Gtk.Button.new_with_label()
-        self.code_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["code"]))[0]:
-                self.code_font.font_idx = idx
-                break
-        self.code_font.set_label(constants.FONTS_LIST[self.code_font.font_idx][0])
-
-        hbox.append(self.code_font)
-        self.code_font.connect("clicked", self.set_code_font)
-
-        color = Gdk.color_parse(self.acbf_document.font_colors["code"])
-        color_button = Gtk.ColorButton(color)
-        color_button.set_title('Select Color')
-        color_button.connect("color-set", self.set_font_color, 'code')
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Formal
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Formal:           </tt>')
-        hbox.append(label)
-
-        self.formal_font = Gtk.Button.new_with_label()
-        self.formal_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["formal"]))[0]:
-                self.formal_font.font_idx = idx
-                break
-        self.formal_font.set_label(constants.FONTS_LIST[self.formal_font.font_idx][0])
-
-        hbox.append(self.formal_font)
-        self.formal_font.connect("clicked", self.set_formal_font)
-
-        color = Gdk.color_parse(self.acbf_document.font_colors["formal"])
-        color_button = Gtk.ColorButton(color)
-        color_button.set_title('Select Color')
-        color_button.connect("color-set", self.set_font_color, 'formal')
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Letter
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Letter:           </tt>')
-        hbox.append(label)
-
-        self.letter_font = Gtk.Button.new_with_label()
-        self.letter_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["letter"]))[0]:
-                self.letter_font.font_idx = idx
-                break
-        self.letter_font.set_label(constants.FONTS_LIST[self.letter_font.font_idx][0])
-
-        hbox.append(self.letter_font)
-        self.letter_font.connect("clicked", self.set_letter_font)
-
-        color = Gdk.color_parse(self.acbf_document.font_colors["letter"])
-        color_button = Gtk.ColorButton(color)
-        color_button.set_title('Select Color')
-        color_button.connect("color-set", self.set_font_color, 'letter')
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Heading
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Heading:          </tt>')
-        hbox.append(label)
-
-        self.heading_font = Gtk.Button.new_with_label()
-        self.heading_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["heading"]))[0]:
-                self.heading_font.font_idx = idx
-                break
-        self.heading_font.set_label(constants.FONTS_LIST[self.heading_font.font_idx][0])
-
-        hbox.append(self.heading_font)
-        self.heading_font.connect("clicked", self.set_heading_font)
-
-        color = Gdk.color_parse(self.acbf_document.font_colors["heading"])
-        color_button = Gtk.ColorButton(color)
-        color_button.set_title('Select Color')
-        color_button.connect("color-set", self.set_font_color, 'heading')
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Audio
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Audio:            </tt>')
-        hbox.append(label)
-
-        self.audio_font = Gtk.Button.new_with_label()
-        self.audio_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["audio"]))[0]:
-                self.audio_font.font_idx = idx
-                break
-        self.audio_font.set_label(constants.FONTS_LIST[self.audio_font.font_idx][0])
-
-        hbox.append(self.audio_font)
-        self.audio_font.connect("clicked", self.set_audio_font)
-
-        color = Gdk.color_parse(self.acbf_document.font_colors["audio"])
-        color_button = Gtk.ColorButton(color)
-        color_button.set_title('Select Color')
-        color_button.connect("color-set", self.set_font_color, 'audio')
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Thought
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Thought:          </tt>')
-        hbox.append(label)
-
-        self.thought_font = Gtk.Button.new_with_label()
-        self.thought_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["thought"]))[0]:
-                self.thought_font.font_idx = idx
-                break
-        self.thought_font.set_label(constants.FONTS_LIST[self.thought_font.font_idx][0])
-
-        hbox.append(self.thought_font)
-        self.thought_font.connect("clicked", self.set_thought_font)
-
-        color = Gdk.color_parse(self.acbf_document.font_colors["thought"])
-        color_button = Gtk.ColorButton(color)
-        color_button.set_title('Select Color')
-        color_button.connect("color-set", self.set_font_color, 'thought')
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        ## Sign
-        hbox = Gtk.HBox(True, 0)
-
-        label = Gtk.Label()
-        label.set_markup('<tt>Sign:             </tt>')
-        hbox.append(label)
-
-        self.sign_font = Gtk.Button.new_with_label()
-        self.sign_font.font_idx = 0
-        for idx, font in enumerate(constants.FONTS_LIST, start=0):
-            if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["sign"]))[0]:
-                self.sign_font.font_idx = idx
-                break
-        self.sign_font.set_label(constants.FONTS_LIST[self.sign_font.font_idx][0])
-
-        hbox.append(self.sign_font)
-        self.sign_font.connect("clicked", self.set_sign_font)
-
-        color = Gdk.color_parse(self.acbf_document.font_colors["sign"])
-        color_button = Gtk.ColorButton(color)
-        color_button.set_title('Select Color')
-        color_button.connect("color-set", self.set_font_color, 'sign')
-        hbox.append(color_button)
-
-        hbox.show_all()
-        entries_box.append(hbox)
-
-        # show it
-        dialog.vbox.append(entries_box)
-        dialog.show_all()
-        response = dialog.run()
-
-        if response == Gtk.ResponseType.OK:
-            self.is_modified = True
-            style = ''
-
-            if self.speech_font.font_idx > 0:
-                self.acbf_document.font_styles["normal"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.speech_font.font_idx][1]))
-                style = 'text-area {font-family: "' + os.path.basename(self.acbf_document.font_styles["normal"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.speech_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.speech_font.font_idx][1],
-                                    self.acbf_document.font_styles["normal"])
-                style = style + 'color: "' + self.acbf_document.font_colors["speech"] + '";}\n'
-            if self.emphasis_font.font_idx > 0:
-                self.acbf_document.font_styles["emphasis"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.emphasis_font.font_idx][1]))
-                style = style + 'emphasis {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["emphasis"]) + '";}\n'
-                if not os.path.isfile(os.path.join(fonts_dir, os.path.basename(
-                        constants.FONTS_LIST[self.emphasis_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.emphasis_font.font_idx][1],
-                                    self.acbf_document.font_styles["emphasis"])
-            if self.strong_font.font_idx > 0:
-                self.acbf_document.font_styles["strong"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.strong_font.font_idx][1]))
-                style = style + 'strong {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["strong"]) + '";}\n'
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.strong_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.strong_font.font_idx][1],
-                                    self.acbf_document.font_styles["strong"])
-            if self.commentary_font.font_idx > 0:
-                self.acbf_document.font_styles["commentary"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.commentary_font.font_idx][1]))
-                style = style + 'text-area[type=commentary] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["commentary"]) + '"; '
-                if not os.path.isfile(os.path.join(fonts_dir, os.path.basename(
-                        constants.FONTS_LIST[self.commentary_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.commentary_font.font_idx][1],
-                                    self.acbf_document.font_styles["commentary"])
-                style = style + 'color: "' + self.acbf_document.font_colors["commentary"] + '";}\n'
-            if self.code_font.font_idx > 0:
-                self.acbf_document.font_styles["code"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.code_font.font_idx][1]))
-                style = style + 'text-area[type=code] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["code"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.code_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.code_font.font_idx][1],
-                                    self.acbf_document.font_styles["code"])
-                style = style + 'color: "' + self.acbf_document.font_colors["code"] + '";}\n'
-            if self.formal_font.font_idx > 0:
-                self.acbf_document.font_styles["formal"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.formal_font.font_idx][1]))
-                style = style + 'text-area[type=formal] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["formal"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.formal_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.formal_font.font_idx][1],
-                                    self.acbf_document.font_styles["formal"])
-                style = style + 'color: "' + self.acbf_document.font_colors["formal"] + '";}\n'
-            if self.letter_font.font_idx > 0:
-                self.acbf_document.font_styles["letter"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.letter_font.font_idx][1]))
-                style = style + 'text-area[type=letter] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["letter"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.letter_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.letter_font.font_idx][1],
-                                    self.acbf_document.font_styles["letter"])
-                style = style + 'color: "' + self.acbf_document.font_colors["letter"] + '";}\n'
-            if self.heading_font.font_idx > 0:
-                self.acbf_document.font_styles["heading"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.heading_font.font_idx][1]))
-                style = style + 'text-area[type=heading] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["heading"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.heading_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.heading_font.font_idx][1],
-                                    self.acbf_document.font_styles["heading"])
-                style = style + 'color: "' + self.acbf_document.font_colors["heading"] + '";}\n'
-            if self.audio_font.font_idx > 0:
-                self.acbf_document.font_styles["audio"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.audio_font.font_idx][1]))
-                style = style + 'text-area[type=audio] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["audio"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.audio_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.audio_font.font_idx][1],
-                                    self.acbf_document.font_styles["audio"])
-                style = style + 'color: "' + self.acbf_document.font_colors["audio"] + '";}\n'
-            if self.thought_font.font_idx > 0:
-                self.acbf_document.font_styles["thought"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.thought_font.font_idx][1]))
-                style = style + 'text-area[type=thought] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["thought"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.thought_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.thought_font.font_idx][1],
-                                    self.acbf_document.font_styles["thought"])
-                style = style + 'color: "' + self.acbf_document.font_colors["thought"] + '";}\n'
-            if self.sign_font.font_idx > 0:
-                self.acbf_document.font_styles["sign"] = os.path.join(fonts_dir, os.path.basename(
-                    constants.FONTS_LIST[self.sign_font.font_idx][1]))
-                style = style + 'text-area[type=sign] {font-family: "' + os.path.basename(
-                    self.acbf_document.font_styles["sign"]) + '"; '
-                if not os.path.isfile(
-                        os.path.join(fonts_dir, os.path.basename(constants.FONTS_LIST[self.sign_font.font_idx][1]))):
-                    shutil.copyfile(constants.FONTS_LIST[self.sign_font.font_idx][1],
-                                    self.acbf_document.font_styles["sign"])
-                style = style + 'color: "' + self.acbf_document.font_colors["sign"] + '";}\n'
-
-            # print style
-            if style != '':
-                try:
-                    self.acbf_document.tree.find("style").text = style
-                except Exception:
-                    element = xml.SubElement(self.acbf_document.tree.getroot(), "style", type="text/css")
-                    element.text = str(style)
-
-            # delete unused files
-            for root, dirs, files in os.walk(fonts_dir):
-                for f in files:
-                    if f.upper()[-4:] == '.TTF' or f.upper()[-4:] == '.OTF':
-                        if os.path.join(root, f) not in list(self.acbf_document.font_styles.values()):
-                            os.remove(os.path.join(root, f))
-
-        dialog.destroy()
-        return"""
-
-    """def set_font_color(self, widget, style):
-        font_color = widget.get_color().to_string()
-        if len(font_color) == 13:
-            font_color = '#' + font_color[1:3] + \
-                font_color[5:7] + font_color[9:11]
-        self.acbf_document.font_colors[style] = font_color
-        self.isChanged = True
-        return True"""
-
-    """def set_speech_font(self, widget):
-        self.font_idx = self.speech_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Speech Font', self.speech_font.font_idx,
-        )
-        self.speech_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.speech_font.font_idx = self.font_idx
-        return True
-
-    def set_commentary_font(self, widget):
-        self.font_idx = self.commentary_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Commentary Font', self.commentary_font.font_idx,
-        )
-        self.commentary_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.commentary_font.font_idx = self.font_idx
-        return True
-
-    def set_code_font(self, widget):
-        self.font_idx = self.code_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Code Font', self.code_font.font_idx,
-        )
-        self.code_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.code_font.font_idx = self.font_idx
-        return True
-
-    def set_formal_font(self, widget):
-        self.font_idx = self.formal_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Formal Font', self.formal_font.font_idx,
-        )
-        self.formal_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.formal_font.font_idx = self.font_idx
-        return True
-
-    def set_letter_font(self, widget):
-        self.font_idx = self.letter_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Formal Font', self.letter_font.font_idx,
-        )
-        self.letter_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.letter_font.font_idx = self.font_idx
-        return True
-
-    def set_heading_font(self, widget):
-        self.font_idx = self.heading_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Heading Font', self.heading_font.font_idx,
-        )
-        self.heading_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.heading_font.font_idx = self.font_idx
-        return True
-
-    def set_audio_font(self, widget):
-        self.font_idx = self.audio_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Audio Font', self.audio_font.font_idx,
-        )
-        self.audio_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.audio_font.font_idx = self.font_idx
-        return True
-
-    def set_thought_font(self, widget):
-        self.font_idx = self.thought_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Thought Font', self.thought_font.font_idx,
-        )
-        self.thought_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.thought_font.font_idx = self.font_idx
-        return True
-
-    def set_sign_font(self, widget):
-        self.font_idx = self.sign_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Sign Font', self.sign_font.font_idx,
-        )
-        self.sign_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.sign_font.font_idx = self.font_idx
-        return True
-
-    def set_emphasis_font(self, widget):
-        self.font_idx = self.emphasis_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Emphasis Font', self.emphasis_font.font_idx,
-        )
-        self.emphasis_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.emphasis_font.font_idx = self.font_idx
-        return True
-
-    def set_strong_font(self, widget):
-        self.font_idx = self.strong_font.font_idx
-        self.font_dialog = fontselectiondialog.FontSelectionDialog(
-            self, 'Strong Font', self.strong_font.font_idx,
-        )
-        self.strong_font.set_label(constants.FONTS_LIST[self.font_idx][0])
-        self.strong_font.font_idx = self.font_idx
-        return True"""
 
     def edit_cover(self, widget: Gtk.Button) -> None:
         dialog = cover_picker.CoverDialog(self)
@@ -1596,9 +856,7 @@ class MainWindow(Gtk.ApplicationWindow):
         )
 
     def char_widget_update(self) -> None:
-        self.characters.set_placeholder_text(
-            ", ".join(sorted(self.acbf_document.characters)),
-        )
+        self.characters.set_placeholder_text(", ".join(sorted(self.acbf_document.characters)))
 
     def sources_widget_update(self) -> None:
         self.source.set_placeholder_text(", ".join(self.acbf_document.sources))
@@ -1609,21 +867,13 @@ class MainWindow(Gtk.ApplicationWindow):
         )
 
     def rating_widget_update(self) -> None:
-        self.rating.set_placeholder_text(
-            ", ".join(
-                [f"{r[0]} - {r[1]}" for r in self.acbf_document.content_ratings],
-            ),
-        )
+        self.rating.set_placeholder_text(", ".join([f"{r[0]} - {r[1]}" for r in self.acbf_document.content_ratings]))
 
     def series_widget_update(self) -> None:
-        self.series.set_placeholder_text(
-            ", ".join([s[0] for s in self.acbf_document.sequences]),
-        )
+        self.series.set_placeholder_text(", ".join([s[0] for s in self.acbf_document.sequences]))
 
     def keywords_widget_update(self) -> None:
-        self.keywords.set_placeholder_text(
-            ", ".join(sorted(self.acbf_document.keywords)),
-        )
+        self.keywords.set_placeholder_text(", ".join(sorted(self.acbf_document.keywords)))
 
     def dbref_widget_update(self) -> None:
         dbnames = []
@@ -1645,9 +895,7 @@ class MainWindow(Gtk.ApplicationWindow):
         authors_text = []
         for authors in self.acbf_document.authors:
             if authors.get("first_name"):
-                authors_text.append(
-                    authors["first_name"] + " " + authors.get("last_name", ""),
-                )
+                authors_text.append(authors["first_name"] + " " + authors.get("last_name", ""))
             elif authors.get("nickname"):
                 authors_text.append(authors["nickname"])
 
@@ -1657,9 +905,7 @@ class MainWindow(Gtk.ApplicationWindow):
         authors_text = []
         for authors in self.acbf_document.doc_authors:
             if authors.get("first_name"):
-                authors_text.append(
-                    authors["first_name"] + " " + authors.get("last_name", ""),
-                )
+                authors_text.append(authors["first_name"] + " " + authors.get("last_name", ""))
             elif authors.get("nickname"):
                 authors_text.append(authors["nickname"])
 
@@ -1702,12 +948,7 @@ class MainWindow(Gtk.ApplicationWindow):
         anno_text.set_margin_bottom(5)
         anno_text.set_wrap_mode(Gtk.WrapMode.WORD)
         anno_text.get_buffer().set_text(
-            unescape(
-                self.acbf_document.annotation.get(
-                    self.lang_button.get_selected_item().lang_iso,
-                    "",
-                ),
-            ),
+            unescape(self.acbf_document.annotation.get(self.lang_button.get_selected_item().lang_iso, "")),
         )
         old_text = anno_text.get_buffer().get_text(
             anno_text.get_buffer().get_bounds()[0],
@@ -1724,14 +965,10 @@ class MainWindow(Gtk.ApplicationWindow):
         calendar = Gtk.Calendar()
 
         try:
-            calendar_date = GLib.DateTime.new_from_iso8601(
-                self.publish_date.get_text() + "T00:00:00Z",
-            )
+            calendar_date = GLib.DateTime.new_from_iso8601(self.publish_date.get_text() + "T00:00:00Z")
         except Exception as e:
             calendar_date = GLib.DateTime.new_now_local()
-            logger.warning(
-                f"Failed to parse date: {self.publish_date.get_text()} with error: {e}",
-            )
+            logger.warning(f"Failed to parse date: {self.publish_date.get_text()} with error: {e}")
 
         calendar.select_day(calendar_date)
         calendar.connect("day-selected", self.update_publish_date_entry)
@@ -1746,14 +983,10 @@ class MainWindow(Gtk.ApplicationWindow):
         calendar = Gtk.Calendar()
 
         try:
-            calendar_date = GLib.DateTime.new_from_iso8601(
-                self.creation_date.get_text() + "T00:00:00Z",
-            )
+            calendar_date = GLib.DateTime.new_from_iso8601(self.creation_date.get_text() + "T00:00:00Z")
         except Exception as e:
             calendar_date = GLib.DateTime.new_now_local()
-            logger.warning(
-                f"Failed to parse date: {self.creation_date.get_text()} with error: {e}",
-            )
+            logger.warning(f"Failed to parse date: {self.creation_date.get_text()} with error: {e}")
 
         calendar.select_day(calendar_date)
         calendar.connect("day-selected", self.update_creation_date_entry)
@@ -1778,9 +1011,7 @@ class MainWindow(Gtk.ApplicationWindow):
             book_title = ""
             if self.acbf_document.valid:
                 try:
-                    book_title = unescape(
-                        self.book_title_list[self.lang_button.get_selected_item().lang_iso],
-                    )
+                    book_title = unescape(self.book_title_list[self.lang_button.get_selected_item().lang_iso])
                 except Exception:
                     try:
                         book_title = unescape(self.book_title_list["en"])
@@ -1834,10 +1065,7 @@ class MainWindow(Gtk.ApplicationWindow):
         """Triggered from open (async) dialog"""
         if self.filename_before != self.filename:
             try:
-                self.acbf_document = acbfdocument.ACBFDocument(
-                    self,
-                    self.filename,
-                )
+                self.acbf_document = acbfdocument.ACBFDocument(self, self.filename)
             except Exception as e:
                 logger.error(e)
 
@@ -1870,13 +1098,10 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.set_program_name("ACBF Editor")
         dialog.set_version(constants.VERSION)
         dialog.set_license_type(Gtk.License(Gtk.License.GPL_3_0))
-        dialog.set_comments(
-            "ACBF Editor is a tool to create and edit Advanced Comic Book Format files",
-        )
-        dialog.set_website("http://launchpad.net/acbf")
+        dialog.set_comments("ACBF Editor is a tool to create and edit Advanced Comic Book Format files")
+        dialog.set_website("https://github.com/GeoRW/ACBF-Editor")
         dialog.add_credit_section("Creator", ["Robert Kubik"])
         dialog.add_credit_section("Developer(s)", ["mizaki"])
-        # dialog.set_translator_credits("Name1 url")
         dialog.set_copyright("© 2013-2019 Robert Kubik")
         dialog.set_logo(logo)
 
@@ -1956,21 +1181,12 @@ class MainWindow(Gtk.ApplicationWindow):
 
         try:
             # create tree with namespace
-            tree = xml.Element(
-                "ACBF",
-                xmlns="http://www.acbf.info/xml/acbf/1.1",
-            )
+            tree = xml.Element("ACBF", xmlns="http://www.acbf.info/xml/acbf/1.1")
             for element in self.acbf_document.tree.getroot():
                 tree.append(deepcopy(element))
 
             with open(os.path.join(self.tempdir, os.path.basename(self.filename)), "wb") as f:
-                f.write(
-                    xml.tostring(
-                        tree,
-                        pretty_print=True,
-                        xml_declaration=True,
-                    ),
-                )
+                f.write(xml.tostring(tree, pretty_print=True, xml_declaration=True))
 
             tree = None
 
@@ -1985,18 +1201,10 @@ class MainWindow(Gtk.ApplicationWindow):
                             progress_bar.set_fraction(fraction)
                         filename = os.path.join(root, str(file))
                         if os.path.isfile(filename):  # regular files only
-                            arcname = os.path.join(
-                                os.path.relpath(root, self.tempdir),
-                                str(file),
-                            )
+                            arcname = os.path.join(os.path.relpath(root, self.tempdir), str(file))
                             zip.write(filename, arcname)
 
-            # print self.original_filename, self.filename, return_filename
-            # print xml.tostring(self.acbf_document.tree, pretty_print=True)
-            output_file_size = round(
-                float(os.path.getsize(output_file)) / 1024 / 1024,
-                2,
-            )
+            output_file_size = round(float(os.path.getsize(output_file)) / 1024 / 1024, 2)
             if not self.is_cmd_line:
                 progress_dialog.close()
             else:
@@ -2016,33 +1224,13 @@ class MainWindow(Gtk.ApplicationWindow):
             if not self.is_cmd_line:
                 progress_dialog.close()
                 message = Gtk.AlertDialog()
-                message.set_message(
-                    "Failed to save comic book.\n\n" + "Exception: %s" % e,
-                )
+                message.set_message("Failed to save comic book.\n\n" + "Exception: %s" % e)
                 logger.error(f"Failed to save comic book. Exception: {e}")
                 message.show()
             else:
                 logger.error(f"Failed to save comic book. Exception: {e}")
 
         logger.info("Done")
-
-    """def add_element(self, element: xml.Element, sub_element: str, text: str) -> None:
-        if text is not None and text != '':
-            new_element = xml.SubElement(element, sub_element)
-            new_element.text = str(text)
-
-    def modify_element(self, path: str, value: str) -> None:
-        element_name = path.split('/')[-1]
-        element_path = path[: len(path) - len(path.split('/')[-1]) - 1]
-        element = self.acbf_document.tree.find(path)
-
-        if element is None:
-            element = xml.SubElement(
-                self.acbf_document.tree.find(element_path), element_name,
-            )
-        element.text = str(value)
-
-        return"""
 
     def entry_changed(self, widget: Gtk.Entry) -> None:
         self.modified()
@@ -2058,12 +1246,10 @@ class MainWindow(Gtk.ApplicationWindow):
             if response == 2:
                 self.disconnect_by_func(self.terminate_program)
                 self.exit_program()
-                # self.close()
             elif response == 1:
                 self.disconnect_by_func(self.terminate_program)
                 self.save_as_file("")
                 self.exit_program()
-                # self.close()
             else:
                 pass
 
@@ -2111,11 +1297,6 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def pil_to_pixbuf(self, PILImage: Image) -> GdkPixbuf:
         # Parse the background color to get the RGB values
-        """bcolor = Gdk.RGBA()
-        bcolor.parse(BGColor)
-        bcolor = (int(bcolor.red * 255), int(bcolor.green * 255), int(bcolor.blue * 255))
-        """
-
         try:
             PILImage = PILImage.convert("RGBA")
 
@@ -2133,27 +1314,6 @@ class MainWindow(Gtk.ApplicationWindow):
                 w * 4,
             )
             return pix
-            # Convert PIL image to RGBA format
-            """PILImage = PILImage.convert("RGBA")
-
-            # Create a new background image with the specified color
-            bg = Image.new("RGBA", PILImage.size, bcolor)
-
-            # Composite the PIL image onto the background
-            bg.paste(PILImage, (0, 0), PILImage)
-
-            # Convert the composite image to PPM format and load into GdkPixbuf
-            dummy_file = io.BytesIO()
-            bg.save(dummy_file, "ppm")
-            dummy_file.seek(0)  # Go to the start of the BytesIO buffer
-            contents = dummy_file.read()
-            dummy_file.close()
-
-            loader = GdkPixbuf.PixbufLoader.new_with_type('pnm')
-            loader.write(contents)
-            loader.close()
-            pixbuf = loader.get_pixbuf()
-            return pixbuf"""
         except Exception as e:
             print("failed to create pixbuf with alpha: ", e)
             bg = Image.new("RGBA", (150, 200), (0, 0, 0, 0))

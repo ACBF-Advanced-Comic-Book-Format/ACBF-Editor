@@ -1,15 +1,8 @@
 """preferences.py - viewer preferences (CONFIG_DIR/preferences.xml).
 
 Copyright (C) 2011-2018 Robert Kubik
-https://launchpad.net/~just-me
+https://github.com/GeoRW/ACBF-Editor
 """
-
-from __future__ import annotations
-
-import os.path
-
-import constants
-import lxml.etree as xml
 # -------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as published
@@ -24,14 +17,18 @@ import lxml.etree as xml
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
 
+from __future__ import annotations
+
+import os.path
+
+import constants
+import lxml.etree as xml
+
 
 class Preferences:
     def __init__(self) -> None:
-        self.prefs_file_path: str = os.path.join(
-            constants.CONFIG_DIR,
-            "preferences.xml",
-        )
-        self.tree: xml.Element
+        self.prefs_file_path: str = os.path.join(constants.CONFIG_DIR, "preferences.xml")
+        self.tree: xml.Element = None
         self.load_preferences()
 
     def create_new_tree(self) -> None:
@@ -42,27 +39,20 @@ class Preferences:
 
         self.check_elements()
 
-        # print self.tree.find("bg_color_override").text
-        # print(xml.tostring(self.tree, pretty_print=True))
-
     def load_preferences(self) -> None:
-        # if os.path.isfile(self.prefs_file_path):
         try:
-            # TODO change to try in case of empty file
             self.tree = xml.parse(source=self.prefs_file_path).getroot()
             self.set_value("version", constants.VERSION)
             self.check_elements()
             self.save_preferences()
         except Exception:
             self.create_new_tree()
-            f = open(self.prefs_file_path, "w")
-            f.write(xml.tostring(self.tree, encoding="unicode", pretty_print=True))
-            f.close()
+            with open(self.prefs_file_path, "w") as f:
+                f.write(xml.tostring(self.tree, encoding="unicode", pretty_print=True))
 
     def save_preferences(self) -> None:
-        f = open(self.prefs_file_path, "w")
-        f.write(xml.tostring(self.tree, encoding="unicode", pretty_print=True))
-        f.close()
+        with open(self.prefs_file_path, "w") as f:
+            f.write(xml.tostring(self.tree, encoding="unicode", pretty_print=True))
 
     def get_value(self, element: str) -> str:
         if self.tree.find(element) is not None:

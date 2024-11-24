@@ -3,6 +3,19 @@
 Copyright (C) 2011-2018 Robert Kubik
 https://launchpad.net/~just-me
 """
+# -------------------------------------------------------------------------
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# -------------------------------------------------------------------------
 
 from __future__ import annotations
 
@@ -17,19 +30,7 @@ import preferences
 from gi.repository import Gtk
 from PIL import Image
 from pathlib import Path
-# -------------------------------------------------------------------------
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as published
-# by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# -------------------------------------------------------------------------
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,22 +49,13 @@ class FilePrepare:
             file_type = "RAR"
 
         if file_type is not None:
-            # show progress bar
             progress_dialog = Gtk.Window()
-            # progress_dialog.set_transient_for(window)
             progress_dialog.set_title("Loading Comic Book ...")
 
             progress_bar = Gtk.ProgressBar()
-            # progress_bar.set_size_request(-1, 13 * self._window._window.ui_scale_factor)
             progress_dialog.set_child(progress_bar)
-            # progress_title = Gtk.Label()
-            # progress_title.set_markup('Loading file ...')
-            # progress_dialog.set_child(progress_title)
             if show_dialog:
                 progress_dialog.show()
-
-            """while Gtk.events_pending():
-                Gtk.main_iteration()"""
 
             # clear temp directory
             for root, dirs, files in os.walk(tempdir):
@@ -101,10 +93,7 @@ class FilePrepare:
 
             if not acbf_found:
                 # create dummy acbf file
-                tree = xml.Element(
-                    "ACBF",
-                    xmlns="http://www.fictionbook-lib.org/xml/acbf/1.2",
-                )
+                tree = xml.Element("ACBF", xmlns="http://www.fictionbook-lib.org/xml/acbf/1.2")
                 metadata = xml.SubElement(tree, "meta-data")
                 bookinfo = xml.SubElement(metadata, "book-info")
                 coverpage = xml.SubElement(bookinfo, "coverpage")
@@ -136,39 +125,21 @@ class FilePrepare:
                     ):
                         if cover_image == "":
                             # insert coverpage
-                            cover_image = xml.SubElement(
-                                coverpage,
-                                "image",
-                                href=datafile,
-                            )
-                            files_to_elements[
-                                os.path.basename(
-                                    datafile,
-                                )[:-4]
-                            ] = cover_image
+                            cover_image = xml.SubElement(coverpage, "image", href=datafile)
+                            files_to_elements[os.path.basename(datafile)[:-4]] = cover_image
                         else:
                             # insert normal page
                             if is_acv_file and "/" not in datafile:
                                 page = xml.SubElement(body, "page")
-                                image = xml.SubElement(
-                                    page,
-                                    "image",
-                                    href=datafile,
-                                )
+                                image = xml.SubElement(page, "image", href=datafile)
                                 files_to_elements[os.path.basename(datafile)[:-4]] = image
                             elif not is_acv_file:
                                 page = xml.SubElement(body, "page")
-                                image = xml.SubElement(
-                                    page,
-                                    "image",
-                                    href=datafile,
-                                )
+                                image = xml.SubElement(page, "image", href=datafile)
 
                 # check for ACV's comic.xml
                 if is_acv_file:
-                    acv_tree = xml.parse(
-                        source=os.path.join(tempdir, "comic.xml"),
-                    )
+                    acv_tree = xml.parse(source=os.path.join(tempdir, "comic.xml"))
 
                     if acv_tree.getroot().get("bgcolor") is not None:
                         body.set("bgcolor", acv_tree.getroot().get("bgcolor"))
@@ -179,27 +150,12 @@ class FilePrepare:
 
                     images = acv_tree.find("images")
                     pattern_length = len(images.get("indexPattern"))
-                    pattern_format = images.get("namePattern").replace(
-                        "@index",
-                        "%%0%dd" % pattern_length,
-                    )
+                    pattern_format = images.get("namePattern").replace("@index", "%%0%dd" % pattern_length)
                     for screen in acv_tree.findall("screen"):
-                        element = files_to_elements[
-                            pattern_format
-                            % int(
-                                screen.get("index"),
-                            )
-                        ]
-                        xsize, ysize = Image.open(
-                            os.path.join(
-                                tempdir,
-                                element.get("href"),
-                            ),
-                        ).size
+                        element = files_to_elements[pattern_format % int(screen.get("index"))]
+                        xsize, ysize = Image.open(os.path.join(tempdir, element.get("href"))).size
                         for frame in screen:
-                            x1, y1, w, h = list(
-                                map(float, frame.get("relativeArea").split(" ")),
-                            )
+                            x1, y1, w, h = list(map(float, frame.get("relativeArea").split(" ")))
                             ix1 = int(xsize * x1)
                             ix2 = int(xsize * (x1 + w))
                             iy1 = int(ysize * y1)
@@ -214,21 +170,16 @@ class FilePrepare:
                                 ix1,
                                 iy2,
                             )
-                            frame_elt = xml.SubElement(
-                                element.getparent(),
-                                "frame",
-                                points=envelope,
-                            )
+                            frame_elt = xml.SubElement(element.getparent(), "frame", points=envelope)
                             if frame.get("bgcolor") is not None:
                                 frame_elt.set("bgcolor", frame.get("bgcolor"))
 
                 # check if there's ComicInfo.xml file inside
                 # TODO This should be an option
                 elif os.path.isfile(os.path.join(tempdir, "ComicInfo.xml")):
+                    # TODO Refactor out to own method (in acbfdocument? Import(xml, type[CIX, CBL, etc.))
                     # load comic book information from ComicInfo.xml
-                    comicinfo_tree = xml.parse(
-                        source=os.path.join(tempdir, "ComicInfo.xml"),
-                    )
+                    comicinfo_tree = xml.parse(source=os.path.join(tempdir, "ComicInfo.xml"))
 
                     for author in [
                         "Writer",
@@ -240,23 +191,11 @@ class FilePrepare:
                         "Letterer",
                     ]:
                         if comicinfo_tree.find(author) is not None:
-                            author_element = xml.SubElement(
-                                bookinfo,
-                                "author",
-                                activity=author,
-                            )
-                            first_name = xml.SubElement(
-                                author_element,
-                                "first-name",
-                            )
-                            first_name.text = comicinfo_tree.find(
-                                author,
-                            ).text.split(" ")[0]
+                            author_element = xml.SubElement(bookinfo, "author", activity=author)
+                            first_name = xml.SubElement(author_element, "first-name")
+                            first_name.text = comicinfo_tree.find(author).text.split(" ")[0]
                             if len(comicinfo_tree.find(author).text.split(" ")) > 2:
-                                middle_name = xml.SubElement(
-                                    author_element,
-                                    "middle-name",
-                                )
+                                middle_name = xml.SubElement(author_element, "middle-name")
                                 middle_name.text = ""
                                 for i in range(len(comicinfo_tree.find(author).text.split(" "))):
                                     if i > 0 and i < (len(comicinfo_tree.find(author).text.split(" ")) - 1):
@@ -267,13 +206,8 @@ class FilePrepare:
                                                 author,
                                             ).text.split(" ")[i]
                                         )
-                            last_name = xml.SubElement(
-                                author_element,
-                                "last-name",
-                            )
-                            last_name.text = comicinfo_tree.find(
-                                author,
-                            ).text.split(" ")[-1]
+                            last_name = xml.SubElement(author_element, "last-name")
+                            last_name.text = comicinfo_tree.find(author).text.split(" ")[-1]
 
                     if comicinfo_tree.find("Title") is not None:
                         book_title = xml.SubElement(bookinfo, "book-title")
@@ -291,11 +225,7 @@ class FilePrepare:
                             name.text = character
 
                     if comicinfo_tree.find("Series") is not None:
-                        sequence = xml.SubElement(
-                            bookinfo,
-                            "sequence",
-                            title=comicinfo_tree.find("Series").text,
-                        )
+                        sequence = xml.SubElement(bookinfo, "sequence", title=comicinfo_tree.find("Series").text)
                         if comicinfo_tree.find("Number") is not None:
                             sequence.text = comicinfo_tree.find("Number").text
                         else:
@@ -329,11 +259,7 @@ class FilePrepare:
                             + "-"
                             + comicinfo_tree.find("Day").text
                         )
-                        publish_date = xml.SubElement(
-                            publishinfo,
-                            "publish-date",
-                            value=publish_date,
-                        )
+                        publish_date = xml.SubElement(publishinfo, "publish-date", value=publish_date)
                         publish_date.text = comicinfo_tree.find("Year").text
 
                     if comicinfo_tree.find("Publisher") is not None:
@@ -342,23 +268,9 @@ class FilePrepare:
 
                 # save generated acbf file
                 progress_bar.set_fraction(1)
-                return_filename = os.path.join(
-                    tempdir,
-                    os.path.splitext(
-                        os.path.basename(filename),
-                    )[0]
-                    + ".acbf",
-                )
+                return_filename = os.path.join(tempdir, os.path.splitext(os.path.basename(filename))[0] + ".acbf")
                 with open(return_filename, "w") as file:
-                    # f = open(return_filename, 'w')
-                    file.write(
-                        xml.tostring(
-                            tree,
-                            encoding="Unicode",
-                            pretty_print=True,
-                        ),
-                    )
-                    # f.close()
+                    file.write(xml.tostring(tree, encoding="Unicode", pretty_print=True))
 
             self.filename = return_filename
             progress_dialog.close()

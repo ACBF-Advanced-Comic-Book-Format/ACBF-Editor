@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import gi
@@ -61,10 +62,7 @@ class EditContentWindow(Gtk.Window):
         new_button.set_icon_name("list-add-symbolic")
         new_button.connect("clicked", self.add_content_item)
 
-        self.lang_button: Gtk.DropDown = self.parent.create_lang_dropdown(
-            self.parent.lang_store,
-            self.lang_changed,
-        )
+        self.lang_button: Gtk.DropDown = self.parent.create_lang_dropdown(self.parent.lang_store, self.lang_changed)
 
         toolbar_header.pack_start(self.lang_button)
 
@@ -77,10 +75,7 @@ class EditContentWindow(Gtk.Window):
         title_factory.connect("setup", self.setup_title_column)
         title_factory.connect("bind", self.bind_title_column, "title")
         title_factory.connect("unbind", self.unbind_title_column)
-        title_column = Gtk.ColumnViewColumn(
-            title="Title",
-            factory=title_factory,
-        )
+        title_column = Gtk.ColumnViewColumn(title="Title", factory=title_factory)
         title_column.set_expand(True)
         title_column.set_resizable(True)
         column_view.append_column(title_column)
@@ -97,10 +92,7 @@ class EditContentWindow(Gtk.Window):
         delete_factory.connect("setup", self.setup_delete_column)
         delete_factory.connect("bind", self.bind_delete_column)
         delete_factory.connect("unbind", self.unbind_delete_column)
-        delete_column = Gtk.ColumnViewColumn(
-            title="Delete",
-            factory=delete_factory,
-        )
+        delete_column = Gtk.ColumnViewColumn(title="Delete", factory=delete_factory)
         column_view.append_column(delete_column)
 
         self.update_contents(self.lang_button.get_selected())
@@ -122,9 +114,7 @@ class EditContentWindow(Gtk.Window):
         list_item.set_child(entry)
 
     def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
-        button: Gtk.Button = Gtk.Button.new_from_icon_name(
-            "edit-delete-symbolic",
-        )
+        button: Gtk.Button = Gtk.Button.new_from_icon_name("edit-delete-symbolic")
         list_item.set_child(button)
 
     def bind_title_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute: str) -> None:
@@ -197,9 +187,7 @@ class EditContentWindow(Gtk.Window):
             alert = Gtk.AlertDialog()
             alert.set_message("Unsaved Changes")
             alert.set_detail("There are unsaved changes that will be lost:")
-            alert.set_buttons(
-                ["Cancel", "Save and Switch", "Switch (lose changes)"],
-            )
+            alert.set_buttons(["Cancel", "Save and Switch", "Switch (lose changes)"])
             alert.set_cancel_button(0)
             alert.set_default_button(1)
             alert.choose(self, None, handle_response, widget.get_selected())
@@ -217,26 +205,14 @@ class EditContentWindow(Gtk.Window):
 
     def save_contents(self, lang: int) -> None:
         for entry in self.model:
-            xml_page = self.parent.acbf_document.tree.xpath(
-                f"//page[image[@href='{entry.page}']]",
-            )
+            xml_page = self.parent.acbf_document.tree.xpath(f"//page[image[@href='{entry.page}']]")
             if len(xml_page) > 0:
                 element = xml.SubElement(xml_page[0], "title")
                 element.set("lang", self.contents_languages[lang])
                 element.text = entry.title
 
     def update_contents(self, lang: int) -> None:
-        # TODO set image
-        """if widget is not None:
-        lang = widget.get_selected()"""
-
-        """for entry in self.model:
-            xml_page = self.parent.acbf_document.tree.xpath(f"//page[image[@href='{entry.page}']]")
-            if len(xml_page) > 0:
-                element = xml.SubElement(xml_page[0], "title")
-                element.set('lang', lang)
-                element.text = entry.title"""
-
+        # TODO show image
         self.page_image_names.clear()
         for page in self.parent.acbf_document.tree.findall("body/page"):
             self.page_image_names.append(page.find("image").get("href"))
@@ -249,17 +225,9 @@ class EditContentWindow(Gtk.Window):
             for title in page.findall("title"):
                 default_title = title.text
                 if (title.get("lang") == self.contents_languages[lang]) or (
-                    title.get(
-                        "lang",
-                    )
-                    is None
-                    and self.contents_languages[lang] == "en"
+                    title.get("lang") is None and self.contents_languages[lang] == "en"
                 ):
-                    self.add_content_item(
-                        None,
-                        title.text,
-                        self.page_image_names[idx],
-                    )
+                    self.add_content_item(None, title.text, self.page_image_names[idx])
                     title_found = True
             if not title_found and default_title != "":
                 self.add_content_item(None)

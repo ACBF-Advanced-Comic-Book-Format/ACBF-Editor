@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import gi
@@ -53,9 +54,7 @@ class LanguageDialog(Gtk.Window):
             self.model.append(
                 Language(
                     lang_iso=lang[0],
-                    lang=lang_info.get(
-                        "name",
-                    ),
+                    lang=lang_info.get("name"),
                     show=lang[1],
                 ),
             )
@@ -77,10 +76,7 @@ class LanguageDialog(Gtk.Window):
         active_factory.connect("setup", self.setup_active_column)
         active_factory.connect("bind", self.bind_active_column)
         active_factory.connect("unbind", self.unbind_active_column)
-        active_column = Gtk.ColumnViewColumn(
-            title="Active",
-            factory=active_factory,
-        )
+        active_column = Gtk.ColumnViewColumn(title="Active", factory=active_factory)
         active_column.set_resizable(True)
         column_view.append_column(active_column)
 
@@ -94,10 +90,7 @@ class LanguageDialog(Gtk.Window):
         lang_factory = Gtk.SignalListItemFactory()
         lang_factory.connect("setup", self.setup_lang_column)
         lang_factory.connect("bind", self.bind_lang_column)
-        lang_column = Gtk.ColumnViewColumn(
-            title="Language",
-            factory=lang_factory,
-        )
+        lang_column = Gtk.ColumnViewColumn(title="Language", factory=lang_factory)
         lang_column.set_expand(True)
         lang_column.set_resizable(True)
         column_view.append_column(lang_column)
@@ -106,10 +99,7 @@ class LanguageDialog(Gtk.Window):
         delete_factory.connect("setup", self.setup_delete_column)
         delete_factory.connect("bind", self.bind_delete_column)
         delete_factory.connect("unbind", self.unbind_delete_column)
-        delete_column = Gtk.ColumnViewColumn(
-            title="Delete",
-            factory=delete_factory,
-        )
+        delete_column = Gtk.ColumnViewColumn(title="Delete", factory=delete_factory)
         column_view.append_column(delete_column)
 
         self.set_child(column_view)
@@ -161,12 +151,7 @@ class LanguageDialog(Gtk.Window):
     def bind_lang_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         item = list_item.get_item()
         entry: Gtk.Entry = list_item.get_child()
-        item.bind_property(
-            "lang",
-            entry,
-            "label",
-            GObject.BindingFlags.SYNC_CREATE,
-        )
+        item.bind_property("lang", entry, "label", GObject.BindingFlags.SYNC_CREATE)
 
     def bind_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
         position = list_item.get_position()
@@ -223,7 +208,6 @@ class LanguageDialog(Gtk.Window):
             self.set_title(title)
 
     def save_and_exit(self, widget: Gtk.Button) -> None:
-        # The whole "only one of language" thing wasn't followed by creator, so we won't enforce it for now
         if self.is_modified:
             self.parent.acbf_document.languages.clear()
             i = 0

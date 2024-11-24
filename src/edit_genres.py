@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import constants
@@ -84,10 +85,7 @@ class GenresDialog(Gtk.Window):
         active_factory.connect("setup", self.setup_active_column)
         active_factory.connect("bind", self.bind_active_column)
         active_factory.connect("unbind", self.unbind_active_column)
-        active_column = Gtk.ColumnViewColumn(
-            title="Active",
-            factory=active_factory,
-        )
+        active_column = Gtk.ColumnViewColumn(title="Active", factory=active_factory)
         active_column.set_resizable(True)
         column_view.append_column(active_column)
 
@@ -104,10 +102,7 @@ class GenresDialog(Gtk.Window):
         match_factory.connect("setup", self.setup_match_column)
         match_factory.connect("bind", self.bind_match_column)
         match_factory.connect("unbind", self.unbind_match_column)
-        match_column = Gtk.ColumnViewColumn(
-            title="Match Quantity",
-            factory=match_factory,
-        )
+        match_column = Gtk.ColumnViewColumn(title="Match Quantity", factory=match_factory)
         match_column.set_resizable(True)
         column_view.append_column(match_column)
 
@@ -151,13 +146,7 @@ class GenresDialog(Gtk.Window):
 
         click_controller = Gtk.GestureClick()
         click_controller.set_button(1)
-        click_controller.connect(
-            "pressed",
-            self.label_clicked,
-            item,
-            position,
-            checkbox,
-        )
+        click_controller.connect("pressed", self.label_clicked, item, position, checkbox)
         entry.add_controller(click_controller)
 
     def unbind_name_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ColumnViewCell) -> None:
@@ -169,13 +158,7 @@ class GenresDialog(Gtk.Window):
 
         click_controller = Gtk.GestureClick()
         click_controller.set_button(1)
-        click_controller.connect(
-            "pressed",
-            self.label_clicked,
-            item,
-            position,
-            checkbox,
-        )
+        click_controller.connect("pressed", self.label_clicked, item, position, checkbox)
         entry.add_controller(click_controller)
 
     def bind_match_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:

@@ -1,8 +1,21 @@
 """acbfdocument.py - ACBF Document object.
 
 Copyright (C) 2011-2018 Robert Kubik
-https://launchpad.net/~just-me
+https://github.com/GeoRW/ACBF-Editor
 """
+# -------------------------------------------------------------------------
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# -------------------------------------------------------------------------
 
 from __future__ import annotations
 
@@ -28,21 +41,6 @@ from gi.repository import Gtk
 from lxml import objectify
 from matplotlib import font_manager
 from PIL import Image
-
-# -------------------------------------------------------------------------
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as published
-# by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# -------------------------------------------------------------------------
-# TODO remove
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +150,7 @@ class ACBFDocument:
             self.pages_total = 0
             if body is not None:
                 self.bg_color = self.tree.find("body").get("bgcolor")
+                # TODO Make Class or dict?
                 self.pages = self.tree.findall("body/page")
                 self.pages_total = len(self.pages)
             if self.bg_color is None:
@@ -232,11 +231,6 @@ class ACBFDocument:
                 self.genres.append((g.text, int(g.get("match", 0))))
 
         # languages
-        """self.languages = []
-        for language in self.bookinfo.findall("languages/" + "text-layer"):
-            self.languages.append((language.get("lang"), language.get("show").upper()))
-        if len(self.languages) == 0:
-            self.languages.append(('??', 'FALSE'))"""
         try:
             for language in self.bookinfo.findall("languages/text-layer"):
                 # full_lang = isocodes.languages.get(alpha_2=language.get("lang"))
@@ -331,13 +325,7 @@ class ACBFDocument:
         self.license = get_element_text(self.publishinfo, "license")
 
         # document-info
-        """for doc_author in self.docinfo.findall("author"):
-            for element in ['first-name', 'middle-name', 'nickname', 'last-name']:
-                name = get_element_text(doc_author, element)
-                if name != '':
-                    self.doc_authors = self.doc_authors + name + ' '
-            self.doc_authors = self.doc_authors[:-1] + ', '
-        self.doc_authors = self.doc_authors[:-2]"""
+
         # doc author (mandatory)
         for doc_author in self.docinfo.findall("author"):
             first_name = middle_name = last_name = nickname = home_page = email = ""
@@ -405,7 +393,6 @@ class ACBFDocument:
                 self.has_frames = True
 
     def load_image(self, image_uri: ImageURI) -> Image:
-        # print image_uri.file_type, image_uri.archive_path, image_uri.file_path, self._window.tempdir
         try:
             if image_uri.file_type == "embedded":
                 for image in self.binaries:
@@ -433,10 +420,6 @@ class ACBFDocument:
                     logger.error(
                         f"Failed to load HTTP image: {image_uri.file_path}",
                     )
-                    """md = Gtk.MessageDialog(self.parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                           Gtk.ButtonsType.CLOSE, "Error loading image: " + page_image_id)
-                    md.run()
-                    md.destroy()"""
             else:
                 return Image.open(os.path.join(self.base_dir, image_uri.file_path))
 
@@ -485,17 +468,7 @@ class ACBFDocument:
         page_num: int,
         language: str,
     ) -> tuple[list[tuple[list[tuple[int, int]], str, str, int, str, bool, bool]], list[tuple[str, str]]]:
-        text_areas: list[
-            tuple[
-                list[tuple[int, int]],
-                str,
-                str,
-                int,
-                str,
-                bool,
-                bool,
-            ]
-        ] = []
+        text_areas: list[tuple[list[tuple[int, int]], str, str, int, str, bool, bool]] = []
         references: list[tuple[str, str]] = []
         all_lines = ""
         text_rotation = 0
@@ -590,8 +563,6 @@ class ACBFDocument:
                     )
                     text_areas.append(text_area_tuple)
 
-        # print(xml.tostring(text_areas[0][1][0], pretty_print=True))
-
         return text_areas, references
 
     def get_page_transition(self, page_num: int) -> int | None:
@@ -612,22 +583,17 @@ class ACBFDocument:
             self.contents_table = contents
 
     def load_stylesheet(self) -> None:
-        # print self.stylesheet.text
-        # sheet = cssutils.parseString(self.stylesheet.text)
         font = ""
 
         for rule in self.stylesheet.text.replace("\n", " ").split("}"):
             if rule.strip() != "":
                 selector = rule.strip().split("{")[0].strip().upper()
-                # print "selectorText: ", selector
                 font_style = "normal"
                 font_weight = "normal"
                 font_stretch = "normal"
                 font_families = ""
                 for style in rule.strip().split("{")[1].strip().split(";"):
                     if style != "":
-                        # print "style:", style.split(':')[0].strip()
-                        # print "value:", style.split(':')[1].strip()
                         current_style = style.split(":")[0].strip().upper()
                         if current_style == "FONT-FAMILY":
                             font_families = style.split(":")[1].strip()
@@ -639,87 +605,27 @@ class ACBFDocument:
                             font_stretch = style.split(":")[1].strip()
 
                         if selector == "*" and current_style == "COLOR":
-                            self.font_colors["speech"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["speech"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[INVERTED=TRUE]" and current_style == "COLOR":
                             self.font_colors["inverted"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=SPEECH]" and current_style == "COLOR":
-                            self.font_colors["speech"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["speech"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=COMMENTARY]" and current_style == "COLOR":
-                            self.font_colors["commentary"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["commentary"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=FORMAL]" and current_style == "COLOR":
-                            self.font_colors["formal"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["formal"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=LETTER]" and current_style == "COLOR":
-                            self.font_colors["letter"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["letter"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=CODE]" and current_style == "COLOR":
-                            self.font_colors["code"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["code"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=HEADING]" and current_style == "COLOR":
-                            self.font_colors["heading"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["heading"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=AUDIO]" and current_style == "COLOR":
-                            self.font_colors["audio"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["audio"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=THOUGHT]" and current_style == "COLOR":
-                            self.font_colors["thought"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["thought"] = style.split(":")[1].strip().strip('"')
                         elif selector == "TEXT-AREA[TYPE=SIGN]" and current_style == "COLOR":
-                            self.font_colors["sign"] = (
-                                style.split(
-                                    ":",
-                                )[1]
-                                .strip()
-                                .strip('"')
-                            )
+                            self.font_colors["sign"] = style.split(":")[1].strip().strip('"')
 
                 if font_families != "":
                     for font_family in font_families.split(","):
@@ -835,13 +741,7 @@ class ACBFDocument:
 
     def extract_fonts(self) -> None:
         if os.path.exists(os.path.join(self.base_dir, "Fonts")) and not os.path.exists(self.fonts_dir):
-            shutil.copytree(
-                os.path.join(
-                    self.base_dir,
-                    "Fonts",
-                ),
-                self.fonts_dir,
-            )
+            shutil.copytree(os.path.join(self.base_dir, "Fonts"), self.fonts_dir)
         if not os.path.exists(self.fonts_dir):
             os.makedirs(self.fonts_dir, 0o700)
         for font in self.binaries:
@@ -888,19 +788,13 @@ class ACBFDocument:
                         element_path = "/".join(element_path_parts)
                         add_root = self.tree.find(element_path)
                         if add_root is None:
-                            raise Exception(
-                                "add_path: Failed to find XML path element: %s",
-                                add_root,
-                            )
+                            raise Exception("add_path: Failed to find XML path element: %s", add_root)
                         else:
                             add_element(add_root, p)
 
             ele = self.tree.find(path)
             if ele is None:
-                raise Exception(
-                    "add_path: Failed to create XML path element: %s",
-                    path,
-                )
+                raise Exception("add_path: Failed to create XML path element: %s", path)
             else:
                 return ele
 
@@ -1044,40 +938,21 @@ class ACBFDocument:
 
         get_or_create_element("meta-data/book-info/characters").clear()
         for c in self.characters:
-            add_element(
-                self.tree.find(
-                    "meta-data/book-info/characters",
-                ),
-                "name",
-                c,
-            )
+            add_element(self.tree.find("meta-data/book-info/characters"), "name", c)
 
-        modify_element(
-            "meta-data/book-info/keywords",
-            ", ".join(self.keywords),
-        )
+        modify_element("meta-data/book-info/keywords", ", ".join(self.keywords))
 
         for item in self.tree.findall("meta-data/book-info/languages/text-layer"):
             self.tree.find("meta-data/book-info/languages").remove(item)
         for lang_tup in self.languages:
-            element = xml.SubElement(
-                get_or_create_element(
-                    "meta-data/book-info/languages",
-                ),
-                "text-layer",
-            )
+            element = xml.SubElement(get_or_create_element("meta-data/book-info/languages"), "text-layer")
             element.attrib["lang"] = lang_tup[0]
             element.attrib["show"] = str(lang_tup[1])
 
         for item in self.tree.findall("meta-data/book-info/databaseref"):
             self.tree.find("meta-data/book-info").remove(item)
         for d in self.databaseref:
-            element = xml.SubElement(
-                get_or_create_element(
-                    "meta-data/book-info",
-                ),
-                "databaseref",
-            )
+            element = xml.SubElement(get_or_create_element("meta-data/book-info"), "databaseref")
             element.text = d["value"]
             element.attrib["dbname"] = d["dbname"]
             if d.get("dbtype"):
@@ -1086,12 +961,7 @@ class ACBFDocument:
         for item in self.tree.findall("meta-data/book-info/content-rating"):
             get_or_create_element("meta-data/book-info").remove(item)
         for r in self.content_ratings:
-            element = xml.SubElement(
-                get_or_create_element(
-                    "meta-data/book-info",
-                ),
-                "content-rating",
-            )
+            element = xml.SubElement(get_or_create_element("meta-data/book-info"), "content-rating")
             element.text = r[1]
             if r[0]:
                 element.attrib["type"] = r[0]
@@ -1156,26 +1026,14 @@ class ACBFDocument:
 
         get_or_create_element("meta-data/document-info/source").clear()
         for source in self.sources:
-            add_element(
-                get_or_create_element(
-                    "meta-data/document-info/source",
-                ),
-                "p",
-                source,
-            )
+            add_element(get_or_create_element("meta-data/document-info/source"), "p", source)
 
         if self.version:
             modify_element("meta-data/document-info/version", self.version)
 
         get_or_create_element("meta-data/document-info/history").clear()
         for h in self.history:
-            add_element(
-                get_or_create_element(
-                    "meta-data/document-info/history",
-                ),
-                "p",
-                h,
-            )
+            add_element(get_or_create_element("meta-data/document-info/history"), "p", h)
 
         # Save fonts
         all_styles = ""

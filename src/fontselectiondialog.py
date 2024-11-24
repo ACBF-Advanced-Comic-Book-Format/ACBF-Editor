@@ -1,23 +1,8 @@
 """fontselectiondialog.py - Miscellaneous constants.
 
 Copyright (C) 2011-2018 Robert Kubik
-https://launchpad.net/~just-me
+https://github.com/GeoRW/ACBF-Editor
 """
-
-from __future__ import annotations
-
-import logging
-import os
-
-from gi.repository import Gio
-from gi.repository import GObject
-from gi.repository import Gtk
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
-from typing import Any
-# from edit_styles import FontItem  # circular import atm
-
 # -------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as published
@@ -32,6 +17,19 @@ from typing import Any
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
 
+from __future__ import annotations
+
+import logging
+import os
+
+from gi.repository import Gio
+from gi.repository import GObject
+from gi.repository import Gtk
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
+from typing import Any
+# from edit_styles import FontItem  # circular import atm
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -116,13 +114,9 @@ class FontSelectionOldDialog(Gtk.Window):
                         ),
                     )
                 except OSError as e:
-                    logging.error(
-                        f"Failed to read font file: {font_file} error: {e}",
-                    )
+                    logging.error(f"Failed to read font file: {font_file} error: {e}")
                 except Exception as e:
-                    logging.error(
-                        f"Failed to load font file: {font_file} error: {e}",
-                    )
+                    logging.error(f"Failed to load font file: {font_file} error: {e}")
 
         sw.set_child(font_view)
 
@@ -142,8 +136,6 @@ class FontSelectionOldDialog(Gtk.Window):
 
     def setup_font_item(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell) -> None:
         entry = Gtk.Label()
-        # entry.set_hexpand(True)
-        # entry.set_halign(Gtk.Align.FILL)
         entry.set_margin_start(5)
         entry.set_margin_end(5)
         list_item.set_child(entry)

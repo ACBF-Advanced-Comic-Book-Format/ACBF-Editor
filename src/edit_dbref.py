@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import gi
@@ -50,9 +51,7 @@ class DBRefDialog(Gtk.Window):
         self.model = Gio.ListStore.new(item_type=DBRef)
 
         for ref in self.parent.acbf_document.databaseref:
-            self.model.append(
-                DBRef(ref["dbname"], ref["dbtype"], ref["value"]),
-            )
+            self.model.append(DBRef(ref["dbname"], ref["dbtype"], ref["value"]))
 
         selection_model = Gtk.NoSelection(model=self.model)
         Gtk.SelectionMode(0)
@@ -93,15 +92,11 @@ class DBRefDialog(Gtk.Window):
         column.set_resizable(True)
         column_view.append_column(column)
 
-        # Add delete button column
         delete_factory = Gtk.SignalListItemFactory()
         delete_factory.connect("setup", self.setup_delete_column)
         delete_factory.connect("bind", self.bind_delete_column)
         delete_factory.connect("unbind", self.unbind_delete_column)
-        delete_column = Gtk.ColumnViewColumn(
-            title="Delete",
-            factory=delete_factory,
-        )
+        delete_column = Gtk.ColumnViewColumn(title="Delete", factory=delete_factory)
         column_view.append_column(delete_column)
 
         self.set_child(column_view)
@@ -111,9 +106,7 @@ class DBRefDialog(Gtk.Window):
         list_item.set_child(entry)
 
     def setup_type_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
-        entry: Gtk.DropDown = Gtk.DropDown.new_from_strings(
-            ["", "URL", "IssueID", "SeriesID", "Other"],
-        )
+        entry: Gtk.DropDown = Gtk.DropDown.new_from_strings(["", "URL", "IssueID", "SeriesID", "Other"])
         list_item.set_child(entry)
 
     def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:

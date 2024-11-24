@@ -1,16 +1,8 @@
 """prefsdialog.py - Preferences Dialog.
 
 Copyright (C) 2011-2018 Robert Kubik
-https://launchpad.net/~just-me
+https://github.com/GeoRW/ACBF-Editor
 """
-
-from __future__ import annotations
-
-import constants
-from gi.repository import Gdk
-from gi.repository import GObject
-from gi.repository import Gtk
-
 # -------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as published
@@ -24,6 +16,13 @@ from gi.repository import Gtk
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
+from __future__ import annotations
+
+import constants
+from gi.repository import Gdk
+from gi.repository import GObject
+from gi.repository import Gtk
 
 
 class PrefsDialog(Gtk.Window):
@@ -50,16 +49,9 @@ class PrefsDialog(Gtk.Window):
         self.default_language = Gtk.DropDown()
         self.default_language.set_model(gtk_lang_list)
         self.default_language.set_enable_search(True)
-        expression = Gtk.PropertyExpression.new(
-            Gtk.StringObject,
-            None,
-            "string",
-        )
+        expression = Gtk.PropertyExpression.new(Gtk.StringObject, None, "string")
         self.default_language.set_expression(expression)
-        self.default_language.connect(
-            "notify::selected",
-            self.set_default_language,
-        )
+        self.default_language.connect("notify::selected", self.set_default_language,)
 
         general.attach(self.default_language, 1, 0, 1, 1)
 
@@ -72,9 +64,7 @@ class PrefsDialog(Gtk.Window):
         general.attach(self.tmpfs_button, 3, 1, 1, 1)
 
         self.tmpfs_entry = Gtk.Entry()
-        self.tmpfs_entry.set_text(
-            self.parent.preferences.get_value("tmpfs_dir"),
-        )
+        self.tmpfs_entry.set_text(self.parent.preferences.get_value("tmpfs_dir"))
         general.attach(self.tmpfs_entry, 1, 1, 1, 1)
 
         if self.parent.preferences.get_value("tmpfs") == "True":
@@ -141,10 +131,7 @@ class PrefsDialog(Gtk.Window):
         self.frames_color_button = Gtk.ColorDialogButton()
         self.frames_color_button.set_dialog(Gtk.ColorDialog())
         self.frames_color_button.set_rgba(color)
-        self.frames_color_button.connect(
-            "notify::dialog",
-            self.set_frames_color,
-        )
+        self.frames_color_button.connect("notify::dialog", self.set_frames_color)
         frames.attach(self.frames_color_button, 1, 0, 1, 1)
 
         frames.attach(Gtk.Label.new("Text Layers Colour"), 0, 1, 1, 1)
@@ -153,62 +140,42 @@ class PrefsDialog(Gtk.Window):
         self.text_color_button = Gtk.ColorDialogButton()
         self.text_color_button.set_dialog(Gtk.ColorDialog())
         self.text_color_button.set_rgba(color)
-        self.text_color_button.connect(
-            "notify::dialog",
-            self.set_text_layers_color,
-        )
+        self.text_color_button.connect("notify::dialog", self.set_text_layers_color)
         frames.attach(self.text_color_button, 1, 1, 1, 1)
 
-        self.snap_to_border = Gtk.CheckButton.new_with_label(
-            "Snap to Image Border",
-        )
-        self.snap_to_border.set_tooltip_text(
-            "Snap polygon points to image border when close to it",
-        )
+        self.snap_to_border = Gtk.CheckButton.new_with_label("Snap to Image Border")
+        self.snap_to_border.set_tooltip_text("Snap polygon points to image border when close to it")
         self.snap_to_border.connect("toggled", self.set_snap)
         frames.attach(self.snap_to_border, 1, 2, 1, 1)
 
-        # Add the widgets to the stack with a name
         stack.add_titled(general, "general", "General")
         stack.add_titled(doc_info, "doc_info", "Document Information")
         stack.add_titled(frames, "frames", "Frames")
 
-        # Create a Gtk.StackSwitcher
         stack_switcher = Gtk.StackSwitcher()
         stack_switcher.set_stack(stack)
 
-        # Create a vertical box to hold the stack and the switcher
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         vbox.append(stack_switcher)
         vbox.append(stack)
 
-        # Add the vbox to the window
         self.set_child(vbox)
 
-        # Optionally, set the initial visible page
         stack.set_visible_child_name("general")
 
         # Initialise values
         self.default_language.set_selected(
-            constants.LANGUAGES.index(
-                self.parent.preferences.get_value("default_language"),
-            ),
+            constants.LANGUAGES.index(self.parent.preferences.get_value("default_language")),
         )
         if self.parent.preferences.get_value("tmpfs") == "True":
             self.tmpfs_button.set_active(True)
-            self.tmpfs_entry.set_text(
-                self.parent.preferences.get_value("tmpfs_dir"),
-            )
+            self.tmpfs_entry.set_text(self.parent.preferences.get_value("tmpfs_dir"))
         if self.parent.preferences.get_value("snap") == "True":
             self.snap_to_border.set_active(True)
         if self.parent.preferences.get_value("first_name") != "":
-            self.first.set_text(
-                self.parent.preferences.get_value("first_name"),
-            )
+            self.first.set_text(self.parent.preferences.get_value("first_name"))
         if self.parent.preferences.get_value("middle_name") != "":
-            self.middle.set_text(
-                self.parent.preferences.get_value("middle_name"),
-            )
+            self.middle.set_text(self.parent.preferences.get_value("middle_name"))
         if self.parent.preferences.get_value("last_name") != "":
             self.last.set_text(self.parent.preferences.get_value("last_name"))
         if self.parent.preferences.get_value("nickname") != "":
@@ -230,24 +197,15 @@ class PrefsDialog(Gtk.Window):
         self.parent.preferences.save_preferences()
 
     def set_text_layers_color(self, widget: Gtk.ColorDialogButton, _pspec: GObject.GParamSpec) -> None:
-        self.parent.preferences.set_value(
-            "text_layers_color",
-            widget.get_rgba().to_string(),
-        )
+        self.parent.preferences.set_value("text_layers_color", widget.get_rgba().to_string())
         self.parent.preferences.save_preferences()
 
     def set_frames_color(self, widget: Gtk.ColorDialogButton, _pspec: GObject.GParamSpec) -> None:
-        self.parent.preferences.set_value(
-            "frames_color",
-            widget.get_rgba().to_string(),
-        )
+        self.parent.preferences.set_value("frames_color", widget.get_rgba().to_string())
         self.parent.preferences.save_preferences()
 
     def set_default_language(self, widget: Gtk.DropDown, _pspec: GObject.GParamSpec) -> None:
-        self.parent.preferences.set_value(
-            "default_language",
-            constants.LANGUAGES[widget.props.selected],
-        )
+        self.parent.preferences.set_value("default_language", constants.LANGUAGES[widget.props.selected])
 
     def set_tmpfs(self, widget: Gtk.Button, _pspec: GObject.GParamSpec) -> None:
         if widget.get_active():
@@ -262,25 +220,13 @@ class PrefsDialog(Gtk.Window):
             self.parent.preferences.set_value("snap", "False")
         if self.tmpfs_button.get_active():
             self.parent.preferences.set_value("tmpfs", "True")
-            self.parent.preferences.set_value(
-                "tmpfs_dir",
-                self.tmpfs_entry.get_text(),
-            )
+            self.parent.preferences.set_value("tmpfs_dir", self.tmpfs_entry.get_text())
         else:
             self.parent.preferences.set_value("tmpfs", "False")
-        self.parent.preferences.set_value(
-            "text_layers_color",
-            self.text_color_button.get_rgba().to_string(),
-        )
-        self.parent.preferences.set_value(
-            "frames_color",
-            self.frames_color_button.get_rgba().to_string(),
-        )
+        self.parent.preferences.set_value("text_layers_color", self.text_color_button.get_rgba().to_string())
+        self.parent.preferences.set_value("frames_color", self.frames_color_button.get_rgba().to_string())
         self.parent.preferences.set_value("first_name", self.first.get_text())
-        self.parent.preferences.set_value(
-            "middle_name",
-            self.middle.get_text(),
-        )
+        self.parent.preferences.set_value("middle_name", self.middle.get_text())
         self.parent.preferences.set_value("last_name", self.last.get_text())
         self.parent.preferences.set_value("nickname", self.nick.get_text())
 

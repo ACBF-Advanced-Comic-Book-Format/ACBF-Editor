@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import pathlib
@@ -75,19 +76,12 @@ class EditStylesWindow(Gtk.Window):
 
         selection_model = Gtk.NoSelection(model=self.model)
 
-        # Gtk.SelectionMode(0)
-
-        # Create the ColumnView
         column_view = Gtk.ColumnView(model=selection_model)
 
         sematic_factory = Gtk.SignalListItemFactory()
         sematic_factory.connect("setup", self.setup_sematic_column)
         sematic_factory.connect("bind", self.bind_sematic_column)
-        sematic_column = Gtk.ColumnViewColumn(
-            title="Title",
-            factory=sematic_factory,
-        )
-        # sematic_column.set_expand(True)
+        sematic_column = Gtk.ColumnViewColumn(title="Title", factory=sematic_factory)
         sematic_column.set_resizable(True)
         column_view.append_column(sematic_column)
 
@@ -99,25 +93,14 @@ class EditStylesWindow(Gtk.Window):
         font_factory.set_expand(True)
         column_view.append_column(font_factory)
 
-        # Add delete button column
         colour_factory = Gtk.SignalListItemFactory()
         colour_factory.connect("setup", self.setup_colour_column)
         colour_factory.connect("bind", self.bind_colour_column)
         colour_factory = Gtk.ColumnViewColumn(title="Colour", factory=colour_factory)
         column_view.append_column(colour_factory)
 
-        # Add the ColumnView to a ScrolledWindow
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_child(column_view)
-
-        # Add the ScrolledWindow to the main window
-        # content.append(scrolled_window)
-
-        """okay_button = Gtk.Button.new_with_label("Save and Close")
-        okay_button.connect("clicked", self.save_and_exit)
-
-        toolbar_bottom.pack_start(okay_button)
-        toolbar.add_bottom_bar(toolbar_bottom)"""
 
         self.set_size_request(500, 600)
         self.set_child(scrolled_window)
@@ -132,9 +115,6 @@ class EditStylesWindow(Gtk.Window):
 
     def setup_font_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ListItem) -> None:
         entry: Gtk.Button = Gtk.Button()
-        # entry = Gtk.FontDialogButton()
-        # entry.set_dialog(Gtk.FontDialog())
-        # entry.set_use_font(True)
         list_item.set_child(entry)
 
     def setup_colour_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ListItem) -> None:
@@ -149,14 +129,7 @@ class EditStylesWindow(Gtk.Window):
     def bind_font_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ListItem) -> None:
         item: FontItem = list_item.get_item()
         entry: Gtk.FontDialogButton = list_item.get_child()
-        # entry.set_label(item.font)
         entry.connect("clicked", self.font_button_click, item)
-        # initial_font = Pango.FontDescription.from_string(f"{item.font} 12")
-        # print(item.font_families)
-        # test = Pango.FontDescription.from_string(item.font_families.split(",")[0])
-        # print(test.to_string())
-        # entry.set_font_desc(test)
-        # entry.set_level(Gtk.FontLevel.FAMILY)
         item.bind_property("font", entry, "label", GObject.BindingFlags.SYNC_CREATE)
 
     def unbind_font_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:

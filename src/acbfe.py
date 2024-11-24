@@ -2,17 +2,8 @@
 """ACBF Editor - Editor for ACBF documents
 
 Copyright (C) 2013-2018 Robert Kubik
-https://launchpad.net/~just-me
+https://github.com/GeoRW/ACBF-Editor
 """
-
-from __future__ import annotations
-
-import getopt
-import gettext
-import os
-import sys
-from typing import Any
-
 # -------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as published
@@ -26,6 +17,14 @@ from typing import Any
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
+from __future__ import annotations
+
+import getopt
+import gettext
+import os
+import sys
+from typing import Any
 
 
 try:

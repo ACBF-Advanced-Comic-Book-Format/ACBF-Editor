@@ -1,15 +1,8 @@
 """constants.py - Miscellaneous constants.
 
 Copyright (C) 2011-2018 Robert Kubik
-https://launchpad.net/~just-me
+https://github.com/GeoRW/ACBF-Editor
 """
-
-from __future__ import annotations
-
-import os
-import sys
-
-import portability
 # -------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as published
@@ -23,6 +16,14 @@ import portability
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
+from __future__ import annotations
+
+import os
+import sys
+
+import portability
+
 
 VERSION = "1.18"
 HOME_DIR = portability.get_home_directory()

@@ -1,8 +1,21 @@
 """frameseditor.py - Frames/Text Layers Editor Dialog.
 
 Copyright (C) 2011-2018 Robert Kubik
-https://launchpad.net/~just-me
+https://github.com/GeoRW/ACBF-Editor
 """
+# -------------------------------------------------------------------------
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# -------------------------------------------------------------------------
 
 from __future__ import annotations
 
@@ -26,19 +39,7 @@ from PIL import Image
 
 if TYPE_CHECKING:
     import pathlib
-# -------------------------------------------------------------------------
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as published
-# by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# -------------------------------------------------------------------------
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -145,8 +146,7 @@ class FramesEditorDialog(Gtk.Window):
             self.parent.filename,
         )
         self.selected_page = (
-            # self.parent.acbf_document.bookinfo.find("coverpage/" + "image").get("href").replace("\\", "/")
-            ""
+            self.parent.acbf_document.bookinfo.find("coverpage/" + "image").get("href").replace("\\", "/")
         )
         self.selected_page_bgcolor: str | None = None
         self.page_color_button: Gtk.ColorDialogButton = Gtk.ColorDialogButton()
@@ -170,17 +170,13 @@ class FramesEditorDialog(Gtk.Window):
         frames_selection_model = Gtk.NoSelection(model=self.frame_model)
         texts_selection_model = Gtk.NoSelection(model=self.text_layer_model)
 
-        # Create the ColumnView
         frames_column_view = Gtk.ColumnView(model=frames_selection_model)
         texts_column_view = Gtk.ColumnView(model=texts_selection_model)
 
         frames_order_factory = Gtk.SignalListItemFactory()
         frames_order_factory.connect("setup", self.setup_order_column)
         frames_order_factory.connect("bind", self.bind_order_column, "frame")
-        frames_order_column = Gtk.ColumnViewColumn(
-            title="Order",
-            factory=frames_order_factory,
-        )
+        frames_order_column = Gtk.ColumnViewColumn(title="Order", factory=frames_order_factory)
         frames_order_column.set_resizable(True)
         frames_column_view.append_column(frames_order_column)
 
@@ -188,20 +184,14 @@ class FramesEditorDialog(Gtk.Window):
         frames_move_factory.connect("setup", self.setup_move_column)
         frames_move_factory.connect("bind", self.bind_move_column, "frame")
         frames_move_factory.connect("unbind", self.unbind_move_column)
-        frames_move_column = Gtk.ColumnViewColumn(
-            title="Move",
-            factory=frames_move_factory,
-        )
+        frames_move_column = Gtk.ColumnViewColumn(title="Move", factory=frames_move_factory)
         frames_move_column.set_resizable(True)
         frames_column_view.append_column(frames_move_column)
 
         frames_entry_factory = Gtk.SignalListItemFactory()
         frames_entry_factory.connect("setup", self.setup_entry_column)
         frames_entry_factory.connect("bind", self.bind_entry_column, "frame")
-        frames_entry_column = Gtk.ColumnViewColumn(
-            title="Coordinates",
-            factory=frames_entry_factory,
-        )
+        frames_entry_column = Gtk.ColumnViewColumn(title="Coordinates", factory=frames_entry_factory)
         frames_entry_column.set_resizable(True)
         frames_entry_column.set_expand(True)
         frames_column_view.append_column(frames_entry_column)
@@ -210,30 +200,21 @@ class FramesEditorDialog(Gtk.Window):
         frames_colour_factory.connect("setup", self.setup_colour_column)
         frames_colour_factory.connect("bind", self.bind_colour_column, "frame")
         frames_colour_factory.connect("unbind", self.unbind_colour_column)
-        frames_colour_column = Gtk.ColumnViewColumn(
-            title="Colour",
-            factory=frames_colour_factory,
-        )
+        frames_colour_column = Gtk.ColumnViewColumn(title="Colour", factory=frames_colour_factory)
         frames_column_view.append_column(frames_colour_column)
 
         frames_remove_factory = Gtk.SignalListItemFactory()
         frames_remove_factory.connect("setup", self.setup_remove_column)
         frames_remove_factory.connect("bind", self.bind_remove_column, "frame")
         frames_remove_factory.connect("unbind", self.unbind_remove_column)
-        frames_remove_column = Gtk.ColumnViewColumn(
-            title="Remove",
-            factory=frames_remove_factory,
-        )
+        frames_remove_column = Gtk.ColumnViewColumn(title="Remove", factory=frames_remove_factory)
         frames_column_view.append_column(frames_remove_column)
 
         # Text layer factory
         texts_order_factory = Gtk.SignalListItemFactory()
         texts_order_factory.connect("setup", self.setup_order_column)
         texts_order_factory.connect("bind", self.bind_order_column, "text")
-        texts_order_column = Gtk.ColumnViewColumn(
-            title="Order",
-            factory=frames_order_factory,
-        )
+        texts_order_column = Gtk.ColumnViewColumn(title="Order", factory=frames_order_factory)
         texts_order_column.set_resizable(True)
         texts_column_view.append_column(texts_order_column)
 
@@ -241,10 +222,7 @@ class FramesEditorDialog(Gtk.Window):
         texts_move_factory.connect("setup", self.setup_move_column)
         texts_move_factory.connect("bind", self.bind_move_column, "text")
         texts_move_factory.connect("unbind", self.unbind_move_column)
-        texts_move_column = Gtk.ColumnViewColumn(
-            title="Move",
-            factory=texts_move_factory,
-        )
+        texts_move_column = Gtk.ColumnViewColumn(title="Move", factory=texts_move_factory)
         texts_move_column.set_resizable(True)
         texts_column_view.append_column(texts_move_column)
 
@@ -252,10 +230,7 @@ class FramesEditorDialog(Gtk.Window):
         texts_entry_factory.connect("setup", self.setup_entry_column)
         texts_entry_factory.connect("bind", self.bind_entry_column, "text")
         texts_entry_factory.connect("unbind", self.unbind_entry_column)
-        texts_entry_column = Gtk.ColumnViewColumn(
-            title="Text",
-            factory=texts_entry_factory,
-        )
+        texts_entry_column = Gtk.ColumnViewColumn(title="Text", factory=texts_entry_factory)
         texts_entry_column.set_resizable(True)
         texts_entry_column.set_expand(True)
         texts_column_view.append_column(texts_entry_column)
@@ -264,30 +239,21 @@ class FramesEditorDialog(Gtk.Window):
         texts_colour_factory.connect("setup", self.setup_colour_column)
         texts_colour_factory.connect("bind", self.bind_colour_column, "text")
         texts_colour_factory.connect("unbind", self.unbind_colour_column)
-        texts_colour_column = Gtk.ColumnViewColumn(
-            title="Colour",
-            factory=texts_colour_factory,
-        )
+        texts_colour_column = Gtk.ColumnViewColumn(title="Colour", factory=texts_colour_factory)
         texts_column_view.append_column(texts_colour_column)
 
         texts_type_factory = Gtk.SignalListItemFactory()
         texts_type_factory.connect("setup", self.setup_type_column)
         texts_type_factory.connect("bind", self.bind_type_column)
         texts_type_factory.connect("unbind", self.unbind_type_column)
-        texts_type_column = Gtk.ColumnViewColumn(
-            title="Type",
-            factory=texts_type_factory,
-        )
+        texts_type_column = Gtk.ColumnViewColumn(title="Type", factory=texts_type_factory)
         texts_column_view.append_column(texts_type_column)
 
         texts_remove_factory = Gtk.SignalListItemFactory()
         texts_remove_factory.connect("setup", self.setup_remove_column)
         texts_remove_factory.connect("bind", self.bind_remove_column, "text")
         texts_remove_factory.connect("unbind", self.unbind_remove_column)
-        texts_remove_column = Gtk.ColumnViewColumn(
-            title="Remove",
-            factory=texts_remove_factory,
-        )
+        texts_remove_column = Gtk.ColumnViewColumn(title="Remove", factory=texts_remove_factory)
         texts_column_view.append_column(texts_remove_column)
 
         main_pane_vert = Gtk.Paned(orientation=Gtk.Orientation.VERTICAL)
@@ -295,7 +261,6 @@ class FramesEditorDialog(Gtk.Window):
         main_pane_vert.set_start_child(main_pane_horz)
 
         sidebar_sw = Gtk.ScrolledWindow()
-        # sidebar_sw.set_hexpand(False)
         sidebar_sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
         self.pages_treestore = Gio.ListStore.new(item_type=ListItem)
@@ -303,15 +268,9 @@ class FramesEditorDialog(Gtk.Window):
         page_list_factory.connect("setup", self.setup_list_item)
         page_list_factory.connect("bind", self.bind_list_item)
 
-        selection_model: Gtk.SingleSelection = Gtk.SingleSelection.new(
-            self.pages_treestore,
-        )
-        # selection_model.connect("selection-changed", self.page_selection_change)
+        selection_model: Gtk.SingleSelection = Gtk.SingleSelection.new(self.pages_treestore)
 
-        self.pages_tree: Gtk.ListView = Gtk.ListView.new(
-            selection_model,
-            page_list_factory,
-        )
+        self.pages_tree: Gtk.ListView = Gtk.ListView.new(selection_model, page_list_factory)
         self.pages_tree.set_single_click_activate(True)
 
         for page in self.parent.acbf_document.pages:
@@ -322,29 +281,6 @@ class FramesEditorDialog(Gtk.Window):
             self.pages_treestore.append(
                 ListItem(label=path_label, path=page_path),
             )
-
-        """directories.append('Cover Page')
-        directories.append('Root')
-
-        for page in self.parent.acbf_document.pages:
-            page_path = page.find("image").get("href").replace("\\", "/")
-            if '/' in page_path:
-                if page_path[0:page_path.find('/')] not in directories:
-                    directories.append(page_path[0:page_path.find('/')])
-
-        for directory in directories:
-            if directory == 'Cover Page':
-                if '/' in page_path:
-                    pages_treestore.append(ListItem("Cover", self.selected_page[self.selected_page.find('/') + 1:], True))
-                else:
-                    pages_treestore.append(ListItem("Cover", self.selected_page))
-            else:
-                for page in self.parent.acbf_document.pages:
-                    page_path = page.find("image").get("href").replace("\\", "/")
-                    if '/' in page_path and page_path[0:page_path.find('/')] == directory:
-                        pages_treestore.append(ListItem(page_path[page_path.find('/') + 1:], page_path[page_path.find('/')]))
-                    elif '/' not in page_path and directory == 'Root':
-                        pages_treestore.append(ListItem(page_path, page_path))"""
 
         self.pages_tree.connect("activate", self.page_selection_changed)
 
@@ -369,7 +305,6 @@ class FramesEditorDialog(Gtk.Window):
         da_mouse_press.set_button(0)
         da_mouse_press.connect("pressed", self.draw_brush)
         self.drawing_area.add_controller(da_mouse_press)
-        # self.drawing_area.connect("scroll-event", self.scrollparent)
 
         self.sw_image.set_child(self.drawing_area)
         main_pane_horz.set_end_child(self.sw_image)
@@ -397,7 +332,6 @@ class FramesEditorDialog(Gtk.Window):
 
         # frames
         self.fsw = Gtk.ScrolledWindow()
-        # self.fsw.set_size_request(550, 150)
 
         self.fsw.set_child(frames_column_view)
         self.fsw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -420,20 +354,13 @@ class FramesEditorDialog(Gtk.Window):
         self.source_layer_texts = ""
         self.source_layer_texts_no = 0
         copy_layer_button.connect("clicked", self.copy_layer)
-        # toolbar_top_tools.pack_start(copy_layer_button)
 
-        paste_layer_button = Gtk.Button.new_from_icon_name(
-            "edit-paste-symbolic",
-        )
+        paste_layer_button = Gtk.Button.new_from_icon_name("edit-paste-symbolic")
         paste_layer_button.set_tooltip_text("Paste Text Layer")
         paste_layer_button.connect("clicked", self.paste_layer)
-        # toolbar_top_tools.pack_start(paste_layer_button)
 
-        self.straight_button = Gtk.CheckButton.new_with_label(
-            "Draw straight lines",
-        )
+        self.straight_button = Gtk.CheckButton.new_with_label("Draw straight lines")
         toolbar_top_tools.pack_start(self.straight_button)
-        # toolbar.add_top_bar(toolbar_top_tools)
 
         self.zoom_dropdown: Gtk.DropDown = Gtk.DropDown.new_from_strings(
             ["10%", "25%", "50%", "75%", "100%", "125%", "175%", "200%"],
@@ -452,28 +379,21 @@ class FramesEditorDialog(Gtk.Window):
         toolbar_header.pack_start(self.zoom_dropdown)
 
         self.frames_color = Gdk.RGBA()
-        self.frames_color.parse(
-            self.parent.preferences.get_value("frames_color"),
-        )
+        self.frames_color.parse(self.parent.preferences.get_value("frames_color"))
 
         self.text_layers_color = Gdk.RGBA()
-        self.text_layers_color.parse(
-            self.parent.preferences.get_value("text_layers_color"),
-        )
+        self.text_layers_color.parse(self.parent.preferences.get_value("text_layers_color"))
 
         self.background_color = Gdk.RGBA()
         self.background_color.parse("#FFFFFF")
 
         self.frame_model.connect("items_changed", self.list_item_changed)
-        self.text_layer_model.connect(
-            "items_changed",
-            self.list_text_item_changed,
-        )
+        self.text_layer_model.connect("items_changed", self.list_text_item_changed)
 
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.append(toolbar_top_tools)
         content.append(main_pane_vert)
-        # Add the ScrolledWindow to the main window
+
         self.set_child(content)
 
     def set_header_title(self, text: str = "") -> None:
@@ -483,45 +403,28 @@ class FramesEditorDialog(Gtk.Window):
         self.set_title(new_title)
 
     def copy_layer(self, widget: Gtk.Button | None = None) -> None:
-        number_of_frames = len(
-            self.parent.acbf_document.load_page_frames(
-                self.get_current_page_number(),
-            ),
-        )
+        number_of_frames = len(self.parent.acbf_document.load_page_frames(self.get_current_page_number()))
         number_of_texts = 0
         selected_layer = self.layer_dropdown.get_selected_item()
         if selected_layer.show:
             number_of_texts = len(
-                self.parent.acbf_document.load_page_texts(
-                    self.get_current_page_number(),
-                    selected_layer,
-                )[0],
+                self.parent.acbf_document.load_page_texts(self.get_current_page_number(), selected_layer)[0],
             )
 
         message = Gtk.AlertDialog()
 
         if self.drawing_frames is False and self.drawing_texts is False:
-            message.set_message(
-                "Nothing to copy.\nSelect 'Frames' or 'Text-Layers' tab.",
-            )
+            message.set_message("Nothing to copy.\nSelect 'Frames' or 'Text-Layers' tab.")
         elif self.drawing_frames is True and number_of_frames == 0:
-            message.set_message(
-                "Nothing to copy.\nNo frames found on this page.",
-            )
+            message.set_message("Nothing to copy.\nNo frames found on this page.")
         elif self.drawing_texts is True and number_of_texts == 0:
-            message.set_message(
-                "Nothing to copy.\nNo text-layers found on this page for layer: " + selected_layer,
-            )
+            message.set_message("Nothing to copy.\nNo text-layers found on this page for layer: " + selected_layer)
         elif self.drawing_frames:
-            message.set_message(
-                f"Frames layer copied: {str(number_of_frames)} objects.",
-            )
+            message.set_message(f"Frames layer copied: {str(number_of_frames)} objects.")
             self.source_layer_frames = self.selected_page
             self.source_layer_frames_no = self.get_current_page_number()
         elif self.drawing_texts:
-            message.set_message(
-                f"Text-layer copied: {str(number_of_texts)} objects.",
-            )
+            message.set_message(f"Text-layer copied: {str(number_of_texts)} objects.")
             self.source_layer_texts = self.selected_page
             self.source_layer_texts_no = self.get_current_page_number()
         else:
@@ -534,28 +437,20 @@ class FramesEditorDialog(Gtk.Window):
             alert = Gtk.AlertDialog()
 
             if self.drawing_frames is False and self.drawing_texts is False:
-                alert.set_message(
-                    "Select 'Frames' or 'Text-Layers' tab to paste into.",
-                )
+                alert.set_message("Select 'Frames' or 'Text-Layers' tab to paste into.")
                 alert.show()
             elif self.drawing_frames and (
                 self.source_layer_frames_no == 0 or self.source_layer_frames_no == self.get_current_page_number()
             ):
-                alert.set_message(
-                    "Nothing to paste. Copy frames from some other page first.",
-                )
+                alert.set_message("Nothing to paste. Copy frames from some other page first.")
                 alert.show()
             elif self.drawing_texts and (
                 self.source_layer_texts_no == 0 or self.source_layer_texts_no == self.get_current_page_number()
             ):
-                alert.set_message(
-                    "Nothing to paste. Copy text-layer from some other page first.",
-                )
+                alert.set_message("Nothing to paste. Copy text-layer from some other page first.")
                 alert.show()
             elif self.drawing_frames:
-                alert.set_message(
-                    "Frames pasted from page " + self.source_layer_frames,
-                )
+                alert.set_message("Frames pasted from page " + self.source_layer_frames)
                 self.set_modified()
 
                 for page in self.parent.acbf_document.pages:
@@ -576,9 +471,7 @@ class FramesEditorDialog(Gtk.Window):
 
             elif self.drawing_texts:
                 selected_layer = self.layer_dropdown.get_selected_item()
-                alert.set_message(
-                    "Text-layer pasted from page " + self.source_layer_texts,
-                )
+                alert.set_message("Text-layer pasted from page " + self.source_layer_texts)
                 self.set_modified()
                 layer_found = False
 
@@ -594,37 +487,22 @@ class FramesEditorDialog(Gtk.Window):
                                 # copy text-areas from source page
                                 for source_page in self.parent.acbf_document.pages:
                                     if (
-                                        source_page.find("image")
-                                        .get("href")
-                                        .replace(
-                                            "\\",
-                                            "/",
-                                        )
+                                        source_page.find("image").get("href").replace("\\", "/")
                                         == self.source_layer_texts
                                     ):
                                         for source_text_layer in source_page.findall("text-layer"):
                                             if source_text_layer.get("lang") == selected_layer.lang_iso:
                                                 for source_text_area in source_text_layer.findall("text-area"):
-                                                    text_layer.append(
-                                                        deepcopy(
-                                                            source_text_area,
-                                                        ),
-                                                    )
+                                                    text_layer.append(deepcopy(source_text_area))
 
                         if not layer_found and selected_layer.show:
-                            text_layer = xml.SubElement(
-                                page,
-                                "text-layer",
-                                lang=selected_layer.lang_iso,
-                            )
+                            text_layer = xml.SubElement(page, "text-layer", lang=selected_layer.lang_iso)
                             for source_page in self.parent.acbf_document.pages:
                                 if source_page.find("image").get("href").replace("\\", "/") == self.source_layer_texts:
                                     for source_text_layer in source_page.findall("text-layer"):
                                         if source_text_layer.get("lang") == selected_layer.lang_iso:
                                             for source_text_area in source_text_layer.findall("text-area"):
-                                                text_layer.append(
-                                                    deepcopy(source_text_area),
-                                                )
+                                                text_layer.append(deepcopy(source_text_area))
 
                 self.load_texts()
                 alert.show()
@@ -652,6 +530,7 @@ class FramesEditorDialog(Gtk.Window):
         alert.choose(self, None, handle_response, None)
 
     def key_pressed(self, widget: Gtk.EventController, event: Gtk.EventController) -> bool:
+        # TODO convert over to eventcontroller
         """print dir(Gdk.KEY_"""
         # ALT + key
         if event.get_state() == Gdk.ModifierType.MOD1_MASK:
@@ -802,18 +681,12 @@ class FramesEditorDialog(Gtk.Window):
         return True
 
     def set_cursor_loading(self) -> None:
-        """loading_cursor = Gdk.Cursor.new_from_name("wait")
-
-        try:
-            self.window.getparent().set_cursor(loading_cursor)
-        except Exception as e:
-            print(type(loading_cursor))
-            print(f"Error setting cursor: {e}")
-        while Gtk.events_pending():
-            Gtk.main_iteration()"""
+        # TODO    self.cursor_crosshair = Gdk.Cursor.new_from_name("crosshair")
+        #         self.dw.set_cursor(self.cursor_crosshair)
         pass
 
     def show_help(self) -> None:
+        # TODO Use a ui file?
         dialog = Gtk.Window()
         dialog.set_title("Help")
         dialog.set_geometry_hints(min_height=230)
@@ -948,10 +821,7 @@ class FramesEditorDialog(Gtk.Window):
             for page in self.parent.acbf_document.tree.findall("body/page"):
                 if page.find("image").get("href").replace("\\", "/") == self.selected_page:
                     self.parent.acbf_document.tree.find("body").remove(page)
-                    in_path = os.path.join(
-                        self.parent.tempdir,
-                        page.find("image").get("href").replace("\\", "/"),
-                    )
+                    in_path = os.path.join(self.parent.tempdir, page.find("image").get("href").replace("\\", "/"))
                     if os.path.isfile(in_path):
                         os.remove(in_path)
 
@@ -959,16 +829,11 @@ class FramesEditorDialog(Gtk.Window):
                 if image.get("id") == self.selected_page[1:]:
                     self.parent.acbf_document.tree.find("data").remove(image)
 
-            self.parent.acbf_document.pages = self.parent.acbf_document.tree.findall(
-                "body/" + "page",
-            )
+            self.parent.acbf_document.pages = self.parent.acbf_document.tree.findall("body/page")
 
-            self.pages_tree.get_selection().get_selected()[0].remove(
-                self.pages_tree.get_selection().get_selected()[1],
-            )
+            self.pages_tree.get_selection().get_selected()[0].remove(self.pages_tree.get_selection().get_selected()[1])
             self.pages_tree.set_cursor((0, 0))
             self.pages_tree.grab_focus()
-            # self.draw_page_image()
 
             self.set_modified()
 
@@ -992,12 +857,7 @@ class FramesEditorDialog(Gtk.Window):
         self.drawing_area.queue_draw()
 
     def change_zoom(self, widget: Gtk.Button, _pspec: GObject.GParamSpec) -> None:
-        self.scale_factor = (
-            float(
-                self.zoom_dropdown.get_selected_item().get_string()[0:-1],
-            )
-            / 100
-        )
+        self.scale_factor = float(self.zoom_dropdown.get_selected_item().get_string()[0:-1]) / 100
         self.drawing_area.queue_draw()
 
     def change_layer(self, widget: Gtk.DropDown, _pspec: GObject.GParamSpec) -> None:
@@ -1031,8 +891,6 @@ class FramesEditorDialog(Gtk.Window):
 
         color_button = Gtk.ColorDialogButton.new(Gtk.ColorDialog())
         color_button.set_rgba(color)
-        # color_button.set_foreground_color(color)
-        # color_button.set_title('Select Color')
         color_button.connect("notify::rgba", self.set_body_bgcolor)
         hbox.append(color_button)
         self.general_box.append(hbox)
@@ -1051,7 +909,6 @@ class FramesEditorDialog(Gtk.Window):
             color.parse(self.parent.acbf_document.bg_color)
         self.page_color_button = Gtk.ColorDialogButton.new(Gtk.ColorDialog())
         self.page_color_button.set_rgba(color)
-        # self.page_color_button.set_title('Select Color')
         self.page_color_button.connect("notify::rgba", self.set_page_bgcolor)
         hbox.append(self.page_color_button)
         self.general_box.append(hbox)
@@ -1075,7 +932,6 @@ class FramesEditorDialog(Gtk.Window):
         )
         if current_trans is None:
             self.transition_dropdown.set_selected(0)
-            # self.transition_dropdown.set_sensitive(False)
         else:
             self.transition_dropdown.set_sensitive(True)
             position: int = 0
@@ -1098,10 +954,7 @@ class FramesEditorDialog(Gtk.Window):
         if active:
             for page in self.parent.acbf_document.pages:
                 if page.find("image").get("href").replace("\\", "/") == self.selected_page:
-                    page.attrib["transition"] = transition.lower().replace(
-                        " ",
-                        "_",
-                    )
+                    page.attrib["transition"] = transition.lower().replace(" ", "_")
             self.set_modified()
 
     def set_body_bgcolor(self, widget: Gtk.Button, _pspec: GObject.GParamSpec | None = None) -> None:
@@ -1110,15 +963,6 @@ class FramesEditorDialog(Gtk.Window):
             "body",
         ).attrib["bgcolor"] = self.rgb_to_hex(colour.to_string())
         self.parent.modified()
-
-    """def get_hex_color(self, widget) -> str:
-        color_string = widget.get_color().to_string()
-        if len(color_string) == 13:
-            color = '#' + color_string[1:3] + \
-                color_string[5:7] + color_string[9:11]
-            return color
-        else:
-            return color_string"""
 
     def rgb_to_hex(self, rgb_string: str) -> str:
         """Converts an rgb or rgba string to a hexadecimal color string."""
@@ -1144,9 +988,7 @@ class FramesEditorDialog(Gtk.Window):
         self.frame_model.remove_all()
 
         current_page_number = self.get_current_page_number()
-        frames = self.parent.acbf_document.load_page_frames(
-            current_page_number,
-        )
+        frames = self.parent.acbf_document.load_page_frames(current_page_number)
 
         for frame in frames:
             self.frame_model.append(FrameItem(frame[0], frame[1]))
@@ -1222,9 +1064,7 @@ class FramesEditorDialog(Gtk.Window):
 
     def load_texts(self) -> None:
         try:
-            self.text_layer_model.disconnect_by_func(
-                self.list_text_item_changed,
-            )
+            self.text_layer_model.disconnect_by_func(self.list_text_item_changed)
         except Exception:
             pass
 
@@ -1234,10 +1074,7 @@ class FramesEditorDialog(Gtk.Window):
         current_page_number = self.get_current_page_number()
         current_lang = self.layer_dropdown.get_selected_item()
         if current_lang is not None and current_lang.show:
-            texts, refs = self.parent.acbf_document.load_page_texts(
-                current_page_number,
-                current_lang.lang_iso,
-            )
+            texts, refs = self.parent.acbf_document.load_page_texts(current_page_number, current_lang.lang_iso)
         else:
             return
         # Load texts
@@ -1267,8 +1104,6 @@ class FramesEditorDialog(Gtk.Window):
         # Create a Cairo ImageSurface to draw text on
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         cr = cairo.Context(surface)
-
-        # current_page_number = self.get_current_page_number()
 
         i = -1
         while i < 9999:
@@ -1389,16 +1224,9 @@ class FramesEditorDialog(Gtk.Window):
         return ret_idx
 
     def draw_page_image(self) -> cairo.Surface:
-        # self.set_cursor_loading()
-        """if self.selected_page[:4] == 'Root':
-        self.selected_page = self.selected_page[5:].replace("\\", "/")"""
-
         lang = self.layer_dropdown.get_selected_item()
         if lang is not None and lang.show:
-            current_page_image = os.path.join(
-                self.parent.tempdir,
-                self.selected_page,
-            )
+            current_page_image = os.path.join(self.parent.tempdir, self.selected_page)
             i = 0
             while i < 999:
                 lang = self.parent.lang_store.get_item(i)
@@ -1418,9 +1246,7 @@ class FramesEditorDialog(Gtk.Window):
 
                 i = i + 1
         else:
-            img, bg_color = self.parent.acbf_document.load_page_image(
-                self.get_current_page_number(),
-            )
+            img, bg_color = self.parent.acbf_document.load_page_image(self.get_current_page_number())
 
         if self.scale_factor != 1:
             img = img.resize(
@@ -1445,13 +1271,7 @@ class FramesEditorDialog(Gtk.Window):
             a = rgba_data[i + 3]
             argb_data.extend([b, g, r, a])
 
-        surface = cairo.ImageSurface.create_for_data(
-            argb_data,
-            cairo.FORMAT_ARGB32,
-            w,
-            h,
-            w * 4,
-        )
+        surface = cairo.ImageSurface.create_for_data(argb_data, cairo.FORMAT_ARGB32, w, h, w * 4)
 
         self.drawing_area.set_content_height(h)
         self.drawing_area.set_content_width(w)
@@ -1459,7 +1279,7 @@ class FramesEditorDialog(Gtk.Window):
         return surface
 
     def draw_brush(self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float) -> bool:
-        # No boxes allowed on cover (for some reason)
+        # TODO Remove as frames and texts ARE allowed on cover page
         if self.get_current_page_number() == 1:
             return True
 
@@ -1486,11 +1306,6 @@ class FramesEditorDialog(Gtk.Window):
             return True
 
         # TODO More tools Old comment: draw vertical/horizontal line with CTRL key pressed
-        """if self.straight_button.get_active() and len(self.points) > 0:
-            if abs(x / self.scale_factor - self.points[-1][0]) > abs(y / self.scale_factor - self.points[-1][1]):
-                y = float(self.points[-1][1]) * self.scale_factor
-            else:
-                x = float(self.points[-1][0]) * self.scale_factor"""
 
         lang_found = False
         for lang in self.parent.acbf_document.languages:
@@ -1499,11 +1314,6 @@ class FramesEditorDialog(Gtk.Window):
         if self.drawing_texts and not lang_found:
             # TODO alert
             print("Can't draw text areas. No languages are defined for this comic book with 'show' attribute checked.")
-            """message = Gtk.MessageDialog(parent=self, flags=0, type=Gtk.MessageType.INFO, buttons=Gtk.ButtonsType.OK,
-                                        message_format="Can't draw text areas. No languages are defined for this comic book with 'show' attribute checked.")
-            response = message.run()
-            message.destroy()
-            return"""
 
         if (
             (len(self.points) > 0)
@@ -1513,9 +1323,7 @@ class FramesEditorDialog(Gtk.Window):
             if len(self.points) > 2:
                 self.enclose_rectangle()
             else:
-                self.points.append(
-                    (int(x / self.scale_factor), int(y / self.scale_factor)),
-                )
+                self.points.append((int(x / self.scale_factor), int(y / self.scale_factor)))
         else:
             self.points.append(
                 (
@@ -1542,11 +1350,7 @@ class FramesEditorDialog(Gtk.Window):
                 if page.find("image").get("href").replace("\\", "/") == self.selected_page:
                     if self.drawing_frames:
                         # add frame
-                        xml.SubElement(
-                            page,
-                            "frame",
-                            points=xml_frame.strip(),
-                        )
+                        xml.SubElement(page, "frame", points=xml_frame.strip())
                         self.load_frames()
                         self.set_modified()
 
@@ -1567,11 +1371,7 @@ class FramesEditorDialog(Gtk.Window):
                                         par = xml.SubElement(area, "p")
                                         par.text = "..."
                                 if not layer_found:
-                                    layer = xml.SubElement(
-                                        page,
-                                        "text-layer",
-                                        lang=lang[0],
-                                    )
+                                    layer = xml.SubElement(page, "text-layer", lang=lang[0])
                                     area = xml.SubElement(
                                         layer,
                                         "text-area",
@@ -1582,9 +1382,7 @@ class FramesEditorDialog(Gtk.Window):
                                     par.text = "..."
                         self.load_texts()
                         self.set_modified()
-                        # self.pixmap.draw_polygon(self.text_layers_gc, False, self.scale_polygon(self.points))
 
-            # self.draw_drawable()
             self.points = []
             # Trigger redraw
             self.drawing_area.queue_draw()
@@ -1664,6 +1462,7 @@ class FramesEditorDialog(Gtk.Window):
 
         return dest
 
+    # TODO Move out to separate module and re-enable
     '''def text_bubble_detection(self, x: float, y: float) -> None:
         x = int(x / self.scale_factor)
         y = int(y / self.scale_factor)
@@ -2266,17 +2065,12 @@ class FramesEditorDialog(Gtk.Window):
             if item.is_cover:
                 # TODO Disable frame and text tabs
                 self.selected_page = (
-                    self.parent.acbf_document.bookinfo.find(
-                        "coverpage/" + "image",
-                    )
-                    .get("href")
-                    .replace("\\", "/")
+                    self.parent.acbf_document.bookinfo.find("coverpage/" + "image").get("href").replace("\\", "/")
                 )
                 self.selected_page_bgcolor = None
                 color = Gdk.RGBA()
                 color.parse(self.parent.acbf_document.bg_color)
             else:
-                # os.path.join(directory, page).replace("\\", "/")
                 self.selected_page = item.path.replace("\\", "/")
                 for p in self.parent.acbf_document.tree.findall("body/page"):
                     if p.find("image").get("href").replace("\\", "/") == self.selected_page:
@@ -2312,9 +2106,7 @@ class FramesEditorDialog(Gtk.Window):
             alert = Gtk.AlertDialog()
             alert.set_message("Unsaved Changes")
             alert.set_detail("There are unsaved changes that will be lost:")
-            alert.set_buttons(
-                ["Cancel", "Save and Switch", "Switch (lose changes)"],
-            )
+            alert.set_buttons(["Cancel", "Save and Switch", "Switch (lose changes)"])
             alert.set_cancel_button(0)
             alert.set_default_button(1)
             alert.choose(self, None, handle_response, None)
@@ -2336,10 +2128,7 @@ class FramesEditorDialog(Gtk.Window):
                     transition = self.transition_dropdown.get_selected_item().get_string()
                     active = self.transition_dropdown.get_sensitive()
                     if active:
-                        page.attrib["transition"] = transition.lower().replace(
-                            " ",
-                            "_",
-                        )
+                        page.attrib["transition"] = transition.lower().replace(" ", "_")
 
                 # Save text layers
                 for xml_text_layer in page.findall("text-layer"):
@@ -2349,22 +2138,15 @@ class FramesEditorDialog(Gtk.Window):
 
                         i = 0
                         while i < 9999:
-                            text_row: TextLayerItem = self.text_layer_model.get_item(
-                                i,
-                            )
+                            text_row: TextLayerItem = self.text_layer_model.get_item(i)
                             if text_row is None:
                                 break
 
                             if text_row.polygon:
-                                text_area = xml.SubElement(
-                                    xml_text_layer,
-                                    "text-area",
-                                )
+                                text_area = xml.SubElement(xml_text_layer, "text-area")
                                 text_area.attrib["points"] = text_row.poly_str()
                                 if text_row.rotation > 0:
-                                    text_area.attrib["text-rotation"] = str(
-                                        text_row.rotation,
-                                    )
+                                    text_area.attrib["text-rotation"] = str(text_row.rotation)
                                 if text_row.type != "speech":
                                     text_area.attrib["type"] = text_row.type
                                 if text_row.colour:
@@ -2379,49 +2161,25 @@ class FramesEditorDialog(Gtk.Window):
                                     for word in text.strip(" ").split("<"):
                                         if re.sub(r"[^\/]*>.*", "", word) == "":
                                             tag_name = re.sub(">.*", "", word)
-                                            tag_text = re.sub(
-                                                "[^>]*>",
-                                                "",
-                                                word,
-                                            )
+                                            tag_text = re.sub("[^>]*>", "", word)
                                         elif ">" in word:
-                                            tag_tail = re.sub(
-                                                "/[^>]*>",
-                                                "",
-                                                word,
-                                            )
+                                            tag_tail = re.sub("/[^>]*>", "", word)
                                         else:
                                             element.text = str(word)
 
                                         if tag_tail is not None:
                                             if " " in tag_name:
-                                                tag_attr = tag_name.split(
-                                                    " ",
-                                                )[1].split("=")[0]
+                                                tag_attr = tag_name.split(" ")[1].split("=")[0]
                                                 tag_value = tag_name.split(" ")[1].split("=")[1].strip('"')
                                                 tag_name = tag_name.split(" ")[0]
-                                                sub_element = xml.SubElement(
-                                                    element,
-                                                    tag_name,
-                                                )
+                                                sub_element = xml.SubElement(element, tag_name)
                                                 sub_element.attrib[tag_attr] = tag_value
-                                                sub_element.text = str(
-                                                    tag_text,
-                                                )
-                                                sub_element.tail = str(
-                                                    tag_tail,
-                                                )
+                                                sub_element.text = str(tag_text)
+                                                sub_element.tail = str(tag_tail)
                                             else:
-                                                sub_element = xml.SubElement(
-                                                    element,
-                                                    tag_name,
-                                                )
-                                                sub_element.text = str(
-                                                    tag_text,
-                                                )
-                                                sub_element.tail = str(
-                                                    tag_tail,
-                                                )
+                                                sub_element = xml.SubElement(element, tag_name)
+                                                sub_element.text = str(tag_text)
+                                                sub_element.tail = str(tag_tail)
 
                                             tag_tail = None
                             else:
@@ -2480,8 +2238,6 @@ class FramesEditorDialog(Gtk.Window):
 
     def setup_list_item(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell) -> None:
         entry = Gtk.Label()
-        # entry.set_hexpand(True)
-        # entry.set_halign(Gtk.Align.FILL)
         entry.set_margin_start(5)
         entry.set_margin_end(5)
         list_item.set_child(entry)
@@ -2508,9 +2264,7 @@ class FramesEditorDialog(Gtk.Window):
         list_item.set_child(entry)
 
     def setup_edit_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell) -> None:
-        entry = Gtk.Button.new_from_icon_name(
-            "pencil-and-paper-small-symbolic",
-        )
+        entry = Gtk.Button.new_from_icon_name("pencil-and-paper-small-symbolic")
         list_item.set_child(entry)
 
     def setup_colour_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell) -> None:
@@ -2539,20 +2293,14 @@ class FramesEditorDialog(Gtk.Window):
         list_item.set_child(entry)
 
     def bind_order_column(
-        self,
-        factory: Gtk.SignalListItemFactory,
-        list_item: Gtk.ColumnViewCell,
-        attribute: str,
+        self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell, attribute: str
     ) -> None:
         order = list_item.get_position() + 1
         entry = list_item.get_child()
         entry.set_text(str(order))
 
     def bind_move_column(
-        self,
-        factory: Gtk.SignalListItemFactory,
-        list_item: Gtk.ColumnViewCell,
-        attribute: str,
+        self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell, attribute: str
     ) -> None:
         item = list_item.get_item()
         position = list_item.get_position()
@@ -2562,23 +2310,14 @@ class FramesEditorDialog(Gtk.Window):
             entry.set_sensitive(False)
         else:
             entry.set_sensitive(True)
-        entry.connect(
-            "clicked",
-            self.move_button_click,
-            item,
-            attribute,
-            position,
-        )
+        entry.connect("clicked", self.move_button_click, item, attribute, position)
 
     def unbind_move_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell) -> None:
         entry: Gtk.Button = list_item.get_child()
         entry.disconnect_by_func(self.move_button_click)
 
     def bind_entry_column(
-        self,
-        factory: Gtk.SignalListItemFactory,
-        list_item: Gtk.ColumnViewCell,
-        attribute: str,
+        self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell, attribute: str
     ) -> None:
         item = list_item.get_item()
         position = list_item.get_position()
@@ -2587,16 +2326,8 @@ class FramesEditorDialog(Gtk.Window):
             entry.set_text(str(item.cords) or "")
             entry.set_sensitive(False)
         else:
-            item.bind_property(
-                "text",
-                entry,
-                "text",
-                GObject.BindingFlags.SYNC_CREATE,
-            )
-            entry.set_icon_from_icon_name(
-                Gtk.EntryIconPosition.SECONDARY,
-                "edit-entry-symbolic",
-            )
+            item.bind_property("text", entry, "text", GObject.BindingFlags.SYNC_CREATE)
+            entry.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "edit-entry-symbolic")
             entry.connect("icon-release", self.edit_texts, position)
 
     def unbind_entry_column(self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell) -> None:
@@ -2604,10 +2335,7 @@ class FramesEditorDialog(Gtk.Window):
         entry.disconnect_by_func(self.edit_texts)
 
     def bind_colour_column(
-        self,
-        factory: Gtk.SignalListItemFactory,
-        list_item: Gtk.ColumnViewCell,
-        attribute: str,
+        self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell, attribute: str
     ) -> None:
         item = list_item.get_item()
         button: Gtk.ColorButton = list_item.get_child()
@@ -2654,10 +2382,7 @@ class FramesEditorDialog(Gtk.Window):
         entry.disconnect_by_func(self.type_changed)
 
     def bind_remove_column(
-        self,
-        factory: Gtk.SignalListItemFactory,
-        list_item: Gtk.ColumnViewCell,
-        attribute: str,
+        self, factory: Gtk.SignalListItemFactory, list_item: Gtk.ColumnViewCell, attribute: str
     ) -> None:
         item = list_item.get_item()
         entry: Gtk.Button = list_item.get_child()
@@ -2668,11 +2393,7 @@ class FramesEditorDialog(Gtk.Window):
         entry.disconnect_by_func(self.remove_button_clicked)
 
     def move_button_click(
-        self,
-        widget: Gtk.Button,
-        item: TextLayerItem | FrameItem,
-        attribute: str,
-        position: int,
+        self, widget: Gtk.Button, item: TextLayerItem | FrameItem, attribute: str, position: int
     ) -> None:
         if attribute == "frame":
             move_item = self.frame_model.get_item(position - 1)
@@ -2692,11 +2413,7 @@ class FramesEditorDialog(Gtk.Window):
                 self.text_layer_model.remove(position)
 
     def colour_button_set(
-        self,
-        widget: Gtk.ColorButton,
-        _pspec: GObject.GParamSpec,
-        item: TextLayerItem | FrameItem,
-        attribute: str,
+        self, widget: Gtk.ColorButton, _pspec: GObject.GParamSpec, item: TextLayerItem | FrameItem, attribute: str
     ) -> None:
         colour = widget.get_rgba()
         item.colour = self.rgb_to_hex(colour.to_string())
@@ -2722,12 +2439,7 @@ class FramesEditorDialog(Gtk.Window):
 class ColorDialog(Gtk.ColorDialog):
     def __init__(self, window: Gtk.Window, color: str, set_transparency: bool, is_transparent: bool) -> None:
         self.parent = window
-        GObject.GObject.__init__(
-            self,
-            "Color Selection Dialog",
-            self,
-            Gtk.DialogFlags.DESTROY_WITH_PARENT,
-        )
+        GObject.GObject.__init__(self, "Color Selection Dialog", self, Gtk.DialogFlags.DESTROY_WITH_PARENT)
         self.get_color_selection().set_current_color(color)
         self.get_color_selection().set_has_palette(True)
         self.transparency_button = Gtk.CheckButton("Set Transparent")
@@ -2739,10 +2451,7 @@ class ColorDialog(Gtk.ColorDialog):
                 0,
             )
             self.transparency_button.show_all()
-            self.transparency_button.connect(
-                "toggled",
-                self.change_transparency,
-            )
+            self.transparency_button.connect("toggled", self.change_transparency)
         self.show_all()
         if is_transparent is not None and is_transparent:
             self.transparency_button.set_active(True)
@@ -2771,9 +2480,7 @@ class TextBoxDialog(Gtk.Window):
         keycont.connect("key-pressed", self.key_pressed)
         self.add_controller(keycont)
 
-        text_layer: TextLayerItem = self.parent.text_layer_model.get_item(
-            position,
-        )
+        text_layer: TextLayerItem = self.parent.text_layer_model.get_item(position)
         self.is_modified: bool = False
 
         self.set_size_request(600, 380)
@@ -2784,22 +2491,14 @@ class TextBoxDialog(Gtk.Window):
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         toolbar_top = Gtk.ActionBar()
 
-        # Being able to switch text language in the text dialogue doesn't make sense so removed
-        # lang = self.parent.layer_dropdown.get_selected_item().lang_iso
+        # TODO Add additional text box for another language to help translation
 
         text_rotation = Gtk.Adjustment.new(0.0, 0.0, 360, 1.0, 1.0, 1.0)
-        scale: Gtk.Scale = Gtk.Scale.new(
-            orientation=Gtk.Orientation.HORIZONTAL,
-            adjustment=text_rotation,
-        )
+        scale: Gtk.Scale = Gtk.Scale.new(orientation=Gtk.Orientation.HORIZONTAL, adjustment=text_rotation)
         scale.set_size_request(100, 50)
         scale.set_tooltip_text("Text Rotation")
         scale.set_hexpand(True)
-        scale.add_mark(
-            value=0,
-            position=Gtk.PositionType.TOP,
-            markup="Text Rotation",
-        )
+        scale.add_mark(value=0, position=Gtk.PositionType.TOP, markup="Text Rotation")
         scale.add_mark(value=90, position=Gtk.PositionType.LEFT, markup="90")
         scale.add_mark(value=180, position=Gtk.PositionType.LEFT, markup="180")
         scale.add_mark(value=270, position=Gtk.PositionType.LEFT, markup="270")
@@ -2819,11 +2518,7 @@ class TextBoxDialog(Gtk.Window):
         transparent_button = Gtk.CheckButton(label="Transparent")
         transparent_button.set_tooltip_text("Transparent background")
         transparent_button.set_active(text_layer.is_transparent)
-        transparent_button.connect(
-            "toggled",
-            self.text_transparent_change,
-            text_layer,
-        )
+        transparent_button.connect("toggled", self.text_transparent_change, text_layer)
         toolbar_top.pack_start(transparent_button)
 
         # main box
@@ -2846,6 +2541,7 @@ class TextBoxDialog(Gtk.Window):
 
     # keyval, keycode, state, user_data
     def key_pressed(self, keyval: int, keycode: int, state: Gdk.ModifierType, user_data: Any) -> bool:
+        # TODO eventcontroller
         """print dir(Gdk.KEY_"""
         if keyval == Gdk.KEY_F1:
             self.show_help()
@@ -3017,6 +2713,7 @@ class TextBoxDialog(Gtk.Window):
         return False
 
     def show_help(self, *args: Any) -> None:
+        # TODO Use ui file?
         dialog: Gtk.ShortcutsWindow = Gtk.ShortcutsWindow()
 
         dialog.set_size_request(500, 500)

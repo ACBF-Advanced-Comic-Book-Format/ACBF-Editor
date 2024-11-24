@@ -1,8 +1,21 @@
 """text_layer.py - Comic page object and image manipulation methods.
 
 Copyright (C) 2011-2018 Robert Kubik
-https://launchpad.net/~just-me
+https://github.com/GeoRW/ACBF-Editor
 """
+# -------------------------------------------------------------------------
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# -------------------------------------------------------------------------
 
 from __future__ import annotations
 
@@ -22,20 +35,6 @@ if TYPE_CHECKING:
     from frames_editor import TextLayerItem
     from gi.repository import Gio
 
-# -------------------------------------------------------------------------
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as published
-# by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# -------------------------------------------------------------------------
-
 
 class TextLayer:
     def __init__(
@@ -52,14 +51,10 @@ class TextLayer:
         self.acbf_document: acbfdocument.ACBFDocument = acbf_document
         self.PILBackgroundImage: Image = Image.open(filename)
         self.PILBackgroundImageProcessed = None
-        _, self.references = acbf_document.load_page_texts(
-            page_number,
-            acbf_document.languages[0][0],
-        )
+        _, self.references = acbf_document.load_page_texts(page_number, acbf_document.languages[0][0])
         self.text_areas: Gio.ListStore[TextLayerItem] = text_layer
         self.polygon: list[tuple[int, int]] = []
         self.updated: bool = False
-        # print constants.FONTS_LIST
         self.normal_font: str = acbf_document.font_styles["normal"]
         self.strong_font: str = acbf_document.font_styles["strong"]
         self.emphasis_font: str = acbf_document.font_styles["emphasis"]
@@ -71,7 +66,6 @@ class TextLayer:
         self.letter_font: str = acbf_document.font_styles["letter"]
         self.audio_font: str = acbf_document.font_styles["audio"]
         self.thought_font: str = acbf_document.font_styles["thought"]
-        # acbf_document.load_page_frames(page_number)
         self.frames: Gio.ListStore[FrameItem] = frames_layers
         self.frames_total = len(self.frames)
         self.draw_text_layer()
@@ -137,23 +131,10 @@ class TextLayer:
         return unescape(re.sub("<[^>]*>", "", in_string))
 
     def draw_text_layer(self) -> None:
+        # TODO Class?
         text_areas_draw: list[
-            tuple[
-                int,
-                list[
-                    tuple[
-                        tuple[int | float, int | float],
-                        str,
-                        tuple[int | float, int | float],
-                    ]
-                ],
-                str,
-                int,
-                list[tuple[int | float, int | float]],
-                str,
-                bool,
-            ]
-        ] = []
+            tuple[int, list[tuple[tuple[int | float, int | float], str, tuple[int | float, int | float]]], str, int,
+            list[tuple[int | float, int | float]], str, bool]] = []
         if self.PILBackgroundImage.mode != "RGB":
             self.PILBackgroundImage = self.PILBackgroundImage.convert("RGB")
         image_draw = ImageDraw.Draw(self.PILBackgroundImage)
@@ -190,10 +171,7 @@ class TextLayer:
                     )
 
                 # rotate polygon
-                rotated_polygon = rotate_polygon(
-                    moved_polygon,
-                    text_area.rotation,
-                )
+                rotated_polygon = rotate_polygon(moved_polygon, text_area.rotation)
 
                 # move polygon to image center
                 polygon = []
@@ -270,14 +248,7 @@ class TextLayer:
                 is_code = False
 
             is_emphasis = is_strong = False
-            words = (
-                text.replace("a href", "a_href")
-                .replace(
-                    " ",
-                    " ˇ",
-                )
-                .split("ˇ")
-            )
+            words = (text.replace("a href", "a_href").replace(" ", " ˇ").split("ˇ"))
             # words_upper = text.replace(" ", "ˇ").upper().split("ˇ")
             area_per_character = polygon_area / len(self.remove_xml_tags(text))
             character_height = int(math.sqrt(area_per_character / 2) * 2) - 3
@@ -311,63 +282,24 @@ class TextLayer:
                 le_font = self.load_font("letter", character_height)
                 au_font = self.load_font("audio", character_height)
                 th_font = self.load_font("thought", character_height)
-                n_font_small = self.load_font(
-                    "normal",
-                    int(character_height / 2),
-                )
-                e_font_small = self.load_font(
-                    "emphasis",
-                    int(character_height / 2),
-                )
-                s_font_small = self.load_font(
-                    "strong",
-                    int(character_height / 2),
-                )
-                c_font_small = self.load_font(
-                    "code",
-                    int(character_height / 2),
-                )
-                co_font_small = self.load_font(
-                    "commentary",
-                    int(character_height / 2),
-                )
-                si_font_small = self.load_font(
-                    "sign",
-                    int(character_height / 2),
-                )
-                fo_font_small = self.load_font(
-                    "formal",
-                    int(character_height / 2),
-                )
-                he_font_small = self.load_font(
-                    "heading",
-                    int(character_height / 2),
-                )
-                le_font_small = self.load_font(
-                    "letter",
-                    int(character_height / 2),
-                )
-                au_font_small = self.load_font(
-                    "audio",
-                    int(character_height / 2),
-                )
-                th_font_small = self.load_font(
-                    "thought",
-                    int(character_height / 2),
-                )
+                n_font_small = self.load_font("normal", int(character_height / 2))
+                e_font_small = self.load_font("emphasis", int(character_height / 2))
+                s_font_small = self.load_font("strong", int(character_height / 2))
+                c_font_small = self.load_font("code", int(character_height / 2))
+                co_font_small = self.load_font("commentary", int(character_height / 2))
+                si_font_small = self.load_font("sign", int(character_height / 2))
+                fo_font_small = self.load_font("formal", int(character_height / 2))
+                he_font_small = self.load_font("heading", int(character_height / 2))
+                le_font_small = self.load_font("letter", int(character_height / 2))
+                au_font_small = self.load_font("audio", int(character_height / 2))
+                th_font_small = self.load_font("thought", int(character_height / 2))
 
                 use_small_font = False
 
                 drawing_word = 0
                 # drawing_line = 0
                 # (first_word_start, line_text, last_word_end)
-                lines: list[
-                    tuple[
-                        tuple[int | float, int | float],
-                        str,
-                        tuple[int | float, int | float],
-                    ]
-                ] = []
+                lines: list[tuple[tuple[int | float, int | float], str, tuple[int | float, int | float]]] = []
                 current_line = ""
                 first_word_start: tuple[int | float, int | float] = text_drawing_start
                 last_word_end: tuple[int | float, int | float] = first_word_start
@@ -376,14 +308,7 @@ class TextLayer:
                 while drawing_word < len(words):
                     # place first word in line
                     first_word_fits = False
-                    tag_split = (
-                        words[drawing_word]
-                        .replace(
-                            "<",
-                            "ˇ<",
-                        )
-                        .split("ˇ")
-                    )
+                    tag_split = (words[drawing_word].replace("<", "ˇ<").split("ˇ"))
                     chunk_size = 0
 
                     for chunk in tag_split:
@@ -473,11 +398,7 @@ class TextLayer:
 
                         current_chunk = self.remove_xml_tags(chunk)
                         if current_chunk != "":
-                            chunk_size = self.text_width(
-                                chunk_size,
-                                chunk,
-                                font,
-                            )
+                            chunk_size = self.text_width(chunk_size, chunk, font)
 
                     text_size: tuple[int | float, int | float] = (chunk_size, character_height + 1)
 
@@ -540,14 +461,7 @@ class TextLayer:
                     # place other words in line that fit
                     other_word_fits = True
                     while other_word_fits and drawing_word < len(words):
-                        tag_split = (
-                            words[drawing_word]
-                            .replace(
-                                "<",
-                                "ˇ<",
-                            )
-                            .split("ˇ")
-                        )
+                        tag_split = (words[drawing_word].replace("<", "ˇ<").split("ˇ"))
                         chunk_size = 0
 
                         for chunk in tag_split:
@@ -640,11 +554,7 @@ class TextLayer:
 
                             current_chunk = self.remove_xml_tags(chunk)
                             if current_chunk != "":
-                                chunk_size = self.text_width(
-                                    chunk_size,
-                                    chunk,
-                                    font,
-                                )
+                                chunk_size = self.text_width(chunk_size, chunk, font)
 
                         text_size = (chunk_size, character_height + 1)
                         upper_right_corner_fits = point_inside_polygon(
@@ -668,18 +578,12 @@ class TextLayer:
                                 and not is_formal
                                 and not is_commentary
                             ):
-                                # print words[drawing_word].encode("ascii","ignore")
-                                # print 'word y:', current_pointer[1] + text_size[1], current_pointer[1] + text_size[1]+ text_size[1]
-                                # print 'polygon:', get_frame_span(polygon)
-                                # print 'diff:', get_frame_span(polygon)[3] - (current_pointer[1] + text_size[1]), diff_ratio
                                 other_word_fits = False
                                 last_word_end = (
                                     current_pointer[0],
                                     current_pointer[1] + text_size[1],
                                 )
-                                lines.append(
-                                    (first_word_start, current_line, last_word_end),
-                                )
+                                lines.append((first_word_start, current_line, last_word_end))
                                 current_line = ""
                                 first_word_start = (
                                     polygon_x_min + 2,
@@ -687,7 +591,6 @@ class TextLayer:
                                 )
                             else:
                                 current_line = current_line + words[drawing_word]
-                                # draw.rectangle((current_pointer[0], current_pointer[1], current_pointer[0] + text_size[0], current_pointer[1] + text_size[1]), outline='#ff0000')
                                 current_pointer = (
                                     current_pointer[0] + text_size[0],
                                     current_pointer[1],
@@ -699,9 +602,7 @@ class TextLayer:
                                 current_pointer[0],
                                 current_pointer[1] + text_size[1],
                             )
-                            lines.append(
-                                (first_word_start, current_line, last_word_end),
-                            )
+                            lines.append((first_word_start, current_line, last_word_end))
                             current_line = ""
                             first_word_start = (
                                 polygon_x_min + 2,
@@ -975,64 +876,27 @@ class TextLayer:
                 e_font = self.load_font("emphasis", current_character_height)
                 s_font = self.load_font("strong", current_character_height)
                 c_font = self.load_font("code", current_character_height)
-                co_font = self.load_font(
-                    "commentary",
-                    current_character_height,
-                )
+                co_font = self.load_font("commentary", current_character_height)
                 si_font = self.load_font("sign", current_character_height)
                 fo_font = self.load_font("formal", current_character_height)
                 he_font = self.load_font("heading", current_character_height)
                 le_font = self.load_font("letter", current_character_height)
                 au_font = self.load_font("audio", current_character_height)
                 th_font = self.load_font("thought", current_character_height)
-                n_font_small = self.load_font(
-                    "normal",
-                    int(current_character_height / 2),
-                )
-                e_font_small = self.load_font(
-                    "emphasis",
-                    int(current_character_height / 2),
-                )
-                s_font_small = self.load_font(
-                    "strong",
-                    int(current_character_height / 2),
-                )
-                c_font_small = self.load_font(
-                    "code",
-                    int(current_character_height / 2),
-                )
-                co_font_small = self.load_font(
-                    "commentary",
-                    int(current_character_height / 2),
-                )
-                si_font_small = self.load_font(
-                    "sign",
-                    int(current_character_height / 2),
-                )
-                fo_font_small = self.load_font(
-                    "formal",
-                    int(current_character_height / 2),
-                )
-                he_font_small = self.load_font(
-                    "heading",
-                    int(current_character_height / 2),
-                )
-                le_font_small = self.load_font(
-                    "letter",
-                    int(current_character_height / 2),
-                )
-                au_font_small = self.load_font(
-                    "audio",
-                    int(current_character_height / 2),
-                )
-                th_font_small = self.load_font(
-                    "thought",
-                    int(current_character_height / 2),
-                )
+                n_font_small = self.load_font("normal", int(current_character_height / 2))
+                e_font_small = self.load_font("emphasis", int(current_character_height / 2))
+                s_font_small = self.load_font("strong", int(current_character_height / 2))
+                c_font_small = self.load_font("code", int(current_character_height / 2))
+                co_font_small = self.load_font("commentary", int(current_character_height / 2))
+                si_font_small = self.load_font("sign", int(current_character_height / 2))
+                fo_font_small = self.load_font("formal", int(current_character_height / 2))
+                he_font_small = self.load_font("heading", int(current_character_height / 2))
+                le_font_small = self.load_font("letter", int(current_character_height / 2))
+                au_font_small = self.load_font("audio", int(current_character_height / 2))
+                th_font_small = self.load_font("thought", int(current_character_height / 2))
 
             # calculate new line length
             if normalized_character_height != t_a[0]:
-                # print "normalized", t_a[0], normalized_character_height, t_a[1]
                 for line in t_a[1]:
                     # calculate some default values
                     text = line[1]
@@ -1077,27 +941,12 @@ class TextLayer:
                         is_code = False
 
                     is_emphasis = is_strong = False
-                    words = (
-                        text.replace("a href", "a_href")
-                        .replace(
-                            " ",
-                            " ˇ",
-                        )
-                        .split("ˇ")
-                    )
-                    # words_upper = text.replace(' ', 'ˇ').upper().split('ˇ')
+                    words = (text.replace("a href", "a_href").replace(" ", " ˇ").split("ˇ"))
                     drawing_word = 0
                     line_length: int | float = 0
 
                     while drawing_word < len(words):
-                        tag_split = (
-                            words[drawing_word]
-                            .replace(
-                                "<",
-                                "ˇ<",
-                            )
-                            .split("ˇ")
-                        )
+                        tag_split = (words[drawing_word].replace("<", "ˇ<").split("ˇ"))
                         chunk_size = 0
 
                         for chunk in tag_split:
@@ -1230,9 +1079,6 @@ class TextLayer:
                     )
                     / 2,
                 )
-                # print get_frame_span(points), get_frame_span(polygon), vertical_move
-                # draw.rectangle((get_frame_span(polygon)[0], get_frame_span(polygon)[1], get_frame_span(polygon)[2], get_frame_span(polygon)[3]), outline="#FF0000")
-                # draw.rectangle((get_frame_span(points)[0], get_frame_span(points)[1], get_frame_span(points)[2], get_frame_span(points)[3]), outline="#FFFF00")
 
                 if vertical_move > 0:
                     # check if inside
@@ -1251,18 +1097,13 @@ class TextLayer:
                                 line[2][1] + move + int(current_character_height / 5),
                                 polygon,
                             ):
-                                # draw.rectangle((line[0][0], line[0][1], line[2][0], line[2][1] + move), outline="#FFFFFF")
                                 is_inside = False
                         if is_inside:
                             vertical_move = move
                             break
 
                     if is_inside:
-                        # print "move", vertical_move, lines[0]
                         for idx, line in enumerate(lines):
-                            # lines[idx] = ((line[0][0], line[0][1] + vertical_move), line[1], (line[2][0], line[2][1] + vertical_move))
-                            # draw.rectangle((line[0][0], line[0][1] + vertical_move, line[2][0], line[2][1] + vertical_move), outline="#FFFFFF")
-
                             # realign to left
                             min_coordinate_set = False
                             current_coordinate = line[0][0]
@@ -1288,7 +1129,6 @@ class TextLayer:
                                     line[2][1] + vertical_move - 1,
                                 ),
                             )
-                            # draw.rectangle((min_coordinate + 2, line[0][1] + vertical_move, line[2][0] - (line[0][0] - min_coordinate), line[2][1] + vertical_move), outline="#FF0000")
 
             if "<COMMENTARY>" in lines[0][1].upper() or t_a[2] == "COMMENTARY":
                 is_commentary = True
@@ -1375,25 +1215,13 @@ class TextLayer:
             # idetify last line in paragraph
             for idx, line in enumerate(lines):
                 if "<BR>" in line[1]:
-                    lines[idx] = (
-                        line[0],
-                        line[1].replace(
-                            "<BR>",
-                            "",
-                        ),
-                        line[2],
-                    )
-                    lines[idx - 1] = (
-                        lines[idx - 1][0],
-                        "<BR>" + lines[idx - 1][1],
-                        lines[idx - 1][2],
-                    )
+                    lines[idx] = (line[0], line[1].replace("<BR>", ""), line[2])
+                    lines[idx - 1] = (lines[idx - 1][0], "<BR>" + lines[idx - 1][1], lines[idx - 1][2])
 
             for idx, line in enumerate(lines):
                 is_last_line = False
                 old_line: tuple[tuple[int | float, int | float], str, tuple[int | float, int | float]] | None = None
                 current_pointer = line[0]
-                # draw.rectangle((line[0][0], line[0][1], line[2][0], line[2][1]), outline="#FFFFFF")
                 max_coordinate_set = False
                 max_coordinate = line[2][0]
                 current_coordinate = line[2][0]
@@ -1424,15 +1252,7 @@ class TextLayer:
 
                     if "<INVERTED>" in chunk_upper or t_a[6]:
                         font_color = self.acbf_document.font_colors["inverted"]
-                        t_a = (
-                            t_a[0],
-                            t_a[1],
-                            t_a[2],
-                            t_a[3],
-                            t_a[4],
-                            t_a[5],
-                            True,
-                        )
+                        t_a = (t_a[0], t_a[1], t_a[2], t_a[3], t_a[4], t_a[5], True)
                     elif "</INVERTED>" in chunk_upper:
                         font_color = self.acbf_document.font_colors[t_a[2].lower()]
                     elif not t_a[6]:
@@ -1503,12 +1323,7 @@ class TextLayer:
                         justify_space: int | float = 0
                         # left align
                         if is_commentary or (t_a[5].upper() == "FORMAL" and idx + 1 == len(lines)):
-                            space_between_words = self.text_width(
-                                # draw.textsize(' ', font=font)[0]
-                                0,
-                                " ",
-                                font,
-                            )
+                            space_between_words = self.text_width(0, " ", font)
                         elif t_a[5].upper() == "FORMAL":  # justify
                             w_count = len(line[1].strip().split(" ")) - 1
                             if is_last_line:
@@ -1517,57 +1332,27 @@ class TextLayer:
                                 justify_space = (max_coordinate - line[2][0]) / w_count
                             else:
                                 justify_space = 0
-                            space_between_words = self.text_width(
-                                0,
-                                " ",
-                                font,
-                                # draw.textsize(' ', font=font)[0] + justify_space
-                            )
+                            space_between_words = self.text_width(0, " ", font)
                         else:  # center
                             space_between_words = self.text_width(0, "n n", font) - self.text_width(
-                                0,
-                                "nn",
-                                font,
-                                # draw.textsize('n n', font=font)[0] - draw.textsize('nn', font=font)[0]
+                                0, "nn", font,
                             )
                             line_length = line[2][0] - line[0][0]
                             mid_bubble_x = (
                                 (get_frame_span(t_a[4])[0] + get_frame_span(t_a[4])[2]) / 2
                             ) - line_length / 2
                             max_coordinate_x = current_pointer[0] + int((max_coordinate - line[2][0]) / 2)
-                            # draw.rectangle((get_frame_span(t_a[4])), outline="#FF0000")
-                            # draw.rectangle((current_pointer[0], current_pointer[1], current_pointer[0] + line_length, current_pointer[1] + int(current_character_height)), outline="#FF0000")
-                            # draw.rectangle((mid_bubble_x, current_pointer[1], mid_bubble_x + line_length, current_pointer[1] + int(current_character_height)), outline="#00FF00")
-                            # print line, mid_bubble_x, line[0][0], max_coordinate - line_length, max_coordinate_x
                             if t_a[3] != 0:
-                                current_pointer = (
-                                    max_coordinate_x,
-                                    current_pointer[1],
-                                )
+                                current_pointer = (max_coordinate_x, current_pointer[1])
                             elif mid_bubble_x >= line[0][0] and mid_bubble_x <= max_coordinate - line_length:
-                                current_pointer = (
-                                    mid_bubble_x,
-                                    current_pointer[1],
-                                )
+                                current_pointer = (mid_bubble_x, current_pointer[1])
                             elif mid_bubble_x > max_coordinate - line_length:
-                                current_pointer = (
-                                    max_coordinate - line_length,
-                                    current_pointer[1],
-                                )
+                                current_pointer = (max_coordinate - line_length, current_pointer[1])
                             elif mid_bubble_x < line[0][0]:
-                                current_pointer = (
-                                    line[0][0],
-                                    current_pointer[1],
-                                )
+                                current_pointer = (line[0][0], current_pointer[1])
                             else:
-                                current_pointer = (
-                                    max_coordinate_x,
-                                    current_pointer[1],
-                                )
+                                current_pointer = (max_coordinate_x, current_pointer[1])
                         old_line = line
-
-                    # length = line[2][0] - line[0][0]
-                    # draw.rectangle((current_pointer[0], current_pointer[1], current_pointer[0] + length, current_pointer[1] + int(current_character_height)), outline="#0000FF")
 
                     if use_small_font and current_word != "":
                         if use_subscript:
@@ -1575,72 +1360,13 @@ class TextLayer:
                                 current_pointer[0],
                                 current_pointer[1] + int(current_character_height * 0.7),
                             )
-                            draw.text(
-                                current_pointer,
-                                current_word + " ",
-                                font=font_small,
-                                fill=font_color,
-                            )
+                            draw.text(current_pointer, current_word + " ", font=font_small, fill=font_color)
                             current_pointer = (
                                 current_pointer[0],
                                 current_pointer[1] - int(current_character_height * 0.7),
                             )
                         elif use_superscript:
-                            draw.text(
-                                current_pointer,
-                                current_word + " ",
-                                font=font_small,
-                                fill=font_color,
-                            )
-                            # draw.rectangle((current_pointer[0] - 1, current_pointer[1] - 1, current_pointer[0] + draw.textsize(current_word, font=font_small)[0] + 1, current_pointer[1] + int(character_height * 0.7) + 1), outline=font_color)
-                            """if "<A_HREF" in chunk_upper:
-                                reference_id = re.sub("[^#]*#", "", chunk)
-                                reference_id = re.sub('".*', "", reference_id)
-                                for idxr, reference in enumerate(self.references):
-                                    if reference_id == reference[0]:
-                                        rectangle = [
-                                            (
-                                                current_pointer[0] - 5,
-                                                current_pointer[1] - 5,
-                                            ),
-                                            (
-                                                current_pointer[0]
-                                                + self.text_width(
-                                                    0,
-                                                    current_word,
-                                                    font_small,
-                                                )
-                                                + 5,
-                                                current_pointer[1] - 5,
-                                            ),
-                                            (
-                                                current_pointer[0]
-                                                + self.text_width(
-                                                    0,
-                                                    current_word,
-                                                    font_small,
-                                                )
-                                                + 5,
-                                                current_pointer[1]
-                                                + int(
-                                                    current_character_height * 0.7,
-                                                )
-                                                + 5,
-                                            ),
-                                            (
-                                                current_pointer[0] - 5,
-                                                current_pointer[1]
-                                                + int(
-                                                    current_character_height * 0.7,
-                                                )
-                                                + 5,
-                                            ),
-                                        ]
-                                        self.references[idxr] = (
-                                            reference[0],
-                                            reference[1],
-                                            rectangle,
-                                        )"""
+                            draw.text(current_pointer, current_word + " ", font=font_small, fill=font_color)
 
                         text_size = (
                             self.text_width(0, current_word, font_small),
@@ -1651,33 +1377,23 @@ class TextLayer:
                             current_pointer[1] + int(current_character_height / 2) + 1,
                             current_pointer[0] + text_size[0] + int(space_between_words / 2),
                             current_pointer[1]
-                            + int(current_character_height / 2)
-                            + 1
-                            - int(current_character_height / 10),
+                            + int(current_character_height / 2) + 1 - int(current_character_height / 10),
                         ]
 
-                        current_pointer = (
-                            current_pointer[0] + text_size[0],
-                            current_pointer[1],
-                        )
+                        current_pointer = (current_pointer[0] + text_size[0], current_pointer[1])
 
                     else:
                         word_start = current_pointer
                         text_size = (0, current_character_height)
                         word_count = len(current_word.strip().split(" "))
-                        line_length_total = draw.textlength(
-                            current_word.strip(),
-                            font=font,
-                        )
+                        line_length_total = draw.textlength(current_word.strip(), font=font)
                         word_length_total = 0
                         for one_word in current_word.split(" "):
                             word_length_total = word_length_total + self.text_width(0, one_word.strip(), font)
 
                         space_length = line_length_total - word_length_total
                         if word_count > 1:
-                            one_space = float(
-                                space_length / float(word_count - 1),
-                            )
+                            one_space = float(space_length / float(word_count - 1))
                         elif space_length > 0:
                             one_space = space_length
                         else:
@@ -1686,8 +1402,6 @@ class TextLayer:
                                 current_word + "M",
                                 font,
                             )
-
-                        # print '#' + current_word.encode('ascii', 'ignore') + '#', line_length_total, word_length_total, space_length, one_space, font_color
 
                         for one_word in current_word.split(" "):
                             if one_word == "":
@@ -1698,49 +1412,23 @@ class TextLayer:
                                     current_pointer[0] + 1,
                                     current_pointer[1],
                                 )
-                            # elif font == e_font or font == s_font:
-                            #  current_pointer = (current_pointer[0] - 1, current_pointer[1])
-                            draw.text(
-                                current_pointer,
-                                one_word + " ",
-                                font=font,
-                                fill=font_color,
-                            )
+
+                            draw.text(current_pointer, one_word + " ", font=font, fill=font_color)
                             word_length = max(
-                                self.text_width(
-                                    0,
-                                    one_word.strip(),
-                                    font,
-                                )
-                                + one_space,
-                                self.text_width(
-                                    0,
-                                    one_word.strip() + " ",
-                                    font,
-                                ),
+                                self.text_width(0, one_word.strip(), font) + one_space,
+                                self.text_width(0, one_word.strip() + " ", font),
                             )
                             if t_a[5].upper() == "FORMAL":
                                 word_length = word_length + justify_space
-                            text_size = (
-                                text_size[0] + word_length,
-                                current_character_height,
-                            )
-                            current_pointer = (
-                                current_pointer[0] + word_length,
-                                current_pointer[1],
-                            )
+                            text_size = (text_size[0] + word_length, current_character_height)
+                            current_pointer = (current_pointer[0] + word_length, current_pointer[1])
                             # dirty fix:
                             if one_word[-1].upper() == "J" and t_a[5].upper() != "FORMAL":
                                 current_pointer = (
                                     current_pointer[0] + 1,
                                     current_pointer[1],
                                 )
-                            # elif font == e_font or font == s_font:
-                            #  current_pointer = (current_pointer[0] + 1, current_pointer[1])
 
-                        # draw.text(current_pointer, current_word, font=font, fill=font_color)
-                        # text_size = (draw.textsize(current_word, font=font)[0], current_character_height)
-                        # current_pointer = (current_pointer[0] + text_size[0], current_pointer[1])
                         strikethrough_rectangle = [
                             word_start[0] - int(space_between_words / 2),
                             word_start[1] + int(current_character_height / 2) + 1,
@@ -1749,11 +1437,7 @@ class TextLayer:
                         ]
 
                     if strikethrough_word:
-                        draw.rectangle(
-                            strikethrough_rectangle,
-                            outline=font_color,
-                            fill=font_color,
-                        )
+                        draw.rectangle(strikethrough_rectangle, outline=font_color, fill=font_color)
 
             # rotate image back to original rotation after text is drawn
             if t_a[3] != 0:
@@ -1784,9 +1468,7 @@ class TextLayer:
         try:
             return chunk_size + width
         except Exception:
-            left, top, right, bottom = font.getbbox(
-                chunk.encode(encoding="ascii", errors="replace"),
-            )
+            left, top, right, bottom = font.getbbox(chunk.encode(encoding="ascii", errors="replace"))
             width = right - left
             return chunk_size + width
 
@@ -1839,12 +1521,8 @@ def rotate_point(x: int, y: int, xm: int, ym: int, xm2: int, ym2: int, a: int) -
     rotation_angle = float(a * math.pi / 180)
     x_coord = float(x - xm)
     y_coord = float(y - ym)
-    x_coord2 = float(
-        x_coord * math.cos(rotation_angle) - y_coord * math.sin(rotation_angle) + xm2,
-    )
-    y_coord2 = float(
-        x_coord * math.sin(rotation_angle) + y_coord * math.cos(rotation_angle) + ym2,
-    )
+    x_coord2 = float(x_coord * math.cos(rotation_angle) - y_coord * math.sin(rotation_angle) + xm2)
+    y_coord2 = float(x_coord * math.sin(rotation_angle) + y_coord * math.cos(rotation_angle) + ym2)
     return int(x_coord2), int(y_coord2)
 
 

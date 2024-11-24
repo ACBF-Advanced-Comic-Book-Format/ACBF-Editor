@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import gi
@@ -50,13 +51,11 @@ class ContentRatingsDialog(Gtk.Window):
         selection_model = Gtk.NoSelection(model=self.model)
         Gtk.SelectionMode(0)
 
-        # Create the ColumnView
         column_view = Gtk.ColumnView(model=selection_model)
 
         toolbar_header = Gtk.HeaderBar()
         self.set_titlebar(toolbar_header)
 
-        # Add "+" button for adding new record
         new_button = Gtk.Button(label="Add")
         new_button.set_tooltip_text("Add new rating")
         toolbar_header.pack_start(new_button)
@@ -78,22 +77,15 @@ class ContentRatingsDialog(Gtk.Window):
         type_factory.connect("setup", self.setup_type_column)
         type_factory.connect("bind", self.bind_type_column, "name")
         type_factory.connect("unbind", self.unbind_type_column)
-        type_column = Gtk.ColumnViewColumn(
-            title="Content Rating",
-            factory=type_factory,
-        )
+        type_column = Gtk.ColumnViewColumn(title="Content Rating", factory=type_factory)
         type_column.set_resizable(True)
         column_view.append_column(type_column)
 
-        # Add delete button column
         delete_factory = Gtk.SignalListItemFactory()
         delete_factory.connect("setup", self.setup_delete_column)
         delete_factory.connect("bind", self.bind_delete_column)
         delete_factory.connect("unbind", self.unbind_delete_column)
-        delete_column = Gtk.ColumnViewColumn(
-            title="Delete",
-            factory=delete_factory,
-        )
+        delete_column = Gtk.ColumnViewColumn(title="Delete", factory=delete_factory)
         column_view.append_column(delete_column)
 
         self.set_child(column_view)
@@ -109,9 +101,7 @@ class ContentRatingsDialog(Gtk.Window):
         list_item.set_child(entry)
 
     def setup_delete_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem) -> None:
-        button: Gtk.Button = Gtk.Button.new_from_icon_name(
-            "edit-delete-symbolic",
-        )
+        button: Gtk.Button = Gtk.Button.new_from_icon_name("edit-delete-symbolic")
         list_item.set_child(button)
 
     def bind_type_column(self, factory: Gtk.ListItemFactory, list_item: Gtk.ListItem, attribute: str) -> None:

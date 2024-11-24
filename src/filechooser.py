@@ -3,15 +3,6 @@
 Copyright (C) 2011-2018 Robert Kubik
 https://launchpad.net/~just-me
 """
-
-from __future__ import annotations
-
-from typing import Any
-
-import fileprepare
-from gi.repository import Gio
-from gi.repository import GLib
-from gi.repository import Gtk
 # -------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as published
@@ -26,13 +17,21 @@ from gi.repository import Gtk
 # along with this program; if not, write to the Free Software
 # -------------------------------------------------------------------------
 
+from __future__ import annotations
+
+from typing import Any
+
+import fileprepare
+from gi.repository import Gio
+from gi.repository import GLib
+from gi.repository import Gtk
+
 
 class FileChooserDialog(Gtk.FileDialog):
     def __init__(self, parent: Gtk.Window, **properties: dict[Any, Any]):
         super().__init__(**properties)
         self.parent = parent
 
-        # Create file filters
         comic_filter = Gtk.FileFilter()
         comic_filter.set_name("Comic files")
         comic_filter.add_pattern("*.acbf")
@@ -66,7 +65,6 @@ class FileChooserDialog(Gtk.FileDialog):
     def open_filename(self, dialog: Gtk.Window, response: Gio.Task) -> None:
         try:
             file = dialog.open_finish(response)
-            # print(file.get_path())
             if file:
                 prepared_file: fileprepare.FilePrepare = fileprepare.FilePrepare(
                     self,
@@ -88,11 +86,7 @@ class FileChooserDialog(Gtk.FileDialog):
     def save_filename(self, dialog: Gtk.Window, response: Gio.Task) -> None:
         try:
             file = dialog.save_finish(response)
-            # print(file.get_path())
             if file:
-                # prepared_file = fileprepare.FilePrepare(self, file.get_path(), self.parent.tempdir, True)
-                # self.parent.filename = prepared_file.filename
-                # self.parent.original_filename = file.get_path()
                 self.parent.saved_file(file.get_path())
             else:
                 self.destroy()
