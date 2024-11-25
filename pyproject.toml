@@ -1,5 +1,5 @@
 [project]
-name = "ACBF Editor"
+name = "ACBFEditor"
 #dynamic = ["version"]
 version = "3.0.0a"
 authors = [
@@ -34,6 +34,13 @@ dependencies = [
     "opencv-python",
     "matplot",
     "patool",
+    "isocodes",
+]
+[project.optional-dependencies]
+dev = [
+  "pre-commit",
+  "ruff",
+  "mypy",
 ]
 
 [project.urls]
