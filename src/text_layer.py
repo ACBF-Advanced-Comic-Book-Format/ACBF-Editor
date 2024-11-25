@@ -133,8 +133,16 @@ class TextLayer:
     def draw_text_layer(self) -> None:
         # TODO Class?
         text_areas_draw: list[
-            tuple[int, list[tuple[tuple[int | float, int | float], str, tuple[int | float, int | float]]], str, int,
-            list[tuple[int | float, int | float]], str, bool]] = []
+            tuple[
+                int,
+                list[tuple[tuple[int | float, int | float], str, tuple[int | float, int | float]]],
+                str,
+                int,
+                list[tuple[int | float, int | float]],
+                str,
+                bool,
+            ]
+        ] = []
         if self.PILBackgroundImage.mode != "RGB":
             self.PILBackgroundImage = self.PILBackgroundImage.convert("RGB")
         image_draw = ImageDraw.Draw(self.PILBackgroundImage)
@@ -248,7 +256,7 @@ class TextLayer:
                 is_code = False
 
             is_emphasis = is_strong = False
-            words = (text.replace("a href", "a_href").replace(" ", " ˇ").split("ˇ"))
+            words = text.replace("a href", "a_href").replace(" ", " ˇ").split("ˇ")
             # words_upper = text.replace(" ", "ˇ").upper().split("ˇ")
             area_per_character = polygon_area / len(self.remove_xml_tags(text))
             character_height = int(math.sqrt(area_per_character / 2) * 2) - 3
@@ -308,7 +316,7 @@ class TextLayer:
                 while drawing_word < len(words):
                     # place first word in line
                     first_word_fits = False
-                    tag_split = (words[drawing_word].replace("<", "ˇ<").split("ˇ"))
+                    tag_split = words[drawing_word].replace("<", "ˇ<").split("ˇ")
                     chunk_size = 0
 
                     for chunk in tag_split:
@@ -461,7 +469,7 @@ class TextLayer:
                     # place other words in line that fit
                     other_word_fits = True
                     while other_word_fits and drawing_word < len(words):
-                        tag_split = (words[drawing_word].replace("<", "ˇ<").split("ˇ"))
+                        tag_split = words[drawing_word].replace("<", "ˇ<").split("ˇ")
                         chunk_size = 0
 
                         for chunk in tag_split:
@@ -941,12 +949,12 @@ class TextLayer:
                         is_code = False
 
                     is_emphasis = is_strong = False
-                    words = (text.replace("a href", "a_href").replace(" ", " ˇ").split("ˇ"))
+                    words = text.replace("a href", "a_href").replace(" ", " ˇ").split("ˇ")
                     drawing_word = 0
                     line_length: int | float = 0
 
                     while drawing_word < len(words):
-                        tag_split = (words[drawing_word].replace("<", "ˇ<").split("ˇ"))
+                        tag_split = words[drawing_word].replace("<", "ˇ<").split("ˇ")
                         chunk_size = 0
 
                         for chunk in tag_split:
@@ -1335,7 +1343,9 @@ class TextLayer:
                             space_between_words = self.text_width(0, " ", font)
                         else:  # center
                             space_between_words = self.text_width(0, "n n", font) - self.text_width(
-                                0, "nn", font,
+                                0,
+                                "nn",
+                                font,
                             )
                             line_length = line[2][0] - line[0][0]
                             mid_bubble_x = (
@@ -1377,7 +1387,9 @@ class TextLayer:
                             current_pointer[1] + int(current_character_height / 2) + 1,
                             current_pointer[0] + text_size[0] + int(space_between_words / 2),
                             current_pointer[1]
-                            + int(current_character_height / 2) + 1 - int(current_character_height / 10),
+                            + int(current_character_height / 2)
+                            + 1
+                            - int(current_character_height / 10),
                         ]
 
                         current_pointer = (current_pointer[0] + text_size[0], current_pointer[1])

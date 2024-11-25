@@ -51,7 +51,7 @@ class PrefsDialog(Gtk.Window):
         self.default_language.set_enable_search(True)
         expression = Gtk.PropertyExpression.new(Gtk.StringObject, None, "string")
         self.default_language.set_expression(expression)
-        self.default_language.connect("notify::selected", self.set_default_language,)
+        self.default_language.connect("notify::selected", self.set_default_language)
 
         general.attach(self.default_language, 1, 0, 1, 1)
 
