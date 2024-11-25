@@ -86,6 +86,7 @@ def print_help():
     print('  -r [geometry], --resize   Resize images (64x64>, 526x526<)')
     print('  -l [filter], --filter     Resize filter (default is ANTIALIAS)')
     print('  -t [lang] -- text_layer   Output text layer')
+    print('  -x, -- text_export        Export text layer text to a .txt file')
     print('')
     print('Example:')
     print('  acbfe -i comic_book.cbr -o comic_book.cbz -f WEBP -q 91 -r 64x64\> -f NEAREST -t sk')
@@ -114,8 +115,8 @@ def run():
     print('Licensed under the GNU General Public License. https://github.com/GeoRW/ACBF')
 
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], 'hi:o:f:q:r:l:t:',
-            ['help','input', 'output', 'format', 'resize', 'filter', 'text-layer'])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 'hi:o:f:q:r:l:t:x',
+            ['help','input', 'output', 'format', 'resize', 'filter', 'text-layer', 'text-export'])
     except getopt.GetoptError as err:
         print(str(err))
         print_help()

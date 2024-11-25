@@ -52,7 +52,7 @@ class FilePrepare():
 
       if file_type != None:
         # show progress bar
-        progress_dialog = gtk.Dialog('Loading Comic Book ...', self._window, gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT, None)
+        progress_dialog = gtk.Dialog('Loading Comic Book ...', None, gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT, None)
         progress_dialog.set_resizable(False)
         progress_dialog.set_border_width(8)
         progress_dialog.set_size_request(400 * self._window._window.ui_scale_factor, 100 * self._window._window.ui_scale_factor)

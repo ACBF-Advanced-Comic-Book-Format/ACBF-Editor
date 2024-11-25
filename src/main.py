@@ -125,6 +125,7 @@ class MainWindow(gtk.Window):
           resize_geometry = None
           resize_filter = None
           text_layer = None
+          export_text_lang = None
           for opt, value in cmd_options:
             if opt in ('-f', '--format'):
               formats_supported = ('JPG', 'PNG', 'GIF', 'WEBP', 'BMP')
@@ -154,7 +155,7 @@ class MainWindow(gtk.Window):
                 self.exit_program()
             if opt in ('-l', '--filter'):
               if value.upper() not in ('NEAREST', 'BILINEAR', 'BICUBIC', 'ANTIALIAS'):
-                print('Error: Unrecognized resize filter:', value + '. Use one of following: NEAREST, BILINEAR, BICUBIC, ANTIALIAS.')
+                print('Error: Unrecognized resize filter:', value + '. Use one of the following: NEAREST, BILINEAR, BICUBIC, ANTIALIAS.')
                 self.exit_program()
               else:
                 resize_filter = value
@@ -164,6 +165,7 @@ class MainWindow(gtk.Window):
                 if lang[0] == value and lang[1] == 'TRUE':
                   lang_found = True
                   text_layer = idx
+                  export_text_lang = value
               if not lang_found:
                 print('Error: Language layer', value, 'is not defined in comic book.')
                 self.exit_program()
@@ -171,8 +173,21 @@ class MainWindow(gtk.Window):
                 for item in self.acbf_document.tree.findall("meta-data/book-info/languages/text-layer"):
                   if item.get("show").upper() == 'FALSE':
                     item.attrib['lang'] = value
+            if opt in ('-x', '--text_export'):
+              text_export_filename = output_file + '.txt'
+              print('Exporting texts (' + export_text_lang + ') to ' + text_export_filename + ' ...')
+              f = open(text_export_filename, "w")
+              for idx, page in enumerate(self.acbf_document.pages):
+                f.write(str(idx + 2) + "\n")
+                for layer in page.findall("text-layer"):
+                  if layer.get("lang").upper() == export_text_lang.upper():
+                    for paragraph in layer.findall("text-area/p"):
+                      area_text = re.sub(u"<[^>]*>", "",xml.tostring(paragraph, encoding='unicode', with_tail=False))#.replace('</p>', '')
+                      f.write(area_text + "\n")
+              f.close()
 
           if convert_format != None or resize_geometry != None or text_layer != None:
+            print('Converting images ...')
             self.convert_images(convert_format, convert_quality, resize_geometry, resize_filter, text_layer)
           self.write_file(output_file)
           self.exit_program()
@@ -562,7 +577,7 @@ class MainWindow(gtk.Window):
         #convert image
         if in_path != out_path or im_geometry != None or im_text_layer != None:
           if im_text_layer != None and idx > 0:
-            xx = tl.TextLayer(in_path, idx + 1, self.acbf_document, im_text_layer, self.acbf_document.font_styles['normal'],
+            xx = tl.TextLayer(in_path, self.tempdir, idx + 1, self.acbf_document, im_text_layer, self.acbf_document.font_styles['normal'],
                               self.acbf_document.font_styles['strong'], self.acbf_document.font_styles['emphasis'],
                               self.acbf_document.font_styles['code'], self.acbf_document.font_styles['commentary'],
                               self.acbf_document.font_styles['sign'], self.acbf_document.font_styles['formal'],
