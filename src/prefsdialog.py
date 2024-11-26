@@ -233,5 +233,10 @@ class PrefsDialog(Gtk.Window):
         self.parent.preferences.save_preferences()
 
     def exit(self, widget: Gtk.Button) -> None:
+        if str(self.tmpfs_button.get_active()) != self.parent.preferences.get_value("tmpfs"):
+            self.parent.clean_temp()
+            # TODO Hate it but leave for now
+            self.save()
+            self.parent.create_tempdir()
         self.save()
         self.close()

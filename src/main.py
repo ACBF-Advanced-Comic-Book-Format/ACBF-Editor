@@ -22,10 +22,10 @@ from __future__ import annotations
 import io
 import logging
 import os
-import random
 import re
 import shutil
 import zipfile
+import tempfile
 from copy import deepcopy
 from typing import Any
 from typing import Callable, TYPE_CHECKING
@@ -90,23 +90,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self.original_filename: str
         self.original_file_size: float = 1
         self.file_list: list[Path] | None = None
+        self.tempdir: str = ""
+        self.tempdir_obj: tempfile.TemporaryDirectory[str] | None = None
 
-        # check if custom temp dir is defined
-        # TODO use tempfile
-        self.tempdir_root = str(os.path.join(self.preferences.get_value("tmpfs_dir"), "acbfe"))
-        if self.preferences.get_value("tmpfs") != "False":
-            print("Temporary directory override set to: " + self.tempdir_root)
-        else:
-            self.tempdir_root = constants.DATA_DIR
-        self.tempdir = str(
-            os.path.join(
-                self.tempdir_root,
-                "".join(random.choice("abcdefghijklmnopqrstuvwxyz") for i in range(10)),
-            ),
-        )
-
-        if not os.path.exists(self.tempdir):
-            os.makedirs(self.tempdir)
+        self.create_tempdir()
 
         self.filename = ""
         if open_path is None:
@@ -618,6 +605,16 @@ class MainWindow(Gtk.ApplicationWindow):
             self.lang_action.set_enabled(False)
             self.frames_action.set_enabled(False)
             self.styles_action.set_enabled(False)
+
+    def create_tempdir(self) -> None:
+        if self.preferences.get_value("tmpfs") == "True":
+            self.tempdir = str(os.path.join(self.preferences.get_value("tmpfs_dir"), "acbfe"))
+            if not os.path.exists(self.tempdir):
+                os.makedirs(self.tempdir)
+            logger.info("Temporary directory override set to: " + self.tempdir)
+        else:
+            self.tempdir_obj = tempfile.TemporaryDirectory(prefix="acbfe_")
+            self.tempdir = self.tempdir_obj.name
 
     def dedupe_langs(self, langs: Gio.ListStore) -> Gio.ListStore:
         new_langs: Gio.ListStore = Gio.ListStore.new(item_type=Language)
@@ -1270,12 +1267,17 @@ class MainWindow(Gtk.ApplicationWindow):
     def clean_temp(self) -> None:
         # clear temp directory
         logger.info("clean temp")
-        for root, dirs, files in os.walk(self.tempdir):
-            for f in files:
-                os.unlink(os.path.join(root, f))
-            for d in dirs:
-                shutil.rmtree(os.path.join(root, d))
-        shutil.rmtree(self.tempdir, ignore_errors=True)
+        if self.tempdir_obj is None:
+            try:
+                shutil.rmtree(self.tempdir)
+            except Exception as e:
+                logger.error(f"Failed to remove custom temp directory: {e}")
+        else:
+            try:
+                self.tempdir_obj.cleanup()
+                self.tempdir_obj = None
+            except Exception as e:
+                logger.warning(f"Failed to remove temp directory: {e}")
         logger.info("finish clean temp")
 
     def modified(self, modified: bool = True) -> None:
