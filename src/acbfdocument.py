@@ -64,7 +64,8 @@ class ACBFDocument():
         for style in ['normal', 'emphasis', 'strong', 'code', 'commentary', 'sign', 'formal', 'heading', 'letter', 'audio', 'thought']:
           self.font_styles[style] = constants.default_font
         
-        try:
+        if self.filename:
+          try:
             self.base_dir = os.path.dirname(filename)
             self.tree = xml.parse(source = filename)
             root = self.tree.getroot()
@@ -93,7 +94,7 @@ class ACBFDocument():
               self.load_stylesheet()
             #self.tree = None # keep memory usage low
             self.valid = True
-        except Exception as inst:
+          except Exception as inst:
             print("Unable to open ACBF file: %s %s" % (filename, inst))
             self.valid = False
             return

@@ -90,16 +90,13 @@ class MainWindow(gtk.Window):
           os.makedirs(self.tempdir, 0o700)
 
         self.filename = open_path
-        if self.filename == None:
-          self.filename = "xx"
-          self.original_filename = self.filename
-        else:
-          if output_file == None:
-            prepared_file = fileprepare.FilePrepare(self, open_path, self.tempdir, True)
-          else:
-            prepared_file = fileprepare.FilePrepare(self, open_path, self.tempdir, False)
+        if output_file == None and open_path != None:
+          prepared_file = fileprepare.FilePrepare(self, open_path, self.tempdir, True)
           self.filename = prepared_file.filename
-          self.original_filename = open_path
+        elif open_path != None:
+          prepared_file = fileprepare.FilePrepare(self, open_path, self.tempdir, False)
+          self.filename = prepared_file.filename
+        self.original_filename = open_path
 
         try:
           self.original_file_size = round(float(os.path.getsize(open_path))/1024/1024, 2)
