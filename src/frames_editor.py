@@ -37,6 +37,8 @@ from gi.repository import Gtk
 from gi.repository import PangoCairo
 from PIL import Image
 
+from kumiko.kumikolib import Kumiko
+
 if TYPE_CHECKING:
     import pathlib
 
@@ -361,6 +363,9 @@ class FramesEditorDialog(Gtk.Window):
 
         self.straight_button = Gtk.CheckButton.new_with_label("Draw straight lines")
         toolbar_top_tools.pack_start(self.straight_button)
+        find_frames_buttons = Gtk.Button.new_with_label("Find frames")
+        find_frames_buttons.connect("clicked", self.find_frames)
+        toolbar_top_tools.pack_start(find_frames_buttons)
 
         self.zoom_dropdown: Gtk.DropDown = Gtk.DropDown.new_from_strings(
             ["10%", "25%", "50%", "75%", "100%", "125%", "175%", "200%"],
@@ -1778,6 +1783,29 @@ class FramesEditorDialog(Gtk.Window):
         self.detecting_bubble = True
         cross_cursor = Gdk.Cursor.new(Gdk.CursorType.X_CURSOR)
         self.window.set_cursor(cross_cursor)"""
+
+    def find_frames(self, widget: Gtk.Button) -> None:
+        k = Kumiko(
+            {
+                "debug": False,
+                "progress": False,
+                "rtl": False,
+                "min_panel_size_ratio": False,
+                "panel_expansion": False,
+            }
+        )
+        k.parse_image(os.path.join(self.parent.tempdir, self.selected_page))
+        infos = k.get_infos()
+
+        for i, frame in enumerate(infos[0]["panels"]):
+            # [x, y, width, height]
+            frame_tuple = [
+                (frame[0], frame[1]),
+                (frame[0] + frame[2], frame[1]),
+                (frame[0] + frame[2], frame[1] + frame[3]),
+                (frame[0], frame[1] + frame[3]),
+            ]
+            self.frame_model.splice(i, 0, [FrameItem(cords=frame_tuple, colour="")])
 
     """def frames_detection(self) -> None:
         if self.get_current_page_number() == 1:
