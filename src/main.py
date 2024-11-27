@@ -1,7 +1,7 @@
 """main.py - Main window.
 
 Copyright (C) 2011-2024 Robert Kubik
-https://github.com/GeoRW/ACBF
+https://github.com/ACBF-Advanced-Comic-Book-Format
 """
 
 # -------------------------------------------------------------------------
@@ -174,17 +174,29 @@ class MainWindow(gtk.Window):
                   if item.get("show").upper() == 'FALSE':
                     item.attrib['lang'] = value
             if opt in ('-x', '--text_export'):
-              text_export_filename = output_file + '.txt'
-              print('Exporting texts (' + export_text_lang + ') to ' + text_export_filename + ' ...')
-              f = open(text_export_filename, "w")
-              for idx, page in enumerate(self.acbf_document.pages):
-                f.write(str(idx + 2) + "\n")
+              lang_found = False
+              for idx, lang in enumerate(self.acbf_document.languages):
+                if lang[0] == value and lang[1] == 'TRUE':
+                  lang_found = True
+                  export_text_lang = value
+              if not lang_found:
+                print('Error: Language layer', value, 'is not defined in comic book.')
+                self.exit_program()
+              
+              print('Exporting texts (' + export_text_lang + ') to ' + output_file + ' ...')
+              f = open(output_file, "w")
+              for page in self.acbf_document.pages:
+                f.write("==" + page.find("image").get("href") + "==\n")
                 for layer in page.findall("text-layer"):
                   if layer.get("lang").upper() == export_text_lang.upper():
-                    for paragraph in layer.findall("text-area/p"):
-                      area_text = re.sub(u"<[^>]*>", "",xml.tostring(paragraph, encoding='unicode', with_tail=False))#.replace('</p>', '')
-                      f.write(area_text + "\n")
+                    for idx2, text_area in enumerate(layer.findall("text-area")):
+                      f.write(str(idx2 + 1) + ".\n")
+                      for paragraph in text_area.findall("p"):
+                        area_text = re.sub(u"<[^>]*>", "",xml.tostring(paragraph, encoding='unicode', with_tail=False))
+                        f.write(area_text + "\n")
               f.close()
+              print('Done.')
+              self.exit_program()
 
           if convert_format != None or resize_geometry != None or text_layer != None:
             print('Converting images ...')
@@ -2032,7 +2044,7 @@ class MainWindow(gtk.Window):
       info.set_markup(_('\n<span>ACBF Editor is editor for comic books files in ACBF format.') + '\n' +
                       _('ACBF Editor is licensed under the GNU General Public License.') + '\n\n' +
                        '<small>Copyright 2013-2024 Robert Kubik\n' +
-                       'https://github.com/GeoRW/ACBF</small></span>\n')
+                       'https://github.com/ACBF-Advanced-Comic-Book-Format</small></span>\n')
       label.set_line_wrap(True)
       info.set_justify(gtk.Justification.CENTER)
       hbox.pack_start(info, False, False, 0)

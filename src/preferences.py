@@ -1,7 +1,7 @@
 """preferences.py - viewer preferences (CONFIG_DIR/preferences.xml).
 
 Copyright (C) 2011-2024 Robert Kubik
-https://github.com/GeoRW/ACBF
+https://github.com/ACBF-Advanced-Comic-Book-Format
 """
 
 # -------------------------------------------------------------------------
