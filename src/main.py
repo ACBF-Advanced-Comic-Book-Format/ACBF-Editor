@@ -77,7 +77,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def __init__(
         self,
         cmd_options: list[tuple[str, str]],
-        application: Gtk.Application | None = None,
+        application: Gtk.Application,
         open_path: str | None = None,
         output_file: str | None = None,
     ):
@@ -87,6 +87,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self._window = self
         self.font_idx = 0
         self.is_modified: bool = False
+        self.filename_before: str = ""
         self.original_filename: str
         self.original_file_size: float = 1
         self.file_list: list[Path] | None = None
@@ -262,16 +263,29 @@ class MainWindow(Gtk.ApplicationWindow):
         action.connect("activate", self.show_about_window)
         self.add_action(action)
 
-        menu = Gio.Menu.new()
-        menu.append("Open", "win.open")
-        menu.append("Save", "win.save")
+        action = Gio.SimpleAction.new("exit", None)
+        action.connect("activate", self.terminate_program)
+        self.add_action(action)
 
+        menu: Gio.Menu = Gio.Menu.new()
+        menu.append("Open", "win.open")
+        application.set_accels_for_action("win.open", ["<Ctrl>o"])
+        menu.append("Save", "win.save")
+        application.set_accels_for_action("win.save", ["<Ctrl>s"])
         menu.append("Tables of Contents", "win.toc")
+        application.set_accels_for_action("win.toc", ["<Ctrl>c"])
         menu.append("Frames/Texts Area Definitions", "win.frames")
+        application.set_accels_for_action("win.frames", ["<Ctrl>t"])
         menu.append("Font/Style Definitions", "win.styles")
+        application.set_accels_for_action("win.styles", ["<Ctrl>f"])
         menu.append("Preferences", "win.prefs")
+        application.set_accels_for_action("win.prefs", ["<Ctrl>p"])
         menu.append("Languages", "win.lang")
+        application.set_accels_for_action("win.lang", ["<Ctrl>l"])
         menu.append("About", "win.about")
+        application.set_accels_for_action("win.about", ["<Ctrl>a"])
+        menu.append("Exit", "win.exit")
+        application.set_accels_for_action("win.exit", ["<Ctrl>x"])
 
         # Create a popover
         self.popover = Gtk.PopoverMenu()
@@ -295,6 +309,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self.save_button.set_tooltip_text("Save file")
         header.pack_start(self.save_button)
         self.save_button.connect("clicked", self.save_file)
+
+        """key_controller = Gtk.EventControllerKey()
+        key_controller.connect('key-pressed', self.key_listener)
+        self.add_controller(key_controller)"""
 
         self.lang_button: Gtk.DropDown = self.create_lang_dropdown(self.lang_store, self.change_language)
 
@@ -685,6 +703,26 @@ class MainWindow(Gtk.ApplicationWindow):
         else:
             self.set_title("ACBF Editor")
 
+    """def key_listener(self, key, keyval, keycode, state) -> None:
+
+        if (state & Gdk.ModifierType.CONTROL_MASK) and keyval == ord('o'):
+            self.open_file(None)
+
+        if (state & Gdk.ModifierType.CONTROL_MASK) and keyval == ord('s'):
+            self.save_file(None)
+
+        if (state & Gdk.ModifierType.CONTROL_MASK) and keyval == ord('t'):
+            self.edit_frames(None)
+
+        if (state & Gdk.ModifierType.CONTROL_MASK) and keyval == ord('p'):
+            self.open_preferences(None)
+
+        if (state & Gdk.ModifierType.CONTROL_MASK) and keyval == ord('l'):
+            self.edit_languages(None)
+
+        if (state & Gdk.ModifierType.CONTROL_MASK) and keyval == ord('x'):
+            self.exit_program()"""
+
     def convert_images(
         self,
         im_format: str | None,
@@ -791,7 +829,7 @@ class MainWindow(Gtk.ApplicationWindow):
             if in_path != out_path:
                 os.remove(in_path)
 
-    def open_preferences(self, action: Gio.SimpleAction, _pspec: GObject.GParamSpec) -> None:
+    def open_preferences(self, action: Gio.SimpleAction | None, _pspec: GObject.GParamSpec) -> None:
         prefs_dialog = prefsdialog.PrefsDialog(self)
         prefs_dialog.present()
 
@@ -827,7 +865,7 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog = edit_keywords.KeywordsDialog(self)
         dialog.present()
 
-    def edit_languages(self, widget: Gtk.Entry, pos_icon: Gtk.EntryIconPosition) -> None:
+    def edit_languages(self, widget: Gtk.Entry | None, pos_icon: Gtk.EntryIconPosition) -> None:
         dialog = edit_languages.LanguageDialog(self)
         dialog.present()
 
@@ -1051,7 +1089,7 @@ class MainWindow(Gtk.ApplicationWindow):
         return
 
     # toolbar actions
-    def open_file(self, widget: Gtk.Button | Gio.SimpleAction, _spec: GObject.GParamSpec | None = None) -> None:
+    def open_file(self, widget: Gtk.Button | Gio.SimpleAction | None, _spec: GObject.GParamSpec | None = None) -> None:
         self.filename_before = self.filename
         filechooser.FileChooserDialog(self).open_file_dialog()
 
@@ -1125,11 +1163,13 @@ class MainWindow(Gtk.ApplicationWindow):
         self.lang_button.set_model(self.lang_store)
         self.lang_button.set_selected(0)
 
-    def edit_frames(self, widget: Gtk.Button | Gio.SimpleAction, _pspec: GObject.GParamSpec | None = None) -> None:
+    def edit_frames(
+        self, widget: Gtk.Button | Gio.SimpleAction | None, _pspec: GObject.GParamSpec | None = None
+    ) -> None:
         frames_dialog = frames_editor.FramesEditorDialog(self)
         frames_dialog.present()
 
-    def save_file(self, widget: Gtk.Button | Gio.SimpleAction, _pspec: GObject.GParamSpec | None = None) -> None:
+    def save_file(self, widget: Gtk.Button | Gio.SimpleAction | None, _pspec: GObject.GParamSpec | None = None) -> None:
         self.saved_file(self.original_filename)
 
     def save_as_file(self, filename: str) -> None:
@@ -1237,7 +1277,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.clean_temp()
         self.app.quit()
 
-    def terminate_program(self, window: Gtk.Window) -> bool:
+    def terminate_program(self, window: Gtk.Window | None, _pspec: GObject.GParamSpec | None = None) -> bool:
         def handle_response(dialog: Gtk.AlertDialog, task: Gio.Task, data: Any) -> None:
             response = dialog.choose_finish(task)
             if response == 2:
