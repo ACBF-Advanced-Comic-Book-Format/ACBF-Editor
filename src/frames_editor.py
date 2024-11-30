@@ -192,9 +192,16 @@ class FramesEditorDialog(gtk.Dialog):
 
         # action area
         hbox = gtk.HBox(True, 0)
+        
+        help_button = gtk.ToolButton()
+        help_button.set_stock_id(gtk.STOCK_HELP)
+        help_button.set_tooltip_text('Help Window')
+        help_button.connect('clicked', self.show_help)
+        hbox.pack_start(help_button, False, False, 0)
+        
         copy_layer_button = gtk.ToolButton()
         copy_layer_button.set_stock_id(gtk.STOCK_COPY)
-        copy_layer_button.set_tooltip_text('Copy Text Layer')
+        copy_layer_button.set_tooltip_text('Copy Frames/Text Layer')
         self.source_layer_frames = ''
         self.source_layer_frames_no = 0
         self.source_layer_texts = ''
@@ -204,7 +211,7 @@ class FramesEditorDialog(gtk.Dialog):
         
         paste_layer_button = gtk.ToolButton()
         paste_layer_button.set_stock_id(gtk.STOCK_PASTE)
-        paste_layer_button.set_tooltip_text('Paste Text Layer')
+        paste_layer_button.set_tooltip_text('Paste Frame/Text Layer')
         paste_layer_button.connect('clicked', self.paste_layer)
         hbox.pack_start(paste_layer_button, False, False, 0)
         self.get_action_area().pack_start(hbox, False, False, 0)
@@ -298,9 +305,9 @@ class FramesEditorDialog(gtk.Dialog):
 
     def paste_layer(self, *args):
       if self.drawing_frames:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.YES_NO, message_format="Are you sure you want to paste frames from page '" + self.source_layer_frames +"'?\nCurrent layer will be removed.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.YES_NO, message_format="Are you sure you want to paste frames from page '" + self.source_layer_frames +"'?\nCurrent page frames will be removed.")
       else:
-        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.YES_NO, message_format="Are you sure you want to paste text-layers from page '" + self.source_layer_texts +"'?\nCurrent layer will be removed.")
+        message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.YES_NO, message_format="Are you sure you want to paste text layer from page '" + self.source_layer_texts +"'?\nCurrent text layer will be removed.")
       response = message.run()
       message.destroy()
       if response != gtk.ResponseType.YES:
@@ -1145,8 +1152,15 @@ class FramesEditorDialog(gtk.Dialog):
       for lang in self._window.acbf_document.languages:
         if lang[1] == 'TRUE':
           self.edit_text_languages.append(lang[0])
-        
+      
       hbox = gtk.HBox(False, 0)
+
+      tool_button = gtk.ToolButton()
+      tool_button.set_stock_id(gtk.STOCK_HELP)
+      tool_button.set_tooltip_text('Show Help Screen')
+      tool_button.connect("clicked", dialog.show_help)
+      hbox.pack_start(tool_button, False, False, 0)
+
       label = gtk.Label()
       label.set_markup('<b>Language</b>: ')
       hbox.pack_start(label, False, False, 0)
@@ -1270,7 +1284,7 @@ class FramesEditorDialog(gtk.Dialog):
 
                     tag_tail = None
                     for word in text.strip(' ').split('<'):
-                      if re.sub("[^\/]*>.*", '', word) == '':
+                      if re.sub("[^\\/]*>.*", '', word) == '':
                         tag_name = re.sub(">.*", '', word)
                         tag_text = re.sub("[^>]*>", '', word)
                       elif '>' in word:
@@ -2299,7 +2313,7 @@ class TextBoxDialog(gtk.Dialog):
       return False
 
     def show_help(self, *args):
-      dialog = gtk.Dialog('Help', self, gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT, (gtk.STOCK_CLOSE, gtk.ResponseType.CLOSE))
+      dialog = gtk.Dialog('Edit Text Layers - Help', self, gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT, (gtk.STOCK_CLOSE, gtk.ResponseType.CLOSE))
       dialog.height = 300
       dialog.set_resizable(False)
       dialog.set_border_width(8)

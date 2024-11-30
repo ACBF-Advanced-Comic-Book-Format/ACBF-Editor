@@ -183,6 +183,14 @@ def check_dependencies():
         print('    !!! patool .................. Not found')
         required_found = False
     
+    try:
+		import cairo
+        gi.require_foreign('cairo')
+        gi.require_foreign('cairo', 'Surface')
+    except ImportError:
+        print('    !!! python3-gi-cairo ........ Not found')
+        required_found = False
+    
     if not required_found:
         print('\nCould not find all required dependencies!')
         print('Please install them and try again.')

@@ -89,7 +89,7 @@ def print_help():
     print('  -x [lang] -- text_export  Export text layer text to output file')
     print('')
     print('Example:')
-    print('  acbfe -i comic_book.cbr -o comic_book.cbz -f WEBP -q 91 -r 64x64\> -f NEAREST -t sk')
+    print("  acbfe -i comic_book.cbr -o comic_book.cbz -f WEBP -q 91 -r 64x64\\> -f NEAREST -t sk")
     print('  acbfe -i comic_book.cbr -o text_layer_sk.txt -x sk')
     print('')
     sys.exit(1)

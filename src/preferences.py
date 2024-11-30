@@ -114,7 +114,7 @@ class Preferences():
           crop_border.text = 'unrar x'
       elif element == 'frames_color':
         font_color_default = xml.SubElement(self.tree, "frames_color")
-        font_color_default.text = "#000000"
+        font_color_default.text = "#0000FF"
       elif element == 'text_layers_color':
         font_color_default = xml.SubElement(self.tree, "text_layers_color")
         font_color_default.text = "#FF0000"
