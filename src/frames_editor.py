@@ -363,7 +363,7 @@ class FramesEditorDialog(Gtk.Window):
 
         self.straight_button = Gtk.CheckButton.new_with_label("Draw straight lines")
         toolbar_top_tools.pack_start(self.straight_button)
-        find_frames_buttons = Gtk.Button.new_with_label("Find frames")
+        find_frames_buttons: Gtk.Button = Gtk.Button.new_with_label("Find frames")
         find_frames_buttons.connect("clicked", self.find_frames)
         toolbar_top_tools.pack_start(find_frames_buttons)
 
@@ -400,6 +400,10 @@ class FramesEditorDialog(Gtk.Window):
         content.append(main_pane_vert)
 
         self.set_child(content)
+
+        key_controller = Gtk.EventControllerKey()
+        key_controller.connect("key-pressed", self.key_pressed)
+        self.add_controller(key_controller)
 
     def set_header_title(self, text: str = "") -> None:
         new_title: str = "Frames/Text Layers Editor - " + self.selected_page
@@ -534,154 +538,56 @@ class FramesEditorDialog(Gtk.Window):
 
         alert.choose(self, None, handle_response, None)
 
-    def key_pressed(self, widget: Gtk.EventController, event: Gtk.EventController) -> bool:
-        # TODO convert over to eventcontroller
-        """print dir(Gdk.KEY_"""
-        # ALT + key
-        if event.get_state() == Gdk.ModifierType.MOD1_MASK:
-            None
-        # CTRL + key
-        if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
-            if event.keyval in (Gdk.KEY_C, Gdk.KEY_c):
-                self.copy_layer()
-            elif event.keyval in (Gdk.KEY_V, Gdk.KEY_v):
-                self.paste_layer()
-        else:
-            # the rest
-            if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
-                self.enclose_rectangle()
-            elif event.keyval == Gdk.KEY_Escape:
+    def key_pressed(
+        self, controller: Gtk.EventControllerKey, keyval: int, keycode: int, state: Gdk.ModifierType
+    ) -> bool:
+        modifiers = state & Gtk.accelerator_get_default_mod_mask()
+        control_mask = Gdk.ModifierType.CONTROL_MASK
+
+        if modifiers == control_mask and keyval == Gdk.KEY_c:
+            self.copy_layer()
+        elif modifiers == control_mask and keyval == Gdk.KEY_v:
+            self.paste_layer()
+        elif keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+            self.enclose_rectangle()
+        elif keyval == Gdk.KEY_Escape:
+            self.cancel_rectangle()
+            self.detecting_bubble = False
+            # self.window.set_cursor(None)
+        elif keyval == Gdk.KEY_BackSpace:
+            if len(self.points) == 1:
                 self.cancel_rectangle()
                 self.detecting_bubble = False
                 # self.window.set_cursor(None)
-            elif event.keyval == Gdk.KEY_BackSpace:
-                if len(self.points) == 1:
-                    self.cancel_rectangle()
-                    self.detecting_bubble = False
-                    # self.window.set_cursor(None)
-                elif len(self.points) > 1:
-                    del self.points[-1]
-                    # self.draw_page_image()
-                    for point in self.points:
-                        rect = (
-                            int(point[0] * self.scale_factor - 3),
-                            int(point[1] * self.scale_factor - 3),
-                            6,
-                            6,
-                        )
-                        rect2 = (
-                            int(point[0] * self.scale_factor - 1),
-                            int(point[1] * self.scale_factor - 1),
-                            2,
-                            2,
-                        )
-                        self.pixbuf.draw_rectangle(
-                            widget.get_style().black_gc,
-                            True,
-                            rect[0],
-                            rect[1],
-                            rect[2],
-                            rect[3],
-                        )
-                        self.drawing_area.queue_draw_area(
-                            rect[0],
-                            rect[1],
-                            rect[2],
-                            rect[3],
-                        )
-                        self.pixbuf.draw_rectangle(
-                            widget.get_style().white_gc,
-                            True,
-                            rect2[0],
-                            rect2[1],
-                            rect2[2],
-                            rect2[3],
-                        )
-                        self.drawing_area.queue_draw_area(
-                            rect2[0],
-                            rect2[1],
-                            rect2[2],
-                            rect2[3],
-                        )
-            elif event.keyval == Gdk.KEY_F1:
-                self.show_help()
-            elif event.keyval == Gdk.KEY_Delete:
-                self.delete_page()
-            elif event.keyval in (Gdk.KEY_F8, Gdk.KEY_F, Gdk.KEY_f):
-                self.frames_detection()
-            elif event.keyval in (Gdk.KEY_F7, Gdk.KEY_T, Gdk.KEY_t):
-                self.text_bubble_detection_cursor()
-            elif event.keyval == Gdk.KEY_F5:
+            elif len(self.points) > 1:
+                del self.points[-1]
                 self.drawing_area.queue_draw()
-            elif event.keyval in (Gdk.KEY_h, Gdk.KEY_H, Gdk.KEY_F11):
-                if self.notebook.get_property("visible"):
-                    self.notebook.hide()
-                    self.sidebar.hide()
-                else:
-                    self.notebook.show()
-                    self.sidebar.show()
-            elif event.keyval == Gdk.KEY_Right:
-                (path, focus_column) = self.pages_tree.get_cursor()
-                if len(path) == 1:
-                    self.pages_tree.expand_row(path, False)
-            elif event.keyval == Gdk.KEY_Left:
-                (path, focus_column) = self.pages_tree.get_cursor()
-                if len(path) == 1:
-                    self.pages_tree.collapse_row(path)
-            elif event.keyval == Gdk.KEY_Down:
-                (path, focus_column) = self.pages_tree.get_cursor()
-                if len(path) == 1 and self.pages_tree.row_expanded(path):
-                    self.pages_tree.set_cursor(
-                        (path[0], 0),
-                        focus_column,
-                        False,
-                    )
-                elif len(path) == 1:
-                    self.pages_tree.set_cursor(
-                        (path[0] + 1,),
-                        focus_column,
-                        False,
-                    )
-                else:
-                    self.pages_tree.set_cursor(
-                        (path[0], path[1] + 1),
-                        focus_column,
-                        False,
-                    )
 
-                (new_path, focus_column) = self.pages_tree.get_cursor()
-                if new_path is None:
-                    self.pages_tree.set_cursor(
-                        (path[0] + 1,),
-                        focus_column,
-                        False,
-                    )
-
-                (final_path, focus_column) = self.pages_tree.get_cursor()
-                if final_path is None:
-                    self.pages_tree.set_cursor(path, focus_column, False)
-            elif event.keyval == Gdk.KEY_Up:
-                (path, focus_column) = self.pages_tree.get_cursor()
-                if len(path) == 1 and path[0] == 0:
-                    return True
-                elif len(path) == 1:
-                    self.pages_tree.set_cursor(
-                        (path[0] - 1,),
-                        focus_column,
-                        False,
-                    )
-                elif path[1] > 0:
-                    self.pages_tree.set_cursor(
-                        (path[0], path[1] - 1),
-                        focus_column,
-                        False,
-                    )
-                else:
-                    self.pages_tree.set_cursor((path[0],), focus_column, False)
-
-                (final_path, focus_column) = self.pages_tree.get_cursor()
-                if final_path is None:
-                    self.pages_tree.set_cursor(path, focus_column, False)
+        elif keyval == Gdk.KEY_F1:
+            self.show_help()
+        elif keyval == Gdk.KEY_Delete:
+            self.delete_page()
+        elif keyval in (Gdk.KEY_F8, Gdk.KEY_F, Gdk.KEY_f):
+            self.find_frames()
+        elif keyval in (Gdk.KEY_F7, Gdk.KEY_T, Gdk.KEY_t):
+            self.text_bubble_detection_cursor()
+        elif keyval == Gdk.KEY_F5:
+            self.drawing_area.queue_draw()
+        elif keyval in (Gdk.KEY_h, Gdk.KEY_H, Gdk.KEY_F11):
+            if self.notebook.get_property("visible"):
+                self.notebook.hide()
+                self.pages_tree.hide()
+            else:
+                self.notebook.show()
+                self.pages_tree.show()
+        elif keyval == Gdk.KEY_Right:
+            return False
+        elif keyval == Gdk.KEY_Left:
+            return False
+        elif keyval == Gdk.KEY_Down:
+            return False
+        elif keyval == Gdk.KEY_Up:
+            return False
 
         return True
 
@@ -1784,7 +1690,7 @@ class FramesEditorDialog(Gtk.Window):
         cross_cursor = Gdk.Cursor.new(Gdk.CursorType.X_CURSOR)
         self.window.set_cursor(cross_cursor)"""
 
-    def find_frames(self, widget: Gtk.Button) -> None:
+    def find_frames(self, widget: Gtk.Button | None = None) -> None:
         k = Kumiko(
             {
                 "debug": False,
