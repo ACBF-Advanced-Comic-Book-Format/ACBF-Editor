@@ -139,6 +139,9 @@ class FramesEditorDialog(Gtk.Window):
         self.set_size_request(1000, 1000)
 
         toolbar_header = Gtk.HeaderBar()
+        help_button: Gtk.Button = Gtk.Button.new_from_icon_name("dialog-question-symbolic")
+        help_button.connect("clicked", self.show_help)
+        toolbar_header.pack_end(help_button)
         self.set_titlebar(toolbar_header)
         toolbar_top_tools: Gtk.ActionBar = Gtk.ActionBar()
 
@@ -596,132 +599,62 @@ class FramesEditorDialog(Gtk.Window):
         #         self.dw.set_cursor(self.cursor_crosshair)
         pass
 
-    def show_help(self) -> None:
-        # TODO Use a ui file?
-        dialog = Gtk.Window()
+    def show_help(self, widget: Gtk.Widget | None = None) -> None:
+        dialog = Gtk.ShortcutsWindow()
         dialog.set_title("Help")
-        dialog.set_geometry_hints(min_height=230)
-        dialog.set_resizable(False)
 
-        # Shortcuts
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        label = Gtk.Label()
-        label.set_markup("<b>Shortcuts</b>")
-        hbox.append(label)
-        dialog.set_child(hbox)
+        shortcut_section: Gtk.ShortcutsSection = Gtk.ShortcutsSection(section_name="frames")
+        dialog.add_section(shortcut_section)
 
-        # left side
-        main_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        left_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        shortcut_group: Gtk.ShortcutsGroup = Gtk.ShortcutsGroup(title="General")
+        shortcut_section.add_group(shortcut_group)
 
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("help")
-        hbox.append(button)
-        label = Gtk.Label()
-        label.set_markup("This help window (F1)")
-        hbox.append(label)
-        left_vbox.append(hbox)
+        shortcut: Gtk.ShortcutsShortcut = Gtk.ShortcutsShortcut(
+            title="Help", subtitle="This help window", accelerator="F1"
+        )
+        shortcut_group.add_shortcut(shortcut)
+        shortcut = Gtk.ShortcutsShortcut(
+            title="Hide windows", subtitle="Hide bottom and side bars", accelerator="h F11"
+        )
+        shortcut_group.add_shortcut(shortcut)
+        shortcut = Gtk.ShortcutsShortcut(title="Delete Page", subtitle="Delete current page", accelerator="Delete")
+        shortcut_group.add_shortcut(shortcut)
 
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("copy")
-        hbox.append(button)
-        label = Gtk.Label()
-        label.set_markup("Copy Frames/Text-Layer (CTRL + C)")
-        hbox.append(label)
-        left_vbox.append(hbox)
+        shortcut_group = Gtk.ShortcutsGroup(title="Panels")
+        shortcut_section.add_group(shortcut_group)
 
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("ok")
-        hbox.append(button)
-        label = Gtk.Label()
-        label.set_markup("Enclose Rectangle (ENTER, right click)")
-        hbox.append(label)
-        left_vbox.append(hbox)
+        shortcut = Gtk.ShortcutsShortcut(
+            title="Find Panels", subtitle="Automatically find panels on this page", accelerator="f"
+        )
+        shortcut_group.add_shortcut(shortcut)
+        shortcut = Gtk.ShortcutsShortcut(title="Copy Layer", subtitle="Copy Frames/Text-Layer", accelerator="<ctrl>c")
+        shortcut_group.add_shortcut(shortcut)
+        shortcut = Gtk.ShortcutsShortcut(title="Paste Layer", subtitle="Paste Frames/Text-Layer", accelerator="<ctrl>v")
+        shortcut_group.add_shortcut(shortcut)
 
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("ctrl")
-        hbox.append(button)
-        label = Gtk.Label()
+        shortcut_group = Gtk.ShortcutsGroup(title="Drawing")
+        shortcut_section.add_group(shortcut_group)
+
+        shortcut = Gtk.ShortcutsShortcut(
+            title="Enclose Rectangle", subtitle="Finalise and enclose the current rectangle", accelerator="Return"
+        )
+        shortcut_group.add_shortcut(shortcut)
+        shortcut = Gtk.ShortcutsShortcut(
+            title="Cancel Rectangle", subtitle="Cancel drawing the current rectangle", accelerator="Escape"
+        )
+        shortcut_group.add_shortcut(shortcut)
+        shortcut = Gtk.ShortcutsShortcut(
+            title="Remove Last Point", subtitle="Remove the last drawn point", accelerator="BackSpace"
+        )
+        shortcut_group.add_shortcut(shortcut)
+
+        # dialog.props.section_name = "main"
+        """# Shortcuts
         label.set_markup("Draw straight line by holding down Control key")
-        hbox.append(label)
-        left_vbox.append(hbox)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("F5")
-        hbox.append(button)
-        label = Gtk.Label()
         label.set_markup("Refresh image (F5)")
-        hbox.append(label)
-        left_vbox.append(hbox)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("F8")
-        hbox.append(button)
-        label = Gtk.Label()
         label.set_markup('Detect Frames (F8 or "F" key)')
-        hbox.append(label)
-        left_vbox.append(hbox)
+        label.set_markup('Detect Bubble at cursor (F7 or "T" key)')"""
 
-        main_hbox.append(left_vbox)
-
-        # right side
-        right_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("del")
-        hbox.append(button)
-        label = Gtk.Label()
-        label.set_markup("Delete current page (DEL)")
-        hbox.append(label)
-        right_vbox.append(hbox)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("paste")
-        hbox.append(button)
-        label = Gtk.Label()
-        label.set_markup("Paste Frames/Text-Layer (CTRL + V)")
-        hbox.append(label)
-        right_vbox.append(hbox)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("stop")
-        hbox.append(button)
-        label = Gtk.Label()
-        label.set_markup("Cancel Drawing Rectangle (ESC)")
-        hbox.append(label)
-        right_vbox.append(hbox)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("BKSP")
-        hbox.append(button)
-        label = Gtk.Label()
-        label.set_markup("Remove Last Point (BackSpace)")
-        hbox.append(label)
-        right_vbox.append(hbox)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("F7")
-        hbox.append(button)
-        label = Gtk.Label()
-        label.set_markup('Detect Bubble at cursor (F7 or "T" key)')
-        hbox.append(label)
-        right_vbox.append(hbox)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        button = Gtk.Button.new_with_label("F11")
-        hbox.append(button)
-        label = Gtk.Label()
-        label.set_markup('Hide bottom and side bars (F11 or "H" key)')
-        hbox.append(label)
-        right_vbox.append(hbox)
-
-        main_hbox.append(right_vbox)
-
-        dialog.vbox.append(main_hbox)
-        # dialog.get_action_area().get_children()[0].grab_focus()
-
-        # show it
-        # dialog.show_all()
         dialog.present()
 
     def delete_page(self) -> None:
