@@ -278,6 +278,12 @@ class FramesEditorDialog(Gtk.Window):
         self.pages_tree: Gtk.ListView = Gtk.ListView.new(selection_model, page_list_factory)
         self.pages_tree.set_single_click_activate(True)
 
+        # Cover is separate, add to tree list
+        cover_path: str = self.parent.acbf_document.cover_page_uri.file_path
+        if cover_path:
+            cover_path.replace("\\", "/")
+            cover_label = cover_path.rsplit(".", 1)[0].capitalize()
+            self.pages_treestore.append(ListItem(label=cover_label, path=cover_path))
         for page in self.parent.acbf_document.pages:
             page_path = page.find("image").get("href").replace("\\", "/")
             # Remove extension from file name
