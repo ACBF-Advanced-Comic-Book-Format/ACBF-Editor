@@ -66,7 +66,7 @@ def get_fonts_directory():
         if os.getenv('CSIDL_FONTS') != None:
           font_dirs.append(os.getenv('CSIDL_FONTS'))
         else:
-          font_dirs.append('C:\Windows\Fonts')
+          font_dirs.append('C:\\Windows\\Fonts')
         return font_dirs
     elif sys.platform.startswith('linux'):
         if os.path.isfile('/etc/fonts/fonts.conf'):
