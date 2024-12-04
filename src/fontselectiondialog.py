@@ -31,8 +31,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 try:
   from . import constants
+  from . import preferences
 except:
   import constants
+  import preferences
 
 class FontSelectionDialog(gtk.Dialog):
     
@@ -44,6 +46,9 @@ class FontSelectionDialog(gtk.Dialog):
                                   (gtk.STOCK_CLOSE, gtk.ResponseType.CLOSE))
         self.set_resizable(True)
         self.set_border_width(8)
+        
+        self.preferences = preferences.Preferences()
+        
         self.font_type = font_type
 
         hbox = gtk.HBox(False, 10)
@@ -52,7 +57,7 @@ class FontSelectionDialog(gtk.Dialog):
         sw = gtk.ScrolledWindow()
         sw.set_shadow_type(gtk.ShadowType.ETCHED_IN)
         sw.set_policy(gtk.PolicyType.AUTOMATIC, gtk.PolicyType.AUTOMATIC)
-        if self._window._window.preferences.get_value("hidpi") == 'True':
+        if self.preferences.get_value("hidpi") == 'True':
           self.ui_scale_factor = 2
         else:
           self.ui_scale_factor = 1

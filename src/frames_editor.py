@@ -42,9 +42,11 @@ import math
 try:
   from . import constants
   from . import text_layer
+  from . import editstylesdialog
 except:
   import constants
   import text_layer
+  import editstylesdialog
 
 class FramesEditorDialog(gtk.Dialog):
     
@@ -59,7 +61,8 @@ class FramesEditorDialog(gtk.Dialog):
 
         self.points = []
         self.root_directory = os.path.dirname(self._window.filename)
-        self.selected_page = self._window.acbf_document.bookinfo.find("coverpage/" + "image").get("href").replace("\\", "/")
+        self.acbf_document = self._window.acbf_document
+        self.selected_page = self.acbf_document.bookinfo.find("coverpage/" + "image").get("href").replace("\\", "/")
         self.selected_page_bgcolor = None
         self.page_color_button = gtk.ColorButton()
         self.drawing_frames = False
@@ -73,6 +76,7 @@ class FramesEditorDialog(gtk.Dialog):
         self.frames_box = gtk.VBox(False, 0)
         self.texts_box = gtk.VBox(False, 0)
         self.old_layer_dropdown = [0,0]
+        self.tempdir = self._window.tempdir
 
         # main screen
         self.main_box = gtk.HBox(False, 0)
@@ -95,7 +99,7 @@ class FramesEditorDialog(gtk.Dialog):
         directories.append('Cover Page')
         directories.append('Root')
 
-        for page in self._window.acbf_document.pages:
+        for page in self.acbf_document.pages:
           page_path = page.find("image").get("href").replace("\\", "/")
           if '/' in page_path:
             if page_path[0:page_path.find('/')] not in directories:
@@ -109,7 +113,7 @@ class FramesEditorDialog(gtk.Dialog):
             else:
               pages_treestore.append(it, [self.selected_page])
           else:
-            for page in self._window.acbf_document.pages:
+            for page in self.acbf_document.pages:
               page_path = page.find("image").get("href").replace("\\", "/")
               if '/' in page_path and page_path[0:page_path.find('/')] == directory:
                 pages_treestore.append(it, [page_path[page_path.find('/') + 1:]])
@@ -150,7 +154,11 @@ class FramesEditorDialog(gtk.Dialog):
         self.main_box.pack_start(self.sw_image, True, True, 5)
 
         self.vbox.pack_start(self.main_box, True, True, 0)
-
+        
+        i, bg_color = self.acbf_document.load_page_image(0)
+        current_page_image = os.path.join(self.tempdir, self.selected_page)
+        self.drawing_area_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(current_page_image, int(i.size[0] * self.scale_factor), int(i.size[1] * self.scale_factor), True)
+        
         # general & frames & text-layers
         self.notebook = gtk.Notebook()
         self.notebook.set_border_width(3)
@@ -214,6 +222,12 @@ class FramesEditorDialog(gtk.Dialog):
         paste_layer_button.set_tooltip_text('Paste Frame/Text Layer')
         paste_layer_button.connect('clicked', self.paste_layer)
         hbox.pack_start(paste_layer_button, False, False, 0)
+        
+        fonts_button = gtk.ToolButton()
+        fonts_button.set_stock_id(gtk.STOCK_SELECT_FONT)
+        fonts_button.set_tooltip_text('Edit Styles/Fonts Definitions')
+        fonts_button.connect('clicked', self.edit_styles)
+        hbox.pack_start(fonts_button, False, False, 0)
         self.get_action_area().pack_start(hbox, False, False, 0)
 
         self.straight_button = gtk.CheckButton("Draw straight lines.")
@@ -237,10 +251,10 @@ class FramesEditorDialog(gtk.Dialog):
 
         hbox = gtk.HBox(True, 0)
         self.layer_dropdown = gtk.ComboBoxText()
-        for a in self._window.acbf_document.languages:
+        for a in self.acbf_document.languages:
           if a[1] == 'FALSE':
             self.layer_dropdown.append_text(a[0] + '#')
-        for a in self._window.acbf_document.languages:
+        for a in self.acbf_document.languages:
           if a[1] == 'TRUE':
             self.layer_dropdown.append_text(a[0])
         self.layer_dropdown.set_active(0)
@@ -277,11 +291,11 @@ class FramesEditorDialog(gtk.Dialog):
         self.run()
 
     def copy_layer(self, *args):
-      number_of_frames = len(self._window.acbf_document.load_page_frames(self.get_current_page_number()))
+      number_of_frames = len(self.acbf_document.load_page_frames(self.get_current_page_number()))
       number_of_texts = 0
       selected_layer = self.layer_dropdown.get_active_text()
       if selected_layer[-1] != '#':
-        number_of_texts = len(self._window.acbf_document.load_page_texts(self.get_current_page_number(), selected_layer)[0])
+        number_of_texts = len(self.acbf_document.load_page_texts(self.get_current_page_number(), selected_layer)[0])
 
       if self.drawing_frames == False and self.drawing_texts == False:
         message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Nothing to copy.\nSelect 'Frames' or 'Text-Layers' tab.")
@@ -323,14 +337,14 @@ class FramesEditorDialog(gtk.Dialog):
         message = gtk.MessageDialog(parent=self, flags=0, type=gtk.MessageType.INFO, buttons=gtk.ButtonsType.OK, message_format="Frames pasted from page " + self.source_layer_frames)
         self.set_modified()
 
-        for page in self._window.acbf_document.pages:
+        for page in self.acbf_document.pages:
           if page.find("image").get("href").replace("\\", "/") == self.selected_page:
             # delete all frames
             for frame in page.findall("frame"):
               page.remove(frame)
 
             # copy frames from source page
-            for source_page in self._window.acbf_document.pages:
+            for source_page in self.acbf_document.pages:
               if source_page.find("image").get("href").replace("\\", "/") == self.source_layer_frames:
                 for source_frame in source_page.findall("frame"):
                   page.append(deepcopy(source_frame))
@@ -344,7 +358,7 @@ class FramesEditorDialog(gtk.Dialog):
         self.set_modified()
         layer_found = False
 
-        for page in self._window.acbf_document.pages:
+        for page in self.acbf_document.pages:
           if page.find("image").get("href").replace("\\", "/") == self.selected_page:
             for text_layer in page.findall("text-layer"):
               if text_layer.get("lang") == selected_layer:
@@ -354,7 +368,7 @@ class FramesEditorDialog(gtk.Dialog):
                   text_layer.remove(text_area)
 
                 # copy text-areas from source page
-                for source_page in self._window.acbf_document.pages:
+                for source_page in self.acbf_document.pages:
                   if source_page.find("image").get("href").replace("\\", "/") == self.source_layer_texts:
                     for source_text_layer in source_page.findall("text-layer"):
                       if source_text_layer.get("lang") == selected_layer:
@@ -363,7 +377,7 @@ class FramesEditorDialog(gtk.Dialog):
 
             if not layer_found and selected_layer[-1] != '#':
               text_layer = xml.SubElement(page, "text-layer", lang=selected_layer)
-              for source_page in self._window.acbf_document.pages:
+              for source_page in self.acbf_document.pages:
                 if source_page.find("image").get("href").replace("\\", "/") == self.source_layer_texts:
                   for source_text_layer in source_page.findall("text-layer"):
                     if source_text_layer.get("lang") == selected_layer:
@@ -376,7 +390,16 @@ class FramesEditorDialog(gtk.Dialog):
       response = message.run()
       message.destroy()
       return
-      
+
+    def edit_styles(self, *args):
+      dialog = editstylesdialog.EditStylesDialog(self)
+      response = dialog.run()
+      if response == gtk.ResponseType.OK:
+        self.set_modified()
+        dialog.save_styles()
+      dialog.destroy()
+      return
+
     def key_pressed(self, widget, event):
       """print(dir(Gdk.KEY))"""
       # ALT + key
@@ -669,18 +692,18 @@ class FramesEditorDialog(gtk.Dialog):
       if response != gtk.ResponseType.YES:
         return False
 
-      for page in self._window.acbf_document.tree.findall("body/page"):
+      for page in self.acbf_document.tree.findall("body/page"):
         if page.find("image").get("href").replace("\\", "/") == self.selected_page:
-          self._window.acbf_document.tree.find("body").remove(page)
-          in_path = os.path.join(self._window.tempdir, page.find("image").get("href").replace("\\", "/"))
+          self.acbf_document.tree.find("body").remove(page)
+          in_path = os.path.join(self.tempdir, page.find("image").get("href").replace("\\", "/"))
           if os.path.isfile(in_path):
             os.remove(in_path)
 
-      for image in self._window.acbf_document.tree.findall("data/binary"):
+      for image in self.acbf_document.tree.findall("data/binary"):
         if image.get("id") == self.selected_page[1:]:
-          self._window.acbf_document.tree.find("data").remove(image)
+          self.acbf_document.tree.find("data").remove(image)
 
-      self._window.acbf_document.pages = self._window.acbf_document.tree.findall("body/" + "page")
+      self.acbf_document.pages = self.acbf_document.tree.findall("body/" + "page")
 
       self.pages_tree.get_selection().get_selected()[0].remove(self.pages_tree.get_selection().get_selected()[1])
       self.pages_tree.set_cursor((0,0))
@@ -724,7 +747,7 @@ class FramesEditorDialog(gtk.Dialog):
       hbox.pack_start(label, False, False, 0)
 
       color = Gdk.RGBA()
-      Gdk.RGBA.parse(color, self._window.acbf_document.bg_color)
+      Gdk.RGBA.parse(color, self.acbf_document.bg_color)
       color_button = gtk.ColorButton()
       color_button.set_rgba(color)
       #color_button.modify_fg(gtk.StateType.NORMAL, color)
@@ -744,7 +767,7 @@ class FramesEditorDialog(gtk.Dialog):
       try:
         Gdk.RGBA.parse(color, self.selected_page_bgcolor)
       except:
-        Gdk.RGBA.parse(color, self._window.acbf_document.bg_color)
+        Gdk.RGBA.parse(color, self.acbf_document.bg_color)
       self.page_color_button = gtk.ColorButton()
       self.page_color_button.set_rgba(color)
       self.page_color_button.set_title('Select Color')
@@ -762,7 +785,7 @@ class FramesEditorDialog(gtk.Dialog):
       self.transition_dropdown = gtk.ComboBoxText()
       for key in self.transition_dropdown_dict:
         self.transition_dropdown.append_text(self.transition_dropdown_dict[key])
-        if self.transition_dropdown_dict[key].replace(' ', '_').upper() == self._window.acbf_document.get_page_transition(self.get_current_page_number()).upper():
+        if self.transition_dropdown_dict[key].replace(' ', '_').upper() == self.acbf_document.get_page_transition(self.get_current_page_number()).upper():
           self.transition_dropdown.set_active(key)
 
       self.transition_dropdown.connect("changed", self.update_page_transition)
@@ -774,7 +797,7 @@ class FramesEditorDialog(gtk.Dialog):
     def update_page_transition(self, widget):
       if not self.transition_dropdown_is_active or self.transition_dropdown.get_active() == 0:
         return
-      for page in self._window.acbf_document.pages:
+      for page in self.acbf_document.pages:
         if page.find("image").get("href").replace("\\", "/") == self.selected_page:
           page.attrib["transition"] = self.transition_dropdown.get_active_text().lower().replace(' ', '_')
       self.set_modified()
@@ -788,13 +811,13 @@ class FramesEditorDialog(gtk.Dialog):
           response = my_dialog.run()
           if response == gtk.ResponseType.OK:
             widget.set_rgba(my_dialog.get_rgba())
-            self._window.acbf_document.tree.find("body").attrib["bgcolor"] = self.get_hex_color(widget)
-            self._window.acbf_document.bg_color = self.get_hex_color(widget)
+            self.acbf_document.tree.find("body").attrib["bgcolor"] = self.get_hex_color(widget)
+            self.acbf_document.bg_color = self.get_hex_color(widget)
             color = Gdk.RGBA()
             try:
               Gdk.RGBA.parse(color, self.selected_page_bgcolor)
             except:
-              Gdk.RGBA.parse(color, self._window.acbf_document.bg_color)
+              Gdk.RGBA.parse(color, self.acbf_document.bg_color)
             color_button = gtk.ColorButton()
             color_button.set_rgba(color)
             self.set_modified()
@@ -818,7 +841,7 @@ class FramesEditorDialog(gtk.Dialog):
           response = my_dialog.run()
           if response == gtk.ResponseType.OK:
             widget.set_rgba(my_dialog.get_rgba())
-            for page in self._window.acbf_document.pages:
+            for page in self.acbf_document.pages:
               if page.find("image").get("href").replace("\\", "/") == self.selected_page:
                 page.attrib["bgcolor"] = self.get_hex_color(widget)
             self.selected_page_bgcolor = self.get_hex_color(widget)
@@ -829,7 +852,7 @@ class FramesEditorDialog(gtk.Dialog):
     def load_frames(self, *args):
         for i in self.frames_box.get_children():
           i.destroy()
-        for idx, frame in enumerate(self._window.acbf_document.load_page_frames(self.get_current_page_number())):
+        for idx, frame in enumerate(self.acbf_document.load_page_frames(self.get_current_page_number())):
           if self.get_current_page_number() > 1:
             self.add_frames_hbox(None, frame[0], frame[1], idx + 1)
 
@@ -866,7 +889,7 @@ class FramesEditorDialog(gtk.Dialog):
 
       # bg color
       if bg_color == None and self.selected_page_bgcolor == None:
-        bg_color = self._window.acbf_document.bg_color
+        bg_color = self.acbf_document.bg_color
       elif bg_color == None:
         bg_color = self.selected_page_bgcolor
 
@@ -898,7 +921,7 @@ class FramesEditorDialog(gtk.Dialog):
       if response != gtk.ResponseType.YES:
         return False
 
-      for page in self._window.acbf_document.pages:
+      for page in self.acbf_document.pages:
         if page.find("image").get("href").replace("\\", "/") == self.selected_page:
           xml_frame = ''
           for point in polygon:
@@ -924,7 +947,7 @@ class FramesEditorDialog(gtk.Dialog):
           response = my_dialog.run()
           if response == gtk.ResponseType.OK:
             widget.set_rgba(my_dialog.get_rgba())
-            for page in self._window.acbf_document.pages:
+            for page in self.acbf_document.pages:
               if page.find("image").get("href").replace("\\", "/") == self.selected_page:
                 xml_frame = ''
                 for point in polygon:
@@ -937,7 +960,7 @@ class FramesEditorDialog(gtk.Dialog):
       return True
 
     def move_frame_up(self, widget, polygon):
-      for page in self._window.acbf_document.pages:
+      for page in self.acbf_document.pages:
         if page.find("image").get("href").replace("\\", "/") == self.selected_page:
           xml_frame = ''
           for point in polygon:
@@ -966,9 +989,9 @@ class FramesEditorDialog(gtk.Dialog):
     def load_texts(self, *args):
       for i in self.texts_box.get_children():
         i.destroy()
-      for lang in self._window.acbf_document.languages:
+      for lang in self.acbf_document.languages:
         if lang[1] != 'FALSE':
-          for idx, text_areas in enumerate(self._window.acbf_document.load_page_texts(self.get_current_page_number(), lang[0])[0]):
+          for idx, text_areas in enumerate(self.acbf_document.load_page_texts(self.get_current_page_number(), lang[0])[0]):
             self.add_texts_hbox(None, text_areas[0], text_areas[1], text_areas[2], text_areas[4], text_areas[5], idx + 1, text_areas[6])  
           break
 
@@ -1006,7 +1029,7 @@ class FramesEditorDialog(gtk.Dialog):
 
       # bg color
       if bg_color == None and self.selected_page_bgcolor == None:
-        bg_color = self._window.acbf_document.bg_color
+        bg_color = self.acbf_document.bg_color
       elif bg_color == None:
         bg_color = self.selected_page_bgcolor
 
@@ -1056,7 +1079,7 @@ class FramesEditorDialog(gtk.Dialog):
 
           # get transparency value
           is_transparent = 'false'
-          for page in self._window.acbf_document.pages:
+          for page in self.acbf_document.pages:
             if page.find("image").get("href").replace("\\", "/") == self.selected_page:
               xml_frame = ''
               for point in polygon:
@@ -1076,7 +1099,7 @@ class FramesEditorDialog(gtk.Dialog):
             else:
               widget.set_use_alpha(False)
               widget.set_rgba(my_dialog.get_rgba())
-            for page in self._window.acbf_document.pages:
+            for page in self.acbf_document.pages:
               if page.find("image").get("href").replace("\\", "/") == self.selected_page:
                 xml_frame = ''
                 for point in polygon:
@@ -1094,7 +1117,7 @@ class FramesEditorDialog(gtk.Dialog):
       return True
 
     def move_text_up(self, widget, polygon):
-      for page in self._window.acbf_document.pages:
+      for page in self.acbf_document.pages:
         if page.find("image").get("href").replace("\\", "/") == self.selected_page:
           xml_frame = ''
           for point in polygon:
@@ -1129,7 +1152,7 @@ class FramesEditorDialog(gtk.Dialog):
       if response != gtk.ResponseType.YES:
         return False
 
-      for page in self._window.acbf_document.pages:
+      for page in self.acbf_document.pages:
         if page.find("image").get("href").replace("\\", "/") == self.selected_page:
           xml_frame = ''
           for point in polygon:
@@ -1149,7 +1172,7 @@ class FramesEditorDialog(gtk.Dialog):
 
       # Text Layers switch
       self.edit_text_languages = []
-      for lang in self._window.acbf_document.languages:
+      for lang in self.acbf_document.languages:
         if lang[1] == 'TRUE':
           self.edit_text_languages.append(lang[0])
       
@@ -1214,7 +1237,7 @@ class FramesEditorDialog(gtk.Dialog):
       self.text_box = gtk.TextView()
       self.text_box.set_wrap_mode(gtk.WrapMode.WORD)
 
-      for text_areas in self._window.acbf_document.load_page_texts(self.get_current_page_number(), self.edit_text_languages[0])[0]:
+      for text_areas in self.acbf_document.load_page_texts(self.get_current_page_number(), self.edit_text_languages[0])[0]:
         if str(polygon) == str(text_areas[0]):
           self.text_rotation.set_value(text_areas[3])
           self.text_box.get_buffer().set_text(unescape(text_areas[1].replace('<commentary>', '').replace('</commentary>', '').replace('<commentary/>', '').replace('<inverted>', '').replace('</inverted>', '').replace('<BR>', '\n')))
@@ -1254,7 +1277,7 @@ class FramesEditorDialog(gtk.Dialog):
       self.lang_dropdown.set_active(current_active)
 
     def save_edit_text_box(self, polygon, old_lang):
-      for page in self._window.acbf_document.pages:
+      for page in self.acbf_document.pages:
         if page.find("image").get("href").replace("\\", "/") == self.selected_page:
           for text_layer in page.findall("text-layer"):
             for text_area in text_layer:
@@ -1316,7 +1339,7 @@ class FramesEditorDialog(gtk.Dialog):
       text_area_found = False
       text_layer_found = False
       #check if current language has this text-area
-      for text_areas in self._window.acbf_document.load_page_texts(self.get_current_page_number(), self.lang_dropdown.get_active_text())[0]:
+      for text_areas in self.acbf_document.load_page_texts(self.get_current_page_number(), self.lang_dropdown.get_active_text())[0]:
         if str(polygon) == str(text_areas[0]):
           text_area_found = True
           self.text_box.get_buffer().set_text(unescape(text_areas[1].replace('<commentary>', '').replace('</commentary>', '').replace('<commentary/>', '').replace('<inverted>', '').replace('</inverted>', '').replace('<BR>', '\n')))
@@ -1325,7 +1348,7 @@ class FramesEditorDialog(gtk.Dialog):
         for point in polygon:
           xml_frame = xml_frame + str(point[0]) + ',' + str(point[1]) + ' '
         #check if current language has this text-layer
-        for page in self._window.acbf_document.pages:
+        for page in self.acbf_document.pages:
           if page.find("image").get("href").replace("\\", "/") == self.selected_page:
             for text_layer in page.findall("text-layer"):
               if text_layer.get("lang") == self.lang_dropdown.get_active_text():
@@ -1363,7 +1386,7 @@ class FramesEditorDialog(gtk.Dialog):
         
         # draw frames
         event.set_source_rgb(float(frames_color[0]/256), float(frames_color[1]/255), float(frames_color[2]/255))
-        for idx, frame in enumerate(self._window.acbf_document.load_page_frames(self.get_current_page_number())):
+        for idx, frame in enumerate(self.acbf_document.load_page_frames(self.get_current_page_number())):
           if self.get_current_page_number() > 1:
             event.set_line_width(3)
             for point_idx, point in enumerate(self.scale_polygon(frame[0])):
@@ -1404,9 +1427,9 @@ class FramesEditorDialog(gtk.Dialog):
             
         # draw text-layers
         event.set_source_rgba(float(text_layers_color[0]/256), float(text_layers_color[1]/255), float(text_layers_color[2]/255), 0.9)
-        for lang in self._window.acbf_document.languages:
+        for lang in self.acbf_document.languages:
           if lang[1] != 'FALSE':
-            for idx, text_areas in enumerate(self._window.acbf_document.load_page_texts(self.get_current_page_number(), lang[0])[0]):
+            for idx, text_areas in enumerate(self.acbf_document.load_page_texts(self.get_current_page_number(), lang[0])[0]):
               event.set_line_width(3)
               for point_idx, point in enumerate(self.scale_polygon(text_areas[0])):
                 if point_idx == 0:
@@ -1450,7 +1473,7 @@ class FramesEditorDialog(gtk.Dialog):
         return False
 
     def get_current_page_number(self, *args):
-        for idx, page in enumerate(self._window.acbf_document.pages):
+        for idx, page in enumerate(self.acbf_document.pages):
           if page.find("image").get("href").replace("\\", "/") == self.selected_page:
             ret_idx = idx + 2
             break
@@ -1471,25 +1494,25 @@ class FramesEditorDialog(gtk.Dialog):
         if self.selected_page[:4] == 'Root':
           self.selected_page = self.selected_page[5:].replace("\\", "/")
 
-        current_page_image = os.path.join(self._window.tempdir, self.selected_page)
+        current_page_image = os.path.join(self.tempdir, self.selected_page)
         if not os.path.exists(current_page_image):
           self.get_window().set_cursor(None)	
           return
 
         if self.layer_dropdown.get_active_text()[-1] != '#':
-          for idx, lang in enumerate(self._window.acbf_document.languages):
+          for idx, lang in enumerate(self.acbf_document.languages):
             if lang[0] == self.layer_dropdown.get_active_text():
-              xx = text_layer.TextLayer(current_page_image, self._window.tempdir, self.get_current_page_number(), self._window.acbf_document, idx,
-                                      self._window.acbf_document.font_styles['normal'],
-                                      self._window.acbf_document.font_styles['strong'], self._window.acbf_document.font_styles['emphasis'],
-                                      self._window.acbf_document.font_styles['code'], self._window.acbf_document.font_styles['commentary'],
-                                      self._window.acbf_document.font_styles['sign'], self._window.acbf_document.font_styles['formal'],
-                                      self._window.acbf_document.font_styles['heading'], self._window.acbf_document.font_styles['letter'],
-                                      self._window.acbf_document.font_styles['audio'], self._window.acbf_document.font_styles['thought'])
+              xx = text_layer.TextLayer(current_page_image, self.tempdir, self.get_current_page_number(), self.acbf_document, idx,
+                                      self.acbf_document.font_styles['normal'],
+                                      self.acbf_document.font_styles['strong'], self.acbf_document.font_styles['emphasis'],
+                                      self.acbf_document.font_styles['code'], self.acbf_document.font_styles['commentary'],
+                                      self.acbf_document.font_styles['sign'], self.acbf_document.font_styles['formal'],
+                                      self.acbf_document.font_styles['heading'], self.acbf_document.font_styles['letter'],
+                                      self.acbf_document.font_styles['audio'], self.acbf_document.font_styles['thought'])
               i = xx.PILBackgroundImage
               current_page_image = xx.PILBackgroundImageFile
         else:
-          i, bg_color = self._window.acbf_document.load_page_image(self.get_current_page_number())
+          i, bg_color = self.acbf_document.load_page_image(self.get_current_page_number())
 
         w, h = i.size
         self.drawing_area.set_size_request(w, h)
@@ -1547,7 +1570,7 @@ class FramesEditorDialog(gtk.Dialog):
             event.x = float(self.points[-1][0]) * self.scale_factor
 
         lang_found = False
-        for lang in self._window.acbf_document.languages:
+        for lang in self.acbf_document.languages:
           if lang[1] == 'TRUE':
             lang_found = True
         if self.drawing_texts and not lang_found:
@@ -1609,7 +1632,7 @@ class FramesEditorDialog(gtk.Dialog):
           xml_frame = ''
           for point in self.points:
             xml_frame = xml_frame + str(point[0]) + ',' + str(point[1]) + ' '
-          for page in self._window.acbf_document.pages:
+          for page in self.acbf_document.pages:
             if page.find("image").get("href").replace("\\", "/") == self.selected_page:
               if self.drawing_frames:
                 #add frame
@@ -1619,7 +1642,7 @@ class FramesEditorDialog(gtk.Dialog):
                     
               elif self.drawing_texts:
                 #add text-area
-                for lang in self._window.acbf_document.languages:
+                for lang in self.acbf_document.languages:
                   if lang[1] == 'TRUE':
                     layer_found = False
                     for layer in page.findall("text-layer"):
@@ -1690,7 +1713,7 @@ class FramesEditorDialog(gtk.Dialog):
     def text_bubble_detection(self, x, y, *args):
         x = int(x / self.scale_factor)
         y = int(y / self.scale_factor)
-        current_page_image = os.path.join(self._window.tempdir, self.selected_page)
+        current_page_image = os.path.join(self.tempdir, self.selected_page)
         if current_page_image[-4:].upper() == 'WEBP':
           im = Image.open(current_page_image)
           rgb_im = im.convert('RGB')
@@ -1931,7 +1954,7 @@ class FramesEditorDialog(gtk.Dialog):
           self.notebook.set_current_page(2)
         
         lang_found = False
-        for lang in self._window.acbf_document.languages:
+        for lang in self.acbf_document.languages:
           if lang[1] == 'TRUE':
             lang_found = True
         if self.drawing_texts and not lang_found:
@@ -1953,7 +1976,7 @@ class FramesEditorDialog(gtk.Dialog):
         
         CANNY = 500
         
-        current_page_image = os.path.join(self._window.tempdir, self.selected_page)
+        current_page_image = os.path.join(self.tempdir, self.selected_page)
         if current_page_image[-4:].upper() == 'WEBP':
           im = Image.open(current_page_image)
           rgb_im = im.convert('RGB')
@@ -2155,28 +2178,28 @@ class FramesEditorDialog(gtk.Dialog):
             color = Gdk.RGBA()
             if page != directory:
               if directory == 'Cover Page':
-                self.selected_page = self._window.acbf_document.bookinfo.find("coverpage/" + "image").get("href").replace("\\", "/")
+                self.selected_page = self.acbf_document.bookinfo.find("coverpage/" + "image").get("href").replace("\\", "/")
                 self.selected_page_bgcolor = None
-                Gdk.RGBA.parse(color, self._window.acbf_document.bg_color)
+                Gdk.RGBA.parse(color, self.acbf_document.bg_color)
               else:
                 if directory == 'Root':
                   self.selected_page = page.replace("\\", "/")
                 else:
                   self.selected_page = os.path.join(directory, page).replace("\\", "/")
-                for p in self._window.acbf_document.tree.findall("body/page"):
+                for p in self.acbf_document.tree.findall("body/page"):
                   if p.find("image").get("href").replace("\\", "/") == self.selected_page:
                     self.selected_page_bgcolor = p.get("bgcolor")
               try:
                 Gdk.RGBA.parse(color, self.selected_page_bgcolor)
               except:
-                Gdk.RGBA.parse(color, self._window.acbf_document.bg_color)
+                Gdk.RGBA.parse(color, self.acbf_document.bg_color)
               self.page_color_button.set_rgba(color)
               for key in self.transition_dropdown_dict:
-                if self.transition_dropdown_dict[key].replace(' ', '_').upper() == self._window.acbf_document.get_page_transition(self.get_current_page_number()).upper():
+                if self.transition_dropdown_dict[key].replace(' ', '_').upper() == self.acbf_document.get_page_transition(self.get_current_page_number()).upper():
                   self.transition_dropdown_is_active = False
                   self.transition_dropdown.set_active(key)
                   self.transition_dropdown_is_active = True
-              if self._window.acbf_document.get_page_transition(self.get_current_page_number()).upper() == 'UNDEFINED':
+              if self.acbf_document.get_page_transition(self.get_current_page_number()).upper() == 'UNDEFINED':
                 self.transition_dropdown_is_active = False
                 self.transition_dropdown.set_active(0)
                 self.transition_dropdown_is_active = True
@@ -2291,7 +2314,7 @@ class TextBoxDialog(gtk.Dialog):
         elif event.keyval in (Gdk.KEY_u, Gdk.KEY_U):
           if len(self._window.text_box.get_buffer().get_selection_bounds()) > 0:
             bounds = self._window.text_box.get_buffer().get_selection_bounds()
-            text = self._window.text_box.get_buffer().get_text(bounds[0], bounds[1]).decode('utf-8').upper()
+            text = self._window.text_box.get_buffer().get_text(bounds[0], bounds[1], True).upper()
             text = text.replace(u'<EMPHASIS>', u'<emphasis>').replace(u'</EMPHASIS>', u'</emphasis>')
             text = text.replace(u'<STRONG>', u'<strong>').replace(u'</STRONG>', u'</strong>')
             text = text.replace(u'<STRIKETHROUGH>', u'<strikethrough>').replace(u'</STRIKETHROUGH>', u'</strikethrough>')
@@ -2301,7 +2324,7 @@ class TextBoxDialog(gtk.Dialog):
             self._window.text_box.get_buffer().insert(bounds[0],text)
           else:
             bounds = self._window.text_box.get_buffer().get_bounds()
-            text = self._window.text_box.get_buffer().get_text(bounds[0], bounds[1]).decode('utf-8').upper()
+            text = self._window.text_box.get_buffer().get_text(bounds[0], bounds[1], True).upper()
             text = text.replace(u'<EMPHASIS>', u'<emphasis>').replace(u'</EMPHASIS>', u'</emphasis>')
             text = text.replace(u'<STRONG>', u'<strong>').replace(u'</STRONG>', u'</strong>')
             text = text.replace(u'<STRIKETHROUGH>', u'<strikethrough>').replace(u'</STRIKETHROUGH>', u'</strikethrough>')
