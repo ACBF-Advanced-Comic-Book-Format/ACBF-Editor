@@ -31,6 +31,7 @@ install_mime = True
 FILES = (('src/acbfdocument.py', 'share/acbfe/src'),
          ('src/acbfe.py', 'share/acbfe/src'),
          ('src/constants.py', 'share/acbfe/src'),
+         ('src/editstylesdialog.py', 'share/acbfe/src'),
          ('src/filechooser.py', 'share/acbfe/src'),
          ('src/fileprepare.py', 'share/acbfe/src'),
          ('src/fontselectiondialog.py', 'share/acbfe/src'),

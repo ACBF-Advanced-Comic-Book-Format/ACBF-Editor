@@ -19,6 +19,7 @@ https://github.com/ACBF-Advanced-Comic-Book-Format
 # -------------------------------------------------------------------------
 
 import os
+import shutil
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -69,11 +70,11 @@ class EditStylesDialog(gtk.Dialog):
         label = gtk.Label()
         label.set_markup('<tt>Speech (default): </tt>')
         hbox.pack_start(label, True, False, 0)
-
+        
         self.speech_font = gtk.Button()
         self.speech_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["normal"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["normal"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["normal"]):
             self.speech_font.font_idx = idx
             break
         self.speech_font.set_label(constants.FONTS_LIST[self.speech_font.font_idx][0])
@@ -102,7 +103,7 @@ class EditStylesDialog(gtk.Dialog):
         self.emphasis_font = gtk.Button()
         self.emphasis_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["emphasis"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["emphasis"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["emphasis"]):
             self.emphasis_font.font_idx = idx
             break
         self.emphasis_font.set_label(constants.FONTS_LIST[self.emphasis_font.font_idx][0])
@@ -130,7 +131,7 @@ class EditStylesDialog(gtk.Dialog):
         self.strong_font = gtk.Button()
         self.strong_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["strong"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["strong"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["strong"]):
             self.strong_font.font_idx = idx
             break
         self.strong_font.set_label(constants.FONTS_LIST[self.strong_font.font_idx][0])
@@ -158,7 +159,7 @@ class EditStylesDialog(gtk.Dialog):
         self.commentary_font = gtk.Button()
         self.commentary_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["commentary"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["commentary"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["commentary"]):
             self.commentary_font.font_idx = idx
             break
         self.commentary_font.set_label(constants.FONTS_LIST[self.commentary_font.font_idx][0])
@@ -187,7 +188,7 @@ class EditStylesDialog(gtk.Dialog):
         self.code_font = gtk.Button()
         self.code_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["code"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["code"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["code"]):
             self.code_font.font_idx = idx
             break
         self.code_font.set_label(constants.FONTS_LIST[self.code_font.font_idx][0])
@@ -216,7 +217,7 @@ class EditStylesDialog(gtk.Dialog):
         self.formal_font = gtk.Button()
         self.formal_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["formal"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["formal"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["formal"]):
             self.formal_font.font_idx = idx
             break
         self.formal_font.set_label(constants.FONTS_LIST[self.formal_font.font_idx][0])
@@ -245,7 +246,7 @@ class EditStylesDialog(gtk.Dialog):
         self.letter_font = gtk.Button()
         self.letter_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["letter"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["letter"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["letter"]):
             self.letter_font.font_idx = idx
             break
         self.letter_font.set_label(constants.FONTS_LIST[self.letter_font.font_idx][0])
@@ -274,7 +275,7 @@ class EditStylesDialog(gtk.Dialog):
         self.heading_font = gtk.Button()
         self.heading_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["heading"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["heading"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["heading"]):
             self.heading_font.font_idx = idx
             break
         self.heading_font.set_label(constants.FONTS_LIST[self.heading_font.font_idx][0])
@@ -303,7 +304,7 @@ class EditStylesDialog(gtk.Dialog):
         self.audio_font = gtk.Button()
         self.audio_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["audio"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["audio"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["audio"]):
             self.audio_font.font_idx = idx
             break
         self.audio_font.set_label(constants.FONTS_LIST[self.audio_font.font_idx][0])
@@ -332,7 +333,7 @@ class EditStylesDialog(gtk.Dialog):
         self.thought_font = gtk.Button()
         self.thought_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["thought"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["thought"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["thought"]):
             self.thought_font.font_idx = idx
             break
         self.thought_font.set_label(constants.FONTS_LIST[self.thought_font.font_idx][0])
@@ -361,7 +362,7 @@ class EditStylesDialog(gtk.Dialog):
         self.sign_font = gtk.Button()
         self.sign_font.font_idx = 0
         for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["sign"]))[0]:
+          if font[0] == os.path.splitext(os.path.basename(self.acbf_document.font_styles["sign"]))[0] or font[0] == os.path.basename(self.acbf_document.font_styles["sign"]):
             self.sign_font.font_idx = idx
             break
         self.sign_font.set_label(constants.FONTS_LIST[self.sign_font.font_idx][0])

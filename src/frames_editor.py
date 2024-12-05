@@ -91,11 +91,14 @@ class FramesEditorDialog(gtk.Dialog):
         self.pages_tree = gtk.TreeView()
         tree_pages = gtk.TreeViewColumn()
         tree_pages.set_title("Comic Book Pages")
-        cell = gtk.CellRendererText()
-        tree_pages.pack_start(cell, True)
-        tree_pages.add_attribute(cell, "text", 0)
+        cell1 = gtk.CellRendererText()
+        cell2 = gtk.CellRendererText()
+        tree_pages.pack_start(cell1, True)
+        tree_pages.pack_start(cell2, False)
+        tree_pages.add_attribute(cell1, "text", 0)
+        tree_pages.add_attribute(cell2, "text", 1)
 
-        pages_treestore = gtk.TreeStore(str)
+        pages_treestore = gtk.TreeStore(str, str)
         directories.append('Cover Page')
         directories.append('Root')
 
@@ -106,19 +109,20 @@ class FramesEditorDialog(gtk.Dialog):
               directories.append(page_path[0:page_path.find('/')])
 
         for directory in directories:
-          it = pages_treestore.append(None, [directory])
+          it = pages_treestore.append(None, [directory, ''])
           if directory == 'Cover Page':
             if '/' in page_path:
-              pages_treestore.append(it, [self.selected_page[self.selected_page.find('/') + 1:]])
+              pages_treestore.append(it, [self.selected_page[self.selected_page.find('/') + 1:], '(1)'])
             else:
-              pages_treestore.append(it, [self.selected_page])
+              pages_treestore.append(it, [self.selected_page, '(1)'])
           else:
-            for page in self.acbf_document.pages:
+            for idx, page in enumerate(self.acbf_document.pages):
               page_path = page.find("image").get("href").replace("\\", "/")
+              page_number = ' (' + str(idx + 2) + ')'
               if '/' in page_path and page_path[0:page_path.find('/')] == directory:
-                pages_treestore.append(it, [page_path[page_path.find('/') + 1:]])
+                pages_treestore.append(it, [page_path[page_path.find('/') + 1:], page_number])
               elif '/' not in page_path and directory == 'Root':
-                pages_treestore.append(it, [page_path])
+                pages_treestore.append(it, [page_path, page_number])
 
         # remove empty directories (i.e. Root)
         for row in pages_treestore:
