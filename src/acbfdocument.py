@@ -129,45 +129,46 @@ class ACBFDocument:
         ]:
             self.font_styles[style] = constants.default_font
 
-        try:
-            self.base_dir = os.path.dirname(filename)
-            self.tree = xml.parse(source=filename)
-            root = self.tree.getroot()
+        if self.filename:
+            try:
+                self.base_dir = os.path.dirname(filename)
+                self.tree = xml.parse(source=filename)
+                root = self.tree.getroot()
 
-            for elem in root.getiterator():
-                i = elem.tag.find("}")
-                if i >= 0:
-                    elem.tag = elem.tag[i + 1 :]
-            objectify.deannotate(root)
+                for elem in root.getiterator():
+                    i = elem.tag.find("}")
+                    if i >= 0:
+                        elem.tag = elem.tag[i + 1 :]
+                objectify.deannotate(root)
 
-            self.bookinfo = self.tree.find("meta-data/book-info")
-            self.publishinfo = self.tree.find("meta-data/publish-info")
-            self.docinfo = self.tree.find("meta-data/document-info")
-            self.references = self.tree.find("references")
-            body = self.tree.find("body")
-            self.bg_color = None
-            self.pages = []
-            self.pages_total = 0
-            if body is not None:
-                self.bg_color = self.tree.find("body").get("bgcolor")
-                # TODO Make Class or dict?
-                self.pages = self.tree.findall("body/page")
-                self.pages_total = len(self.pages)
-            if self.bg_color is None:
-                self.bg_color = "#000000"
-            self.binaries = self.tree.findall("data/" + "binary")
-            self.load_metadata()
-            self.get_contents_table()
-            self.extract_fonts()
-            self.stylesheet = self.tree.find("style")
-            if self.stylesheet is not None:
-                self.load_stylesheet()
-            # self.tree = None # keep memory usage low
-            self.valid = True
-        except Exception as inst:
-            logger.error(f"Unable to open ACBF file: {filename} {inst}")
-            self.valid = False
-            return
+                self.bookinfo = self.tree.find("meta-data/book-info")
+                self.publishinfo = self.tree.find("meta-data/publish-info")
+                self.docinfo = self.tree.find("meta-data/document-info")
+                self.references = self.tree.find("references")
+                body = self.tree.find("body")
+                self.bg_color = None
+                self.pages = []
+                self.pages_total = 0
+                if body is not None:
+                    self.bg_color = self.tree.find("body").get("bgcolor")
+                    # TODO Make Class or dict?
+                    self.pages = self.tree.findall("body/page")
+                    self.pages_total = len(self.pages)
+                if self.bg_color is None:
+                    self.bg_color = "#000000"
+                self.binaries = self.tree.findall("data/" + "binary")
+                self.load_metadata()
+                self.get_contents_table()
+                self.extract_fonts()
+                self.stylesheet = self.tree.find("style")
+                if self.stylesheet is not None:
+                    self.load_stylesheet()
+                # self.tree = None # keep memory usage low
+                self.valid = True
+            except Exception as inst:
+                logger.error(f"Unable to open ACBF file: {filename} {inst}")
+                self.valid = False
+                return
 
     def load_metadata(self) -> None:
         # Get cover page. While it is mandatory fallback to blank page

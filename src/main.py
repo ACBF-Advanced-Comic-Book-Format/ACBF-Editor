@@ -97,9 +97,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.create_tempdir()
 
         self.filename = ""
-        if open_path is None:
-            pass
-        else:
+        if open_path is not None:
             if output_file is None:
                 prepared_file = fileprepare.FilePrepare(self, open_path, self.tempdir, True)
             else:
