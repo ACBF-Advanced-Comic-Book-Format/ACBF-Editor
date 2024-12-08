@@ -43,13 +43,14 @@ class FontSelectionDialog(gtk.Dialog):
     def __init__(self, window, font_type, selected_font):
         self._window = window
         gtk.Dialog.__init__(self, 'Font Selection: ' + font_type, window, gtk.DialogFlags.MODAL | gtk.DialogFlags.DESTROY_WITH_PARENT,
-                                  (gtk.STOCK_CLOSE, gtk.ResponseType.CLOSE))
+                                  (gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL, gtk.STOCK_OK, gtk.ResponseType.OK))
         self.set_resizable(True)
         self.set_border_width(8)
         
         self.preferences = preferences.Preferences()
         
         self.font_type = font_type
+        self.unique_font_families = []
 
         hbox = gtk.HBox(False, 10)
 
@@ -71,19 +72,35 @@ class FontSelectionDialog(gtk.Dialog):
         self.treeView.set_rules_hint(True)
         sw.add(self.treeView)
         
-        self.treeView.set_cursor(selected_font, start_editing=True)
+        selected_font_family = constants.FONTS_LIST[selected_font][0]
+        selected_font_style = constants.FONTS_LIST[selected_font][2]
+        for i in range(len(store)):
+          if store[i][0] == selected_font_family:
+            self.treeView.set_cursor(i, start_editing=True)
 
         self.create_columns(self.treeView)
 
         # font drawing
         vbox = gtk.VBox(False, 10)
 
+        font_style_hbox = gtk.HBox(False, 10)
+        label = gtk.Label()
+        label.set_markup('<b>Font Style: </b>')
+        font_style_hbox.pack_start(label, False, True, 0)
+        self.font_style_label = gtk.Label(selected_font_style)
+        font_style_hbox.pack_start(self.font_style_label, False, True, 0)
+        vbox.pack_start(font_style_hbox, True, True, 0)
+
+        self.font_style_buttons_hbox = gtk.HBox(False, 10)
+        self.set_font_style_buttons(selected_font_family)
+        vbox.pack_start(self.font_style_buttons_hbox, True, True, 0)
+
         label = gtk.Label("Font Preview:")
         vbox.pack_start(label, True, True, 0)
 
         self.font_image = gtk.Image()
         self.font_image.set_from_stock(gtk.STOCK_BOLD, gtk.IconSize.LARGE_TOOLBAR)
-        self.get_font_preview(constants.FONTS_LIST[self.treeView.get_cursor()[0][0]][1])
+        self.get_font_preview(selected_font_family)
 
         vbox.pack_start(self.font_image, True, True, 0)
         hbox.pack_start(vbox, True, True, 0)
@@ -99,14 +116,14 @@ class FontSelectionDialog(gtk.Dialog):
           scroll_adjustment = self.treeView.get_vadjustment().get_upper()
         self.treeView.get_vadjustment().set_value(scroll_adjustment)
 
-        self.run()
-        self.destroy()
-
-
     def create_model(self):
         store = gtk.ListStore(str)
-        for idx, font in enumerate(constants.FONTS_LIST, start = 0):
-            store.append([font[0].replace('.ttf', '').replace('.TTF', '').replace('.otf', '').replace('.OTF', '')])
+        for font in constants.FONTS_LIST:
+          self.unique_font_families.append(font[0])
+        self.unique_font_families = list(set(self.unique_font_families))
+        self.unique_font_families.sort()
+        for font in self.unique_font_families:
+          store.append([font])
         return store
 
     def create_columns(self, treeView):
@@ -115,24 +132,54 @@ class FontSelectionDialog(gtk.Dialog):
         column.set_sort_column_id(0)
         treeView.append_column(column)
 
+    def return_font_idx(self):
+        font_family = self.unique_font_families[self.treeView.get_cursor()[0][0]]
+        font_style = self.font_style_label.get_label()
+        for idx, font in enumerate(constants.FONTS_LIST):
+          if font_family == font[0] and font_style == font[2]:
+            self._window.font_idx = idx
+
     def on_cursor_changed(self, widget, *args):
-        self._window.font_idx = widget.get_cursor()[0][0]
-        self.get_font_preview(constants.FONTS_LIST[widget.get_cursor()[0][0]][1])
+        self.set_font_style_buttons(self.unique_font_families[widget.get_cursor()[0][0]])
+        self.get_font_preview(self.unique_font_families[widget.get_cursor()[0][0]])
+        self.return_font_idx()
 
     def on_activated(self, widget, *args):
-        self._window.font_idx = widget.get_cursor()[0][0]
+        self.return_font_idx()
         gtk.Widget.destroy(self)
 
-    def get_font_preview(self, font_path):
-        font_image = Image.new("RGB", (200 * self.ui_scale_factor,50 * self.ui_scale_factor), "#fff")
+    def get_font_preview(self, font_family):
+        for font in constants.FONTS_LIST:
+          if font_family == font[0] and self.font_style_label.get_label() == font[2]:
+              font_path = font[1]
+        font_image = Image.new("RGB", (200 * self.ui_scale_factor,100 * self.ui_scale_factor), "#fff")
         draw = ImageDraw.Draw(font_image)
         font = ImageFont.truetype(font_path, 20 * self.ui_scale_factor)
         draw.text((10 * self.ui_scale_factor, 10 * self.ui_scale_factor), "AaBbCc DdEeFf", font=font, fill="#000")
-
-
+        draw.text((10 * self.ui_scale_factor, 55 * self.ui_scale_factor), "ľščťžý áíéúäňô", font=font, fill="#000")
         pixbuf_image = pil_to_pixbuf(font_image, "#000")
         self.font_image.set_from_pixbuf(pixbuf_image)
+
+    def on_font_style_button_changed(self, widget, *args):
+        if widget.get_active():
+          self.font_style_label.set_label(widget.label)
+          self.get_font_preview(self.unique_font_families[self.treeView.get_cursor()[0][0]])
+          self.return_font_idx()
         
+    def set_font_style_buttons(self, font_family):
+        for i in self.font_style_buttons_hbox.get_children():
+          i.destroy()
+        for font in constants.FONTS_LIST:
+          if font_family == font[0]:
+            if len(self.font_style_buttons_hbox.get_children()) == 0:
+              button = gtk.RadioButton()
+              self.font_style_label.set_label(font[2])
+            else:
+              button = gtk.RadioButton(group=button)
+            button.label = font[2]
+            button.connect('toggled', self.on_font_style_button_changed)
+            self.font_style_buttons_hbox.pack_start(button, True, False, 0)
+        self.font_style_buttons_hbox.show_all()
 
 def pil_to_pixbuf(PILImage, BGColor):
         bcolor = Gdk.RGBA()
