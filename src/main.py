@@ -238,7 +238,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.add_action(self.save_action)
 
         self.toc_action = Gio.SimpleAction.new("toc", None)
-        self.toc_action.connect("activate", self.open_edit_contents)
+        self.toc_action.connect("activate", self.edit_contents)
         self.add_action(self.toc_action)
 
         self.frames_action = Gio.SimpleAction.new("frames", None)
@@ -298,7 +298,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         header = Gtk.HeaderBar()
         self.set_titlebar(header)
-        header.pack_start(self.hamburger)
+        header.pack_end(self.hamburger)
         open_button: Gtk.Button = Gtk.Button.new_from_icon_name("document-open-symbolic")
         open_button.set_tooltip_text("Open file")
         header.pack_start(open_button)
@@ -307,6 +307,17 @@ class MainWindow(Gtk.ApplicationWindow):
         self.save_button.set_tooltip_text("Save file")
         header.pack_start(self.save_button)
         self.save_button.connect("clicked", self.save_file)
+        # Dialog buttons
+        self.frames_dialog_button: Gtk.Button = Gtk.Button.new_from_icon_name("insert-text-frame-symbolic")
+        self.frames_dialog_button.set_tooltip_text("Open Frame/Text editor window")
+        self.frames_dialog_button.set_sensitive(False)
+        self.frames_dialog_button.connect("clicked", self.edit_frames)
+        header.pack_start(self.frames_dialog_button)
+        self.content_dialog_button: Gtk.Button = Gtk.Button.new_from_icon_name("view-list-symbolic")
+        self.content_dialog_button.set_tooltip_text("Open Content editor window")
+        self.content_dialog_button.set_sensitive(False)
+        self.content_dialog_button.connect("clicked", self.edit_contents)
+        header.pack_start(self.content_dialog_button)
 
         """key_controller = Gtk.EventControllerKey()
         key_controller.connect('key-pressed', self.key_listener)
@@ -831,7 +842,7 @@ class MainWindow(Gtk.ApplicationWindow):
         prefs_dialog = prefsdialog.PrefsDialog(self)
         prefs_dialog.present()
 
-    def open_edit_contents(self, action: Gio.SimpleAction, _pspec: GObject.GParamSpec) -> None:
+    def edit_contents(self, action: Gio.SimpleAction, _pspec: GObject.GParamSpec | None = None) -> None:
         edit_contents_dialog = edit_contents.EditContentWindow(self)
         edit_contents_dialog.present()
 
@@ -1113,6 +1124,8 @@ class MainWindow(Gtk.ApplicationWindow):
             self.save_button.set_sensitive(True)
             self.toc_action.set_enabled(True)
             self.frames_action.set_enabled(True)
+            self.frames_dialog_button.set_sensitive(True)
+            self.content_dialog_button.set_sensitive(True)
             self.lang_action.set_enabled(True)
             self.styles_action.set_enabled(True)
             self.modified(False)
@@ -1123,6 +1136,8 @@ class MainWindow(Gtk.ApplicationWindow):
             self.toc_action.set_enabled(False)
             self.lang_action.set_enabled(False)
             self.frames_action.set_enabled(False)
+            self.frames_dialog_button.set_sensitive(False)
+            self.content_dialog_button.set_sensitive(False)
             self.styles_action.set_enabled(False)
 
     def show_about_window(self, action: Gio.SimpleAction, _pspec: GObject.GParamSpec) -> None:
