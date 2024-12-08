@@ -28,8 +28,8 @@ from typing import TYPE_CHECKING
 
 import cairo
 import lxml.etree as xml
-import numpy
 import text_layer
+import detection
 from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GObject
@@ -372,9 +372,14 @@ class FramesEditorDialog(Gtk.Window):
 
         self.straight_button = Gtk.CheckButton.new_with_label("Draw straight lines")
         toolbar_top_tools.pack_start(self.straight_button)
-        find_frames_buttons: Gtk.Button = Gtk.Button.new_with_label("Find frames")
-        find_frames_buttons.connect("clicked", self.find_frames)
-        toolbar_top_tools.pack_start(find_frames_buttons)
+        self.find_frames_buttons: Gtk.Button = Gtk.Button.new_with_label("Find frames")
+        self.find_frames_buttons.connect("clicked", self.find_frames)
+        self.find_frames_buttons.set_sensitive(False)
+        toolbar_top_tools.pack_start(self.find_frames_buttons)
+        self.find_bubble_button: Gtk.Button = Gtk.Button.new_with_label("Find bubble")
+        self.find_bubble_button.connect("clicked", lambda widget: self.set_bubble_detection(True))
+        self.find_bubble_button.set_sensitive(False)
+        toolbar_top_tools.pack_start(self.find_bubble_button)
 
         self.zoom_dropdown: Gtk.DropDown = Gtk.DropDown.new_from_strings(
             ["10%", "25%", "50%", "75%", "100%", "125%", "175%", "200%"],
@@ -420,6 +425,38 @@ class FramesEditorDialog(Gtk.Window):
             new_title += "*"
         self.set_title(new_title)
 
+    def detect_bubble(self, x: float, y: float) -> None:
+        tree_model = self.pages_tree.get_model()
+        sel_id = tree_model.get_selected()
+        item: ListItem | None = None
+        if sel_id > -1:
+            item = self.pages_treestore.get_item(sel_id)
+
+        if item is not None:
+            full_path = os.path.join(self.parent.tempdir, item.path)
+            points = detection.text_bubble_detection(full_path, x, y)
+            if len(points) > 0:
+                polygons: list[tuple[int, int]] = []
+                for point in points:
+                    polygons.append((int(point[0]), int(point[1])))
+                self.text_layer_model.append(
+                    TextLayerItem(
+                        polygon=polygons,
+                        text=" ",
+                        colour="#ffffff",
+                        rotation=0,
+                        type="normal",
+                        is_inverted=False,
+                        is_transparent=False,
+                        references=[],
+                    ),
+                )
+                self.drawing_area.queue_draw()
+            else:
+                message: Gtk.AlertDialog = Gtk.AlertDialog()
+                message.set_message("Failed to detect text area.")
+                message.show(self)
+
     def copy_layer(self, widget: Gtk.Button | None = None) -> None:
         number_of_frames = len(self.parent.acbf_document.load_page_frames(self.get_current_page_number()))
         number_of_texts = 0
@@ -449,6 +486,13 @@ class FramesEditorDialog(Gtk.Window):
             return
         message.show()
         return
+
+    def set_bubble_detection(self, active: bool = False) -> None:
+        self.detecting_bubble = active
+        if active:
+            self.set_mouse_cursor(self.drawing_area, "crosshair")
+        else:
+            self.set_mouse_cursor(self.drawing_area)
 
     def paste_layer(self, widget: Gtk.Button | None = None) -> None:
         def paste_layer() -> None:
@@ -561,13 +605,11 @@ class FramesEditorDialog(Gtk.Window):
             self.enclose_rectangle()
         elif keyval == Gdk.KEY_Escape:
             self.cancel_rectangle()
-            self.detecting_bubble = False
-            # self.window.set_cursor(None)
+            self.set_bubble_detection()
         elif keyval == Gdk.KEY_BackSpace:
             if len(self.points) == 1:
                 self.cancel_rectangle()
-                self.detecting_bubble = False
-                # self.window.set_cursor(None)
+                self.set_bubble_detection()
             elif len(self.points) > 1:
                 del self.points[-1]
                 self.drawing_area.queue_draw()
@@ -579,7 +621,7 @@ class FramesEditorDialog(Gtk.Window):
         elif keyval in (Gdk.KEY_F8, Gdk.KEY_F, Gdk.KEY_f):
             self.find_frames()
         elif keyval in (Gdk.KEY_F7, Gdk.KEY_T, Gdk.KEY_t):
-            self.text_bubble_detection_cursor()
+            self.set_bubble_detection(True)
         elif keyval == Gdk.KEY_F5:
             self.drawing_area.queue_draw()
         elif keyval in (Gdk.KEY_h, Gdk.KEY_H, Gdk.KEY_F11):
@@ -599,11 +641,6 @@ class FramesEditorDialog(Gtk.Window):
             return False
 
         return True
-
-    def set_cursor_loading(self) -> None:
-        # TODO    self.cursor_crosshair = Gdk.Cursor.new_from_name("crosshair")
-        #         self.dw.set_cursor(self.cursor_crosshair)
-        pass
 
     def show_help(self, widget: Gtk.Widget | None = None) -> None:
         dialog = Gtk.ShortcutsWindow()
@@ -714,19 +751,31 @@ class FramesEditorDialog(Gtk.Window):
         self.load_texts()
         self.drawing_area.queue_draw()
 
+    def set_mouse_cursor(self, widget: Gtk.Widget | None = None, icon_name: str = "default") -> None:
+        if widget is not None:
+            widget.set_cursor_from_name(icon_name)
+        else:
+            self.set_cursor_from_name(icon_name)
+
     def tab_change(self, notebook: Gtk.Notebook, page: Gtk.ScrolledWindow, page_num: int) -> None:
         if page_num == 1:
             self.drawing_frames = True
             self.drawing_texts = False
-            self.drawing_area.set_cursor_from_name("crosshair")
+            self.find_frames_buttons.set_sensitive(True)
+            self.find_bubble_button.set_sensitive(False)
+            self.set_mouse_cursor(self.drawing_area, "crosshair")
         elif page_num == 2:
             self.drawing_frames = False
             self.drawing_texts = True
-            self.drawing_area.set_cursor_from_name("crosshair")
+            self.find_bubble_button.set_sensitive(True)
+            self.find_frames_buttons.set_sensitive(False)
+            self.set_mouse_cursor(self.drawing_area, "crosshair")
         else:
             self.drawing_frames = False
             self.drawing_texts = False
-            self.drawing_area.set_cursor_from_name("default")
+            self.find_frames_buttons.set_sensitive(False)
+            self.find_bubble_button.set_sensitive(False)
+            self.set_mouse_cursor(self.drawing_area)
 
     def load_general(self) -> None:
         # main bg_color
@@ -1138,16 +1187,8 @@ class FramesEditorDialog(Gtk.Window):
             return False
 
         if self.detecting_bubble:
-            try:
-                self.text_bubble_detection(x, y)
-            except Exception:
-                # TODO
-                message = Gtk.AlertDialog()
-                message.set_message("Failed to detect text area.")
-                message.show()
-
-            self.detecting_bubble = False
-            # self.window.set_cursor(None)
+            self.detect_bubble(x, y)
+            self.set_bubble_detection()
             return False
 
         # Close current points if double or right-click
@@ -1237,398 +1278,6 @@ class FramesEditorDialog(Gtk.Window):
             # Trigger redraw
             self.drawing_area.queue_draw()
 
-    def rotate_coords(
-        self,
-        x: list[int],
-        y: list[int],
-        theta: float,
-        ox: int,
-        oy: int,
-    ) -> tuple[numpy.ndarray, numpy.ndarray]:
-        """Rotate arrays of coordinates x and y by theta radians about the
-        point (ox, oy)."""
-        s, c = numpy.sin(theta), numpy.cos(theta)
-        x, y = numpy.asarray(x) - ox, numpy.asarray(y) - oy
-        return x * c - y * s + ox, x * s + y * c + oy
-
-    def rotate_image(
-        self,
-        src: numpy.ndarray,
-        theta: float,
-        ox: int,
-        oy: int,
-        fill: int = 0,
-    ) -> numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy._64Bit] | numpy.float_]]:
-        """Rotate the image src by theta radians about (ox, oy).
-        Pixels in the result that don't correspond to pixels in src are
-        replaced by the value fill."""
-
-        # Images have origin at the top left, so negate the angle.
-        theta = -theta
-
-        # Dimensions of source image. Note that scipy.misc.imread loads
-        # images in row-major order, so src.shape gives (height, width).
-        sh, sw = src.shape
-
-        # Rotated positions of the corners of the source image.
-        cx, cy = self.rotate_coords(
-            [0, sw, sw, 0],
-            [0, 0, sh, sh],
-            theta,
-            ox,
-            oy,
-        )
-
-        # Determine dimensions of destination image.
-        dw, dh = (int(numpy.ceil(numpy.max(c) - numpy.min(c))) for c in (cx, cy))
-
-        # Coordinates of pixels in destination image.
-        dx, dy = numpy.meshgrid(numpy.arange(dw), numpy.arange(dh))
-
-        # Corresponding coordinates in source image. Since we are
-        # transforming dest-to-src here, the rotation is negated.
-        sx, sy = self.rotate_coords(
-            dx + numpy.min(cx),
-            dy + numpy.min(cy),
-            -theta,
-            ox,
-            oy,
-        )
-
-        # Select nearest neighbour.
-        sx, sy = sx.round().astype(int), sy.round().astype(int)
-
-        # Mask for valid coordinates.
-        mask = (0 <= sx) & (sx < sw) & (0 <= sy) & (sy < sh)
-
-        # Create destination image.
-        dest = numpy.empty(shape=(dh, dw), dtype=src.dtype)
-
-        # Copy valid coordinates from source image.
-        dest[dy[mask], dx[mask]] = src[sy[mask], sx[mask]]
-
-        # Fill invalid coordinates.
-        dest[dy[~mask], dx[~mask]] = fill
-
-        return dest
-
-    # TODO Move out to separate module and re-enable
-    '''def text_bubble_detection(self, x: float, y: float) -> None:
-        x = int(x / self.scale_factor)
-        y = int(y / self.scale_factor)
-        current_page_image = os.path.join(
-            self.parent.tempdir,
-            self.selected_page,
-        )
-        if current_page_image[-4:].upper() == "WEBP":
-            im = Image.open(current_page_image)
-            rgb_im = im.convert("RGB")
-            temp_image = current_page_image[:-4] + "png"
-            rgb_im.save(temp_image)
-            rgb = cv2.imread(temp_image, 1)
-            if os.path.isfile(temp_image):
-                os.remove(temp_image)
-        else:
-            rgb = cv2.imread(current_page_image, 1)
-
-        imgray = cv2.GaussianBlur(rgb, (5, 5), 0)
-        imgray = cv2.cvtColor(imgray, cv2.COLOR_BGR2GRAY)
-        imgray = cv2.copyMakeBorder(imgray, 6, 6, 6, 6, cv2.BORDER_CONSTANT, 0)
-        height, width = imgray.shape[:2]
-        border = int(float(min(height, width)) * 0.008)
-        if border < 2:
-            border = 2
-        # cv2.imshow("im", imgray)
-
-        # get point color and range
-        px = imgray[y + 6, x + 6]
-        px_color = rgb[y, x]
-        low_color = max(0, px - 30)
-        high_color = min(255, px + 30)
-
-        # threshold image on selected color
-        thresholded = cv2.inRange(imgray, low_color, high_color)
-        # cv2.imshow("threshold", thresholded)
-
-        # floodfil with gray
-        mask: numpy.ndarray[Any, numpy.dtype] = numpy.zeros(
-            (height + 2, width + 2),
-            numpy.uint8,
-        )
-        cv2.floodFill(thresholded, mask, (x + 7, y + 7), 100)
-        mask = cv2.inRange(thresholded, 99, 101)
-        # cv2.circle(mask, (x + 7, y + 7), 2, 200)
-        # cv2.imshow("flood", mask)
-
-        # remove holes and narrow lines
-        """self.text_bubble_fill_inside(mask, 0.1, True)
-        #cv2.imshow("close1", mask)
-        mask = numpy.rot90(mask, 1)
-        self.text_bubble_fill_inside(mask, 0.08, True)
-        mask = numpy.rot90(mask, 3)
-        #cv2.imshow("close2", mask)"""
-
-        # carve out the bubble first
-        min_x: float = 0
-        min_y: float = 0
-        max_x: float = 0
-        max_y: float = 0
-        for idx, line in enumerate(mask):
-            if cv2.countNonZero(line) > 0:
-                if min_x == 0 or min_x > numpy.nonzero(line)[0][0]:
-                    min_x = numpy.nonzero(line)[0][0]
-                if max_x == 0 or max_x < numpy.nonzero(line)[0][-1]:
-                    max_x = numpy.nonzero(line)[0][-1]
-                if cv2.countNonZero(line) > 0 and min_y == 0:
-                    min_y = idx
-                if cv2.countNonZero(line) > 0 and max_y < idx:
-                    max_y = idx
-        mask = mask[min_y - 1 : max_y + 1, min_x - 1 : max_x + 2]
-        hi, wi = mask.shape
-
-        # check if it's rectangle
-        check = numpy.copy(mask)
-        self.text_bubble_fill_inside(check, 0.08)
-
-        if (numpy.count_nonzero(check) / float(check.size)) > 0.9:
-            is_rectangle = True
-        else:
-            is_rectangle = False
-
-        # rotate and remove short lines (bubble tail)
-        for angle in (0, 1):
-            if is_rectangle:
-                mask = self.rotate_image(mask, 45 * numpy.pi / 180, 100, 100)
-                mask = self.rotate_image(mask, 45 * numpy.pi / 180, 100, 100)
-            else:
-                self.text_bubble_cut_tails(mask, 0.15)
-                mask = self.rotate_image(mask, 45 * numpy.pi / 180, 100, 100)
-                # cv2.imshow("B" + str(angle), mask)
-                self.text_bubble_cut_tails(mask, 0.15)
-                mask = self.rotate_image(mask, 45 * numpy.pi / 180, 100, 100)
-                # cv2.imshow("C" + str(angle), mask)
-        rhi, rwi = mask.shape
-        mask = mask[
-            int((rhi - hi) / 2) - 10 : int((rhi - hi) / 2) + hi + 10,
-            int((rwi - wi) / 2) - 10 : int((rwi - wi) / 2) + wi + 10,
-        ]
-
-        # remove text
-        self.text_bubble_fill_inside(mask, 0.08)
-        mask = numpy.rot90(mask, 1)
-        self.text_bubble_fill_inside(mask, 0.08)
-        mask = numpy.rot90(mask, 1)
-
-        # check if top/bottom is straight line
-        if numpy.count_nonzero(mask[11]) / float(mask[11].size) > 0.5:
-            is_cut_at_top = True
-        else:
-            is_cut_at_top = False
-
-        if numpy.count_nonzero(mask[-12]) / float(mask[-12].size) > 0.5:
-            is_cut_at_bottom = True
-        else:
-            is_cut_at_bottom = False
-
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (border, border))
-        mask = cv2.erode(mask, kernel, iterations=1)
-
-        # edges
-        mask = cv2.Canny(mask, 10, 1)
-        kernel = cv2.getStructuringElement(
-            cv2.MORPH_RECT,
-            (int(border / 2), int(border / 2)),
-        )
-        mask = cv2.dilate(mask, kernel, iterations=1)
-        # cv2.imshow("edg", mask)
-
-        # find contours
-        i = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        try:
-            contours = i[1]
-        except Exception:
-            contours = i[0]
-
-        if len(contours) == 0:
-            raise
-
-        contours.sort(key=lambda x: cv2.contourArea(x), reverse=True)
-        arc_len = cv2.arcLength(contours[0], True)
-        approx = cv2.approxPolyDP(contours[0], 0.003 * arc_len, True)
-        self.points = []
-
-        # move due to mask and image border added earlier + bubble carve out
-        for point in approx.tolist():
-            x = point[0][0] - 6 + min_x - 11
-            y = point[0][1] - 6 + min_y - 10
-            self.points.append((x, y))
-
-        # cut top and bottom of the bubble (helps text-fitting algorithm)
-        cut_by = 1 + round(height * 0.001, 0)
-        min_y = min(self.points, key=lambda item: item[1])[1]
-        max_y = max(self.points, key=lambda item: item[1])[1]
-        new_points = []
-        points_on_line_upper = []
-        points_on_line_lower = []
-        for point in self.points:
-            if is_rectangle:
-                if point[1] < min_y + (cut_by * 0.5):
-                    new_points.append((point[0], min_y + int(cut_by * 0.5)))
-                    points_on_line_upper.append(
-                        (point[0], min_y + int(cut_by * 0.5)),
-                    )
-                elif point[1] > (max_y - (cut_by * 0.3)):
-                    new_points.append((point[0], max_y - int(cut_by * 0.3)))
-                    points_on_line_lower.append(
-                        (point[0], max_y - int(cut_by * 0.3)),
-                    )
-                else:
-                    new_points.append((point[0], point[1]))
-            elif is_cut_at_top:
-                if point[1] < min_y + (cut_by * 0.1):
-                    new_points.append((point[0], min_y + int(cut_by * 0.1)))
-                    points_on_line_upper.append(
-                        (point[0], min_y + int(cut_by * 0.1)),
-                    )
-                elif point[1] > (max_y - (cut_by * 0.7)):
-                    new_points.append((point[0], max_y - int(cut_by * 0.7)))
-                    points_on_line_lower.append(
-                        (point[0], max_y - int(cut_by * 0.7)),
-                    )
-                else:
-                    new_points.append((point[0], point[1]))
-            elif is_cut_at_bottom:
-                if point[1] < min_y + (cut_by * 1):
-                    new_points.append((point[0], min_y + int(cut_by * 1)))
-                    points_on_line_upper.append(
-                        (point[0], min_y + int(cut_by * 1)),
-                    )
-                elif point[1] > (max_y - (cut_by * 0.1)):
-                    new_points.append((point[0], max_y - int(cut_by * 0.1)))
-                    points_on_line_lower.append(
-                        (point[0], max_y - int(cut_by * 0.1)),
-                    )
-                else:
-                    new_points.append((point[0], point[1]))
-            else:
-                if point[1] < min_y + (cut_by * 1):
-                    new_points.append((point[0], min_y + int(cut_by * 1)))
-                    points_on_line_upper.append(
-                        (point[0], min_y + int(cut_by * 1)),
-                    )
-                elif point[1] > (max_y - (cut_by * 0.7)):
-                    new_points.append((point[0], max_y - int(cut_by * 0.7)))
-                    points_on_line_lower.append(
-                        (point[0], max_y - int(cut_by * 0.7)),
-                    )
-                else:
-                    new_points.append((point[0], point[1]))
-
-        # remove points on the same line
-        try:
-            points_on_line_upper_max_x = max(
-                points_on_line_upper,
-                key=lambda x: x[0],
-            )
-            points_on_line_upper_min_x = min(
-                points_on_line_upper,
-                key=lambda x: x[0],
-            )
-            points_on_line_lower_max_x = max(
-                points_on_line_lower,
-                key=lambda x: x[0],
-            )
-            points_on_line_lower_min_x = min(
-                points_on_line_lower,
-                key=lambda x: x[0],
-            )
-
-            self.points = []
-            for point in new_points:
-                if point in (
-                    points_on_line_upper_max_x,
-                    points_on_line_upper_min_x,
-                    points_on_line_lower_max_x,
-                    points_on_line_lower_min_x,
-                ):
-                    self.points.append(point)
-                elif point not in points_on_line_upper and point not in points_on_line_lower:
-                    self.points.append(point)
-        except Exception:
-            self.points = new_points
-
-        # print len(self.points)
-
-        self.enclose_rectangle(
-            f"#{px_color[2]:02x}{px_color[1]:02x}{px_color[0]:02x}",
-        )
-        return'''
-
-    """def text_bubble_cut_tails(self, mask: numpy.ndarray[Any, numpy.dtype], narrow_by: float) -> list[numpy.ndarray]:
-        zero_these = {}
-        for idx, line in enumerate(mask):
-            if cv2.countNonZero(line) > 0:
-                zero_these[idx] = (
-                    numpy.nonzero(line)[0][0],
-                    numpy.nonzero(line)[0][-1],
-                    len(numpy.nonzero(line)[0]),
-                )
-
-        values = list(zero_these.values())
-        keys = list(zero_these.keys())
-        keys.sort()
-        bubble_width = max(values, key=lambda item: item[2])[2]
-
-        for idx, line in enumerate(mask):
-            # remove narrow lines
-            if idx in zero_these and zero_these[idx][2] < (bubble_width * narrow_by):
-                mask[idx] = 0
-        return mask"""
-
-    """def text_bubble_fill_inside(self, mask: numpy.ndarray[Any, numpy.dtype], narrow_by: float) -> list[numpy.ndarray]:
-        zero_these = {}
-        for idx, line in enumerate(mask):
-            if cv2.countNonZero(line) > 0:
-                zero_these[idx] = (
-                    numpy.nonzero(line)[0][0],
-                    numpy.nonzero(line)[0][-1],
-                    len(numpy.nonzero(line)[0]),
-                )
-
-        # values = list(zero_these.values())
-        keys = list(zero_these.keys())
-        keys.sort()
-        # bubble_width = max(values, key=lambda item: item[2])[2]
-
-        for idx, line in enumerate(mask):
-            if idx in zero_these:  # remove inside holes
-                mask[idx][zero_these[idx][0] : zero_these[idx][1]] = 255
-        return mask"""
-
-    """def text_bubble_detection_cursor(self) -> None:
-        if self.get_current_page_number() == 1:
-            return
-        if not self.drawing_texts:
-            self.notebook.set_current_page(2)
-
-        lang_found = False
-        for lang in self.parent.acbf_document.languages:
-            if lang[1] == "TRUE":
-                lang_found = True
-        if self.drawing_texts and not lang_found:
-            message = Gtk.AlertDialog()
-            message.set_message(
-                "Can't draw text areas. No languages are defined for this comic book with 'show' attribute checked.",
-            )
-            message.show()
-
-            return
-
-        self.detecting_bubble = True
-        cross_cursor = Gdk.Cursor.new(Gdk.CursorType.X_CURSOR)
-        self.window.set_cursor(cross_cursor)"""
-
     def find_frames(self, widget: Gtk.Button | None = None) -> None:
         k = Kumiko(
             {
@@ -1651,227 +1300,6 @@ class FramesEditorDialog(Gtk.Window):
                 (frame[0], frame[1] + frame[3]),
             ]
             self.frame_model.splice(i, 0, [FrameItem(cords=frame_tuple, colour="")])
-
-    """def frames_detection(self) -> None:
-        if self.get_current_page_number() == 1:
-            return
-        if not self.drawing_frames:
-            self.notebook.set_current_page(1)
-        self.set_cursor_loading()
-
-        CANNY = 500
-
-        current_page_image = os.path.join(
-            self.parent.tempdir,
-            self.selected_page,
-        )
-        if current_page_image[-4:].upper() == "WEBP":
-            im = Image.open(current_page_image)
-            rgb_im = im.convert("RGB")
-            temp_image = current_page_image[:-4] + "png"
-            rgb_im.save(temp_image)
-            rgb = cv2.imread(temp_image, 1)
-            if os.path.isfile(temp_image):
-                os.remove(temp_image)
-        else:
-            rgb = cv2.imread(current_page_image, 1)
-
-        height, width, channels = rgb.shape
-        mask = numpy.zeros((height, width), numpy.uint8)
-
-        border = int(float(min(height, width)) * 0.008)
-        if border < 2:
-            border = 2
-
-        gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
-        gray = cv2.bilateralFilter(gray, 2, 10, 120)
-        gray = cv2.copyMakeBorder(
-            gray,
-            6,
-            6,
-            6,
-            6,
-            cv2.BORDER_CONSTANT,
-            value=250,
-        )
-        edges = cv2.Canny(gray, 10, CANNY)
-        # cv2.imshow("edges", edges)
-        kernel = cv2.getStructuringElement(
-            cv2.MORPH_RECT,
-            (border / 2, border / 2),
-        )
-        closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
-        # cv2.imshow("closed", closed)
-        i = cv2.findContours(
-            closed,
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE,
-        )
-        try:
-            contours = i[1]
-        except Exception:
-            contours = i[0]
-        rectangles: list[
-            tuple[
-                list[
-                    tuple[
-                        int | float,
-                        int | float,
-                        int,
-                        int,
-                        int,
-                        int,
-                    ]
-                ]
-            ]
-        ] = []
-
-        cont_area = 0
-        for cont in contours:
-            # shapes greater than 10% of image size and less than 90%
-            if (height * width) * 0.03 < cv2.contourArea(cont) < (height * width) * 0.95:
-                arc_len = cv2.arcLength(cont, True)
-                approx = cv2.approxPolyDP(cont, 0.01 * arc_len, True)
-                # it is rectangle
-                if len(approx) in (3, 4, 5, 6):
-                    cont_area = cont_area + cv2.contourArea(cont)
-                    cv2.drawContours(mask, [cont], 0, 255, -1)
-                    M = cv2.moments(cont)
-                    cX = int(M["m10"] / M["m00"])
-                    cY = int(M["m01"] / M["m00"])
-                    self.points = []
-                    min_x: int | float = 99999999999
-                    min_y: int | float = 99999999999
-                    for point in approx.tolist():
-                        x = point[0][0] - 6
-                        y = point[0][1] - 6
-
-                        # enlarge rectangle
-                        if x > cX:
-                            x = x + border
-                        else:
-                            x = x - border
-
-                        if y > cY:
-                            y = y + border
-                        else:
-                            y = y - border
-
-                        if x < 0:
-                            x = 0
-                        if y < 0:
-                            y = 0
-                        if x > width:
-                            x = width
-                        if y > height:
-                            y = height
-
-                        if x < min_x:
-                            min_x = x
-                        if y < min_y:
-                            min_y = y
-
-                        self.points.append((x, y))
-
-                    centroid = self.centroid_for_polygon(self.points, border)
-                    rectangles.append(
-                        (self.points, centroid[0], centroid[1], min_x, min_y),
-                    )
-
-        if len(rectangles) == 0:
-            message = Gtk.AlertDialog()
-            message.set_message("Failed to detect frames.")
-            message.show()
-
-            return
-
-        # find unindentified frames
-        all_recs: list[tuple[int | float, int | float]] = []
-        for rec in rectangles:
-            all_recs.append(rec[0])
-
-        min_x = min(all_recs, key=lambda item: item[0])[0] - border
-        max_x = max(all_recs, key=lambda item: item[0])[0] + border
-        min_y = min(all_recs, key=lambda item: item[1])[1] - border
-        max_y = max(all_recs, key=lambda item: item[1])[1] + border
-        horizontal_length = max_x - min_x
-        vertical_length = max_y - min_y
-
-        # area with identified frames less than 90%
-        if cont_area / (horizontal_length * vertical_length) < 0.9:
-            for idx, line in enumerate(mask):
-                if idx <= min_y or idx >= max_y:
-                    mask[idx] = 255
-            mask = numpy.rot90(mask, 3)
-            for idx, line in enumerate(mask):
-                if idx <= min_x or idx >= max_x:
-                    mask[idx] = 255
-            mask = numpy.rot90(mask, 1)
-
-            # small = cv2.resize(mask, (0,0), fx=0.2, fy=0.2)
-            # cv2.imshow("1", small)
-            kernel = cv2.getStructuringElement(
-                cv2.MORPH_RECT,
-                (border * 4, border * 4),
-            )
-            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-            mask = cv2.bitwise_not(mask)
-            kernel = cv2.getStructuringElement(
-                cv2.MORPH_RECT,
-                (border * 2, border * 2),
-            )
-            mask = cv2.erode(mask, kernel, iterations=1)
-            mask = cv2.Canny(mask, 10, CANNY)
-            kernel = cv2.getStructuringElement(
-                cv2.MORPH_RECT,
-                (border / 2, border / 2),
-            )
-            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-            i = cv2.findContours(
-                mask,
-                cv2.RETR_EXTERNAL,
-                cv2.CHAIN_APPROX_SIMPLE,
-            )
-            try:
-                contours = i[1]
-            except Exception:
-                contours = i[0]
-
-            for cont in contours:
-                # shapes greater than 10% of image size and less than 90%
-                if cv2.contourArea(cont) > (height * width) * 0.03 and cv2.contourArea(cont) < (height * width) * 0.95:
-                    arc_len = cv2.arcLength(cont, True)
-                    approx = cv2.approxPolyDP(cont, 0.01 * arc_len, True)
-                    # it is rectangle
-                    if len(approx) > 3:
-                        self.points = []
-                        for point in approx.tolist():
-                            x = point[0][0]
-                            y = point[0][1]
-                            self.points.append((x, y))
-                        min_x = min(self.points, key=lambda item: item[0])[0]
-                        min_y = min(self.points, key=lambda item: item[1])[1]
-                        centroid = self.centroid_for_polygon(
-                            self.points,
-                            border,
-                        )
-                        rectangles.append(
-                            (
-                                self.points,
-                                centroid[0],
-                                centroid[1],
-                                min_x,
-                                min_y,
-                            ),
-                        )
-
-        rectangles.sort(key=lambda tup: (tup[2], tup[1]))
-        for idx, rect in enumerate(rectangles):
-            self.points = rect[0]
-            self.enclose_rectangle()
-
-        # self.window.set_cursor(None)
-        return"""
 
     def round_to(self, value: float, base: float) -> int:
         return int(base * round(float(value) / base))

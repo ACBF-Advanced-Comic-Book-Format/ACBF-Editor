@@ -258,7 +258,9 @@ class TextLayer:
             is_emphasis = is_strong = False
             words = text.replace("a href", "a_href").replace(" ", " ˇ").split("ˇ")
             # words_upper = text.replace(" ", "ˇ").upper().split("ˇ")
-            area_per_character = polygon_area / len(self.remove_xml_tags(text))
+            # Empty string *should* be allowed
+            text_length: int = len(self.remove_xml_tags(text)) or 1
+            area_per_character = polygon_area / text_length
             character_height = int(math.sqrt(area_per_character / 2) * 2) - 3
 
             # calculate text drawing start
