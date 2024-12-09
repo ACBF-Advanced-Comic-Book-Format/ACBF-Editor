@@ -111,7 +111,7 @@ class FontSelectionDialog(gtk.Dialog):
         self.treeView.connect("row-activated", self.on_activated)
 
         # adjust scroll window
-        scroll_adjustment = self.treeView.get_cursor()[0][0]/float(len(constants.FONTS_LIST))*(self.treeView.get_vadjustment().get_upper() - self.treeView.get_vadjustment().get_lower())
+        scroll_adjustment = self.treeView.get_cursor()[0][0]/float(len(self.unique_font_families))*(self.treeView.get_vadjustment().get_upper() - self.treeView.get_vadjustment().get_lower())
         if scroll_adjustment > self.treeView.get_vadjustment().get_upper():
           scroll_adjustment = self.treeView.get_vadjustment().get_upper()
         self.treeView.get_vadjustment().set_value(scroll_adjustment)

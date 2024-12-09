@@ -66,6 +66,9 @@ class EditStylesDialog(gtk.Dialog):
                   break
               if not is_duplicate:
                 constants.FONTS_LIST.append(font_tuple)
+        for font in constants.FONTS_LIST:
+          if not os.path.isfile(font[1]):
+            constants.FONTS_LIST.remove(font)
 
         # Font Styles
         entries_box = gtk.VBox(False, 0)

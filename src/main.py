@@ -1496,6 +1496,7 @@ class MainWindow(gtk.Window):
         self.toolbar.update()
         self.update_forms(True)
         self.prior_language = self.toolbar.language.get_active_text()
+
       if self.acbf_document.valid:
         set_sensitivity(self.main_box, True, 0)
         self.toolbar.save_button.set_sensitive(True)
