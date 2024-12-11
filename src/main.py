@@ -49,7 +49,7 @@ import edit_styles
 import filechooser
 import fileprepare
 import frames_editor
-import isocodes
+import pycountry
 import lxml.etree as xml
 import preferences
 import prefsdialog
@@ -207,9 +207,9 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # Create a store for dropdown use for all languages
         self.all_langs: Gio.ListStore = Gio.ListStore.new(Language)
-        for iso_lang in isocodes.languages.items:
-            if iso_lang.get("alpha_2", ""):
-                self.all_langs.append(Language(lang_iso=iso_lang["alpha_2"], lang=iso_lang["name"]))
+        for iso_lang in pycountry.languages:
+            if hasattr(iso_lang, "alpha_2"):
+                self.all_langs.append(Language(lang_iso=iso_lang.alpha_2, lang=iso_lang.name))
 
         self.all_lang_store: Gio.ListStore = Gio.ListStore.new(Language)
 
@@ -656,11 +656,11 @@ class MainWindow(Gtk.ApplicationWindow):
 
             if lang_iso not in seen_lang_isos:
                 seen_lang_isos.add(item.lang_iso)
-                lang_info = isocodes.languages.get(alpha_2=item.lang_iso)
+                lang_info = pycountry.languages.get(alpha_2=item.lang_iso)
                 new_langs.append(
                     Language(
                         lang_iso=item.lang_iso,
-                        lang=lang_info.get("name"),
+                        lang=lang_info.name,
                         show=True,
                     ),
                 )
@@ -1162,9 +1162,9 @@ class MainWindow(Gtk.ApplicationWindow):
     def update_languages(self) -> None:
         self.all_lang_store.remove_all()
         for lang in self.acbf_document.languages:
-            lang_info = isocodes.languages.get(alpha_2=lang[0])
+            lang_info = pycountry.languages.get(alpha_2=lang[0])
             if lang_info:
-                lang_text = lang_info.get("name", "")
+                lang_text = getattr(lang_info, "name", "")
                 new_lang = Language(
                     lang_iso=lang[0],
                     show=lang[1],

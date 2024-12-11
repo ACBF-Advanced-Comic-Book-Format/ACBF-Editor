@@ -234,7 +234,6 @@ class ACBFDocument:
         # languages
         try:
             for language in self.bookinfo.findall("languages/text-layer"):
-                # full_lang = isocodes.languages.get(alpha_2=language.get("lang"))
                 show = False if language.get("show") == "False" else True
                 self.languages.append((language.get("lang"), show))
             if len(self.languages) == 0:

@@ -34,7 +34,7 @@ dependencies = [
     "opencv-python",
     "matplot",
     "patool",
-    "isocodes",
+    "pycountry",
 ]
 [project.optional-dependencies]
 dev = [
