@@ -274,9 +274,10 @@ class FramesEditorDialog(Gtk.Window):
         page_list_factory.connect("bind", self.bind_list_item)
 
         selection_model: Gtk.SingleSelection = Gtk.SingleSelection.new(self.pages_treestore)
+        # Enables `activate` on item single click
+        selection_model.connect("selection-changed", self.tree_selection_changed)
 
         self.pages_tree: Gtk.ListView = Gtk.ListView.new(selection_model, page_list_factory)
-        self.pages_tree.set_single_click_activate(True)
 
         # Cover is separate, add to tree list
         cover_path: str = self.parent.acbf_document.cover_page_uri.file_path
@@ -425,12 +426,25 @@ class FramesEditorDialog(Gtk.Window):
             new_title += "*"
         self.set_title(new_title)
 
+    def tree_selection_changed(self, selection_model: Gtk.SingleSelection, position: int, n_items: int) -> None:
+        model: Gio.ListStore = selection_model.get_model()
+        # Seem we need to find the change ourselves
+        i = 0
+        while i < 9999:
+            item = model.get_item(i)
+            if item is None:
+                break
+
+            is_selected = selection_model.is_selected(i)
+            if is_selected:
+                self.pages_tree.emit("activate", i)
+                break
+
+            i = i + 1
+
     def detect_bubble(self, x: float, y: float) -> None:
-        tree_model = self.pages_tree.get_model()
-        sel_id = tree_model.get_selected()
-        item: ListItem | None = None
-        if sel_id > -1:
-            item = self.pages_treestore.get_item(sel_id)
+        tree_model: Gtk.SingleSelection = self.pages_tree.get_model()
+        item: ListItem | None = tree_model.get_selected_item()
 
         if item is not None:
             full_path = os.path.join(self.parent.tempdir, item.path)
