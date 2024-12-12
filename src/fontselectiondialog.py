@@ -146,6 +146,7 @@ class FontSelectionDialog(gtk.Dialog):
 
     def on_activated(self, widget, *args):
         self.return_font_idx()
+        self.response(gtk.ResponseType.OK)
         gtk.Widget.destroy(self)
 
     def get_font_preview(self, font_family):

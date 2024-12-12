@@ -50,6 +50,7 @@ class EditStylesDialog(gtk.Dialog):
         self.set_border_width(8)
 
         # Font Styles
+        self.fonts_dir = os.path.join(self.tempdir, 'Fonts')
         entries_box = gtk.VBox(False, 0)
         entries_box.set_border_width(5)
 
