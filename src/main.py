@@ -37,6 +37,7 @@ import shutil
 import time
 from xml.sax.saxutils import escape, unescape
 import re
+from fontTools import ttLib
 
 try:
   from . import constants
@@ -1496,6 +1497,24 @@ class MainWindow(gtk.Window):
         self.toolbar.update()
         self.update_forms(True)
         self.prior_language = self.toolbar.language.get_active_text()
+
+        # Create Font list
+        constants.FONTS_LIST, default_font = constants.load_fonts()
+        self.fonts_dir = os.path.join(self.tempdir, 'Fonts')
+        for root, dirs, files in os.walk(self.fonts_dir):
+          for f in files:
+            is_duplicate = False
+            if f.upper()[-4:] == '.TTF' or f.upper()[-4:] == '.OTF':
+              full_font_path = os.path.join(root, f)
+              font_tuple = constants.get_font(ttLib.TTFont(full_font_path), full_font_path)
+              for font in constants.FONTS_LIST:
+                if font_tuple[0] == font[0] and font_tuple[2] == font[2]:
+                  constants.FONTS_LIST.remove(font)
+                  constants.FONTS_LIST.append(font_tuple)
+                  is_duplicate = True
+                  break
+              if not is_duplicate:
+                constants.FONTS_LIST.append(font_tuple)
 
       if self.acbf_document.valid:
         set_sensitivity(self.main_box, True, 0)

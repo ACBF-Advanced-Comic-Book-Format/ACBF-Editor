@@ -20,7 +20,6 @@ https://github.com/ACBF-Advanced-Comic-Book-Format
 
 import os
 import shutil
-from fontTools import ttLib
 import lxml.etree as xml
 
 import gi
@@ -49,26 +48,6 @@ class EditStylesDialog(gtk.Dialog):
                                   
         self.set_resizable(True)
         self.set_border_width(8)
-
-        # Create Font list
-        self.fonts_dir = os.path.join(self.tempdir, 'Fonts')
-        for root, dirs, files in os.walk(self.fonts_dir):
-          for f in files:
-            is_duplicate = False
-            if f.upper()[-4:] == '.TTF' or f.upper()[-4:] == '.OTF':
-              full_font_path = os.path.join(root, f)
-              font_tuple = constants.getFont(ttLib.TTFont(full_font_path), full_font_path)
-              for font in constants.FONTS_LIST:
-                if font_tuple[0] == font[0] and font_tuple[2] == font[2]:
-                  constants.FONTS_LIST.remove(font)
-                  constants.FONTS_LIST.append(font_tuple)
-                  is_duplicate = True
-                  break
-              if not is_duplicate:
-                constants.FONTS_LIST.append(font_tuple)
-        for font in constants.FONTS_LIST:
-          if not os.path.isfile(font[1]):
-            constants.FONTS_LIST.remove(font)
 
         # Font Styles
         entries_box = gtk.VBox(False, 0)
