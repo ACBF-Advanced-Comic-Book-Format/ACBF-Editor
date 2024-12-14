@@ -21,6 +21,7 @@ https://github.com/ACBF-Advanced-Comic-Book-Format
 import os
 import shutil
 import lxml.etree as xml
+from fontTools import ttLib
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -51,6 +52,7 @@ class EditStylesDialog(gtk.Dialog):
 
         # Font Styles
         self.fonts_dir = os.path.join(self.tempdir, 'Fonts')
+
         entries_box = gtk.VBox(False, 0)
         entries_box.set_border_width(5)
 
@@ -457,6 +459,23 @@ class EditStylesDialog(gtk.Dialog):
               if f.upper()[-4:] == '.TTF' or f.upper()[-4:] == '.OTF':
                 if os.path.join(root, f) not in self.acbf_document.font_styles.values():
                   os.remove(os.path.join(root, f))
+
+          # rebuild FONTS_LIST
+          constants.FONTS_LIST, default_font = constants.load_fonts()
+          for root, dirs, files in os.walk(self.fonts_dir):
+            for f in files:
+              is_duplicate = False
+              if f.upper()[-4:] == '.TTF' or f.upper()[-4:] == '.OTF':
+                full_font_path = os.path.join(root, f)
+                font_tuple = constants.get_font(ttLib.TTFont(full_font_path), full_font_path)
+                for font in constants.FONTS_LIST:
+                  if font_tuple[0] == font[0] and font_tuple[2] == font[2]:
+                    constants.FONTS_LIST.remove(font)
+                    constants.FONTS_LIST.append(font_tuple)
+                    is_duplicate = True
+                    break
+                if not is_duplicate:
+                  constants.FONTS_LIST.append(font_tuple)
           
     def set_font_color(self, widget, style):
         font_color = widget.get_color().to_string()

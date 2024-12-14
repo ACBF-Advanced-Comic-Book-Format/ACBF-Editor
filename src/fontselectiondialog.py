@@ -92,7 +92,7 @@ class FontSelectionDialog(gtk.Dialog):
         vbox.pack_start(font_style_hbox, True, True, 0)
 
         self.font_style_buttons_hbox = gtk.HBox(False, 10)
-        self.set_font_style_buttons(selected_font_family)
+        self.set_font_style_buttons(selected_font_family, selected_font_style)
         vbox.pack_start(self.font_style_buttons_hbox, True, True, 0)
 
         label = gtk.Label("Font Preview:")
@@ -140,7 +140,7 @@ class FontSelectionDialog(gtk.Dialog):
             self._window.font_idx = idx
 
     def on_cursor_changed(self, widget, *args):
-        self.set_font_style_buttons(self.unique_font_families[widget.get_cursor()[0][0]])
+        self.set_font_style_buttons(self.unique_font_families[widget.get_cursor()[0][0]], None)
         self.get_font_preview(self.unique_font_families[widget.get_cursor()[0][0]])
         self.return_font_idx()
 
@@ -167,7 +167,7 @@ class FontSelectionDialog(gtk.Dialog):
           self.get_font_preview(self.unique_font_families[self.treeView.get_cursor()[0][0]])
           self.return_font_idx()
         
-    def set_font_style_buttons(self, font_family):
+    def set_font_style_buttons(self, font_family, font_style):
         for i in self.font_style_buttons_hbox.get_children():
           i.destroy()
         for font in constants.FONTS_LIST:
@@ -177,6 +177,9 @@ class FontSelectionDialog(gtk.Dialog):
               self.font_style_label.set_label(font[2])
             else:
               button = gtk.RadioButton(group=button)
+            if font_style == font[2]:
+              button.set_active(True)
+              self.font_style_label.set_label(font[2])
             button.label = font[2]
             button.connect('toggled', self.on_font_style_button_changed)
             self.font_style_buttons_hbox.pack_start(button, True, False, 0)
