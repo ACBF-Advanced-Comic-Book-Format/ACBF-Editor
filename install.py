@@ -177,7 +177,7 @@ def check_dependencies():
     except AssertionError:
         print('    !!! Python Imaging Library .. version', im_ver, end=' ')
         print('found')
-        print('    !!! Python Imaging Library 1.1.5 or higher is required')
+        print('    !!! Python Imaging Library 9 or higher is required')
         required_found = False
     try:
         import patoolib

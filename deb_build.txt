@@ -1,0 +1,8 @@
+1. update debian/changelog file with the newest version details
+2. run "debuild"
+3. run "debuild -T clean"
+4. test deb package
+5. run "debuild -S"
+6. run "dput ppa:acbf-development-team/acbf acbf-editor_3.0_source.changes" outside of ACBF-Editor directory
+7. check launchpad if package was built successfully
+

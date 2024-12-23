@@ -1,0 +1,185 @@
+acbf-editor (3.0) noble; urgency=low
+
+  * New upstream release.
+
+ -- Robert Kubik <pastierovic@gmail.com>  Mon, 23 Dec 2024 11:49:00 +0200
+
+acbf-editor (1.17-1) trusty; urgency=low
+
+  * Fixed package.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Sun, 08 Dec 2019 15:49:00 +0200
+
+acbf-editor (1.17) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Sun, 08 Dec 2019 15:38:00 +0200
+
+acbf-editor (1.16) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Wed, 06 Nov 2019 15:03:00 +0200
+
+acbf-editor (1.15) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Sat, 01 Sep 2018 11:51:00 +0200
+
+acbf-editor (1.14-1) trusty; urgency=low
+
+  * Fix dependency.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Sun, 24 Jun 2018 11:11:00 +0200
+
+acbf-editor (1.14) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Sun, 15 Apr 2018 11:17:00 +0200
+
+acbf-editor (1.13) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 01 Jan 2018 13:24:00 +0200
+
+acbf-editor (1.12) trusty; urgency=low
+
+  * Fix dependency.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Tue, 24 Oct 2017 16:24:00 +0200
+
+acbf-editor (1.11-1) trusty; urgency=low
+
+  * Fix dependency.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Sun, 01 Oct 2017 18:53:00 +0200
+
+acbf-editor (1.11) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Sun, 01 Oct 2017 18:43:00 +0200
+
+acbf-editor (1.1) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Sun, 10 Sep 2017 15:13:00 +0200
+
+acbf-editor (0.95-2) trusty; urgency=low
+
+  * Version fix.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 26 Jun 2017 18:54:00 +0200
+
+acbf-editor (0.95-1) trusty; urgency=low
+
+  * Version fix.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 26 Jun 2017 18:37:00 +0200
+
+acbf-editor (0.95) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 26 Jun 2017 18:15:00 +0200
+
+acbf-editor (0.91-1) trusty; urgency=low
+
+  * New upstream fix.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Thu, 29 Dec 2016 16:13:00 +0200
+
+acbf-editor (0.91) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Tue, 20 Dec 2016 17:18:00 +0200
+
+acbf-editor (0.9) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Tue, 05 Oct 2016 07:20:00 +0200
+
+acbf-editor (0.8) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Tue, 10 Aug 2016 15:36:00 +0200
+
+acbf-editor (0.7-1) trusty; urgency=low
+
+  * Version fix.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Tue, 10 May 2016 15:10:00 +0200
+
+acbf-editor (0.7) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Tue, 10 May 2016 15:00:00 +0200
+
+acbf-editor (0.6-2) trusty; urgency=low
+
+  * Minor Fix.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 04 Jan 2016 23:14:59 +0200
+
+acbf-editor (0.6-1) trusty; urgency=low
+
+  * Minor Fix.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Fri, 01 Jan 2016 13:43:59 +0200
+
+acbf-editor (0.6) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Fri, 01 Jan 2016 11:57:59 +0200
+
+acbf-editor (0.5-1) trusty; urgency=low
+
+  * Fixed adding new file.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Tue, 19 Nov 2015 22:27:59 +0200
+
+acbf-editor (0.5) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Tue, 17 Nov 2015 20:27:59 +0200
+
+acbf-editor (0.4-3) trusty; urgency=low
+
+  * Fixed version.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 09 Oct 2014 21:50:59 +0200
+
+acbf-editor (0.4-2) trusty; urgency=low
+
+  * Fixed dependencies.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 09 Oct 2014 21:50:59 +0200
+
+acbf-editor (0.4-1) trusty; urgency=low
+
+  * Fixed dependencies.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 09 Oct 2014 21:50:59 +0200
+
+acbf-editor (0.4) trusty; urgency=low
+
+  * New upstream release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 09 Oct 2014 21:50:59 +0200
+
+acbf-editor (0.3-3) trusty; urgency=low
+
+  * Initial release.
+
+ -- Robert Pastierovic (Debian packaging key) <pastierovic@gmail.com>  Mon, 30 Sep 2014 18:35:59 +0200

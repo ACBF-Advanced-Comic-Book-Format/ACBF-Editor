@@ -1,0 +1,21 @@
+Source: acbf-editor 
+Section: x11
+Priority: optional
+Maintainer: Robert Kubik <pastierovic@gmail.com>
+Build-Depends: debhelper (>= 10.0.0)
+Build-Depends-Indep: python3 (>= 3.4.0), python3-pil (>= 9), python3-lxml, zlib1g, patool, python3-opencv, python3-numpy, python3-matplotlib, python3-gi-cairo
+Standards-Version: 3.9.5.0
+
+Package: acbf-editor
+Architecture: all
+Homepage: https://github.com/ACBF-Advanced-Comic-Book-Format
+XB-Python-Version: all
+Depends: ${misc:Depends}, python3 (>= 3.4.0), python3-pil (>= 9), python3-lxml, zlib1g, patool, python3-opencv, python3-numpy, python3-matplotlib, python3-gi-cairo
+Suggests: unrar, acbf-viewer
+Description: GTK Editor for ACBF Comic Book Files
+ ACBF Editor is an editor capable of creating CBZ archives with ACBF files
+ inside. It can open ACBF, CBZ and ACV comic book file formats. Different
+ kinds of metadata based on ACBF specifications can be populated/edited.
+ Resulting comic book then can be saved into CBZ archive which will have
+ acbf file with metadata inside.
+

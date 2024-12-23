@@ -1,0 +1,36 @@
+This package was debianized by Robert Kubik <pastierovic@gmail.com> on
+Mon,  30 Sep 2014 18:42:25 +0100.
+
+It was downloaded from https://github.com/ACBF-Advanced-Comic-Book-Format/ACBF-Editor
+
+Upstream Author:
+
+    Robert Kubik
+
+Files: *
+Copyright:
+    2011-2024, Robert Kubik
+License: GPL
+
+Files: debian/*
+Copyright:
+    2011-2024, Robert Kubik
+License: GPL
+
+License: GPL
+   This package is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This package is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this package; if not, see .
+
+On Debian systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL-3'.
+
