@@ -2127,7 +2127,7 @@ class FramesEditorDialog(gtk.Dialog):
                 centroid = self.centroid_for_polygon(self.points, border)
                 rectangles.append((self.points, centroid[0], centroid[1], min_x, min_y))
         
-        rectangles.sort(key=lambda tup: (tup[2], tup[1]))
+        rectangles.sort(key=lambda tup: (round(tup[4]/15, 0), tup[3]))
         for idx, rect in enumerate(rectangles):
           self.points = rect[0]
           self.enclose_rectangle()
