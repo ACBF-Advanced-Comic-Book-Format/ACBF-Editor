@@ -21,6 +21,8 @@ https://github.com/ACBF-Advanced-Comic-Book-Format
 
 
 from PIL import Image, ImageOps, ImageDraw, ImageFont, ImageEnhance, ImageChops
+if not hasattr(Image, 'Resampling'): # for older version of Pillow
+  Image.Resampling = Image
 from xml.sax.saxutils import unescape
 import math
 import re
@@ -185,7 +187,7 @@ class TextLayer():
             is_commentary = True
           else:
             is_commentary = False
-          
+
           if text_area[4].upper() == 'SIGN':
             is_sign = True
           else:
@@ -220,7 +222,7 @@ class TextLayer():
             is_code = True
           else:
             is_code = False
-          
+
           is_emphasis = is_strong = False
           words = text.replace('a href', 'a_href').replace(' ', ' ˇ').split('ˇ')
           words_upper = text.replace(' ', 'ˇ').upper().split('ˇ')
@@ -557,7 +559,7 @@ class TextLayer():
 
           # rotate image back to original rotation after text is drawn
           if text_area[3] != 0:
-            draw_image = draw_image.rotate(text_area[3], Image.BILINEAR, 1)
+            draw_image = draw_image.rotate(text_area[3], Image.Resampling.BILINEAR, 1)
             rotated_image_size = draw_image.size
             left = (rotated_image_size[0] - original_polygon_size[0])/2
             upper = (rotated_image_size[1] - original_polygon_size[1])/2
@@ -607,7 +609,7 @@ class TextLayer():
         for text_area in text_areas_draw:
           lines = []
 
-         # create draw
+          # create draw
           polygon = []
           if text_area[3] == 0:
             draw = image_draw
@@ -1191,7 +1193,7 @@ class TextLayer():
 
           # rotate image back to original rotation after text is drawn
           if text_area[3] != 0:
-            draw_image = draw_image.rotate(text_area[3], Image.BILINEAR, 1)
+            draw_image = draw_image.rotate(text_area[3], Image.Resampling.BILINEAR, 1)
             rotated_image_size = draw_image.size
             left = (rotated_image_size[0] - original_polygon_size[0])/2
             upper = (rotated_image_size[1] - original_polygon_size[1])/2

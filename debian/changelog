@@ -1,3 +1,9 @@
+acbf-editor (3.0-1) noble; urgency=low
+
+  * Fixed dependencies.
+
+ -- Robert Kubik <pastierovic@gmail.com>  Mon, 30 Dec 2024 07:30:00 +0200
+
 acbf-editor (3.0) noble; urgency=low
 
   * New upstream release.
