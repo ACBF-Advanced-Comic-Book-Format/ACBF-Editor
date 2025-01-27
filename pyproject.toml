@@ -32,7 +32,6 @@ dependencies = [
     "lxml",
     "pillow>10",
     "opencv-python",
-    "matplot",
     "patool",
     "pycountry",
 ]

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import base64
 import io
+import sys
 import logging
 import os.path
 import re
@@ -33,14 +34,30 @@ import zipfile
 from typing import Any
 from xml.sax.saxutils import escape
 
+
 import constants
 import lxml.etree as xml
 import PIL.ImageFont
-from gi.repository import GLib
-from gi.repository import Gtk
+
 from lxml import objectify
-from matplotlib import font_manager
 from PIL import Image
+
+try:
+    import gi
+
+    gi.require_version("Gtk", "4.0")
+    from gi.repository import GLib
+    from gi.repository import Gtk
+except ImportError as e:
+    print("GTK4 version 4.10.0 or higher is required to run ACBF Editor.")
+    print(e)
+    sys.exit(1)
+except ValueError as e:
+    print("GTK4 version 4.10.0 or higher is required to run ACBF Editor.")
+    print(e)
+    sys.exit(1)
+
+import utils
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +93,7 @@ class ACBFDocument:
         self.reading_direction: str = "LTR"
         self.has_frames: bool = False
         self.fonts_dir: str = os.path.join(self.parent.tempdir, "Fonts")
+        self.custom_fonts: dict[str, dict[str, str]] = {}  # filename stem: path, name, style, weight, stretch
         self.font_styles: dict[str, str] = {
             "normal": "",
             "emphasis": "",
@@ -160,6 +178,7 @@ class ACBFDocument:
                 self.load_metadata()
                 self.get_contents_table()
                 self.extract_fonts()
+                self.custom_fonts = self.custom_fonts = utils.findSystemFonts([self.fonts_dir])
                 self.stylesheet = self.tree.find("style")
                 if self.stylesheet is not None:
                     self.load_stylesheet()
@@ -588,9 +607,11 @@ class ACBFDocument:
         for rule in self.stylesheet.text.replace("\n", " ").split("}"):
             if rule.strip() != "":
                 selector = rule.strip().split("{")[0].strip().upper()
+                # "" equivalent to "normal"
                 font_style = "normal"
                 font_weight = "normal"
                 font_stretch = "normal"
+
                 font_families = ""
                 for style in rule.strip().split("{")[1].strip().split(";"):
                     if style != "":
@@ -598,11 +619,11 @@ class ACBFDocument:
                         if current_style == "FONT-FAMILY":
                             font_families = style.split(":")[1].strip()
                         elif current_style == "FONT-STYLE":
-                            font_style = style.split(":")[1].strip()
+                            font_style = style.split(":")[1].strip().casefold()
                         elif current_style == "FONT-WEIGHT":
-                            font_weight = style.split(":")[1].strip()
+                            font_weight = style.split(":")[1].strip().casefold()
                         elif current_style == "FONT-STRETCH":
-                            font_stretch = style.split(":")[1].strip()
+                            font_stretch = style.split(":")[1].strip().casefold()
 
                         if selector == "*" and current_style == "COLOR":
                             self.font_colors["speech"] = style.split(":")[1].strip().strip('"')
@@ -628,44 +649,76 @@ class ACBFDocument:
                             self.font_colors["sign"] = style.split(":")[1].strip().strip('"')
 
                 if font_families != "":
+                    font = ""
                     for font_family in font_families.split(","):
+                        if font:
+                            continue
+                        font_family = font_family.strip().strip('"').casefold()
+                        font_family_split = font_family.split(".")[0]
                         # check if font exists in acbf document
-                        font_family_stripped = font_family.strip().strip('"')
-                        if os.path.isfile(os.path.join(self.fonts_dir, font_family_stripped)):
-                            font = os.path.join(
-                                self.fonts_dir,
-                                font_family_stripped,
-                            )
-                            font_obj = PIL.ImageFont.truetype(font)
-                            font_families_list = font_families.split(", ")
-                            font_families_list[0] = font_obj.font.family
-                            font_families = ", ".join(font_families_list)
-                            break
+                        # Is it a font filename?
+                        if "." in font_family:
+                            # Check our bundled fonts first
+                            find_font = self.custom_fonts.get(font_family_split)
+                            if find_font is None:
+                                # Check system fonts
+                                find_font = constants.SYSTEM_FONT_LIST.get(font_family_split)
+                            font = find_font["path"] if find_font is not None else ""
 
-                        # search in system fonts
-                        # TODO Not use matplotlib just to search for fonts
-                        """font_map = Pango.Context().get_font_map()
-                        font_families = font_map.list_families()
-                        for family in font_families:
-                            if family.get_name() == font_family_stripped:
-                                pass"""
+                        if not font:
+                            # Not a filename, check names and styles
+                            found_family_list = {}
+                            for font_id, font_info in self.custom_fonts.items():
+                                if font_family == font_info["name"].casefold():
+                                    found_family_list[font_id] = font_info
 
-                        prop = font_manager.FontProperties(
-                            family=font_family_stripped,
-                            style=font_style,
-                            weight=font_weight,
-                            stretch=font_stretch,
+                            if len(found_family_list) == 0:
+                                # Check system fonts
+                                for font_id, font_info in constants.SYSTEM_FONT_LIST.items():
+                                    if font_family == font_info["name"].casefold():
+                                        found_family_list[font_id] = font_info
+
+                            found_style_list: dict[str, dict[str, str]] = {}
+                            if len(found_family_list) > 0:
+                                # Check each matching family found for matching style attributes
+                                for font_id, font_info in found_family_list.items():
+                                    if (
+                                        font_style == font_info["style"]
+                                        and font_weight == font_info["weight"]
+                                        and font_stretch == font_info["stretch"]
+                                    ):
+                                        # Perfect match
+                                        font = font_info["path"]
+                                        break
+                                    elif font_style == "italic" or "oblique":
+                                        if (
+                                            (font_info["style"] == "italic" or font_info["style"] == "oblique")
+                                            and font_weight == font_info["weight"]
+                                            and font_stretch == font_info["stretch"]
+                                        ):
+                                            # Perfect match
+                                            font = font_info["path"]
+                                            break
+                                    else:
+                                        if font_style == font_info["style"] and font_weight == font_info["weight"]:
+                                            found_style_list[font_id] = font_info
+                                        elif font_style == font_info["style"] and font_stretch == font_info["stretch"]:
+                                            found_style_list[font_id] = font_info
+                                        elif (
+                                            font_weight == font_info["weight"] and font_stretch == font_info["stretch"]
+                                        ):
+                                            found_style_list[font_id] = font_info
+
+                            if not font and len(found_style_list) > 0:
+                                # Didn't find a perfect match, use next best
+                                if len(found_style_list) > 0:
+                                    font = next(iter(found_style_list.values()))["path"]
+
+                    if not font:
+                        logging.warning(
+                            f"Failed to find any requested fonts: {font_families}. Using default {constants.default_font}"
                         )
-                        try:
-                            font = font_manager.findfont(
-                                prop,
-                                fontext="ttf",
-                                fallback_to_default=False,
-                            )
-                        except Exception as e:
-                            # TODO Use fallback
-                            logging.warning(f"Failed load font: {e}")
-                            break
+                        font = constants.default_font
 
                 if selector in ("P", "TEXT-AREA") and font != "":
                     self.font_styles["normal"] = font

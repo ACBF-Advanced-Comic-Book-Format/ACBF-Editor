@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import os
 import sys
+import utils
 
 import portability
 
@@ -278,40 +279,12 @@ LANGUAGES = [
     "zu",
 ]
 
-# load fonts
-FONTS_LIST: list[tuple[str, str]] = []
+# Create system font list
+SYSTEM_FONT_LIST: dict[str, dict[str, str]] = (
+    utils.findSystemFonts()
+)  # filename stem: full path, family name, style, weight, stretch
 default_font = ""
-for font_dir in FONTS_DIR:
-    for root, dirs, files in os.walk(font_dir):
-        for f in files:
-            is_duplicate = False
-            if f.upper()[-4:] == ".TTF" or f.upper()[-4:] == ".OTF":
-                for font in FONTS_LIST:
-                    if f.upper() == font[0].upper():
-                        is_duplicate = True
-                if not is_duplicate:
-                    FONTS_LIST.append(
-                        (
-                            f.replace(".ttf", "")
-                            .replace(".TTF", "")
-                            .replace(
-                                ".otf",
-                                "",
-                            )
-                            .replace(".OTF", ""),
-                            os.path.join(root, f),
-                        ),
-                    )
-                # try to set default font
-                if f == "DejaVuSans.ttf":
-                    default_font = os.path.join(root, f)
-                elif f == "Arial.ttf":
-                    default_font = os.path.join(root, f)
-
-if default_font == "":
-    default_font = FONTS_LIST[0][1]
-sorted_list = sorted(FONTS_LIST, key=lambda font_name: font_name[0].upper())
-
-FONTS_LIST = [("Default", default_font)]
-for font in sorted_list:
-    FONTS_LIST.append(font)
+if SYSTEM_FONT_LIST.get("arial"):
+    default_font = SYSTEM_FONT_LIST.get("arial", {})["path"]
+elif SYSTEM_FONT_LIST.get("dejavusans"):
+    default_font = SYSTEM_FONT_LIST.get("dejavusans", {})["path"]
